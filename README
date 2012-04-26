@@ -1,0 +1,8 @@
+Onza FDTD is a high performance electromagnetic simulation software
+designed to run efficiently in parallel on multicore processors,
+multiprocessor systems, clusters and supercomputers.
+
+Onza FDTD needs MPI installed to compile and run. 
+
+Before use install Blitz++ library. For Debian/Ubuntu systems install with
+# apt-get install libblitz0-dev
