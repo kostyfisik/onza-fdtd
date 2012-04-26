@@ -1,3 +1,4 @@
+// Using Doxygen 1.8.0
 ///
 /// @file   onza-fdtd.cc
 /// @author Ladutenko Konstantin <kostyfisik at gmail (.) com>
@@ -30,7 +31,7 @@
 ///
 /// Onza FDTD software is developed by [Metamaterials Laboratory] of
 /// Photonics and Optical Informatics Department of [NRU ITMO]. It is
-/// also developed by [Ioffe Institute].
+/// also supported by [Ioffe Institute].
 ///
 /// Contact Ladutenko Konstantin <kostyfisik at gmail (.)  com>
 /// with any questions about Onza FDTD.
@@ -57,7 +58,8 @@
 #include <cstdio>
 /// @todo blitz is internal implementation of model storge, move 
 /// `#include <blitz/array.h>` there.
-#include <blitz/array.h> 
+#include <blitz/array.h>
+#include "mpi-decomposition/halo-exchange-process.h"
 /// @brief Init, run and complete simulation.
 ///
 /// @param argc 
@@ -67,5 +69,7 @@
 int main(int argc, char *argv[])
 {
   printf("Starting Onza!!!\n");
+  HaloExchangeProcess halo_exchange_process;
+  halo_exchange_process.init();
   return 0;
 }
