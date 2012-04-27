@@ -1,4 +1,4 @@
 #!/bin/bash
 cd ../doc/doxygen
-./go
+./doxygen  
 rsync -ave ssh html/ phoif:~/onzafdtd.org/

@@ -19,7 +19,7 @@ add_subdirectory(src)
 #   # It is possible to put adddditional CMake commands in sub-directory
 #   # CMakeLists.txt, but the add_subdirectory command must be used to specify
 #   # which sub-directories should be scanned.
-#   add_subdirectory( doc )
+#   #add_subdirectory( doc )
 # else()
 #   message( WARNING "Doxygen not found - code documentation won't be created" )
 # endif()

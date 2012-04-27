@@ -22,7 +22,12 @@ file(GLOB OnzaFDTD_SOURCES *.cc)
 # Create an executable file called run-onzf-fdtd from sources:
 add_executable(run-onza-fdtd ${OnzaFDTD_SOURCES})
 # subdirs names are synonyms for librarys names
-target_link_libraries(run-onza-fdtd ${SUBDIRS})
-install( TARGETS run-onza-fdtd
-   DESTINATION ./
-  )
+message("Searching for MPI...")
+find_package(MPI)
+if (MPI_FOUND)
+  include_directories(${MPI_INCLUDE_DIRS})
+  target_link_libraries(run-onza-fdtd ${SUBDIRS} ${MPI_LIBRARIES})
+  install( TARGETS run-onza-fdtd   DESTINATION ./    )
+else()
+  message( FATAL_ERROR "Onza FDTD needs MPI libs installed!" )
+endif()
