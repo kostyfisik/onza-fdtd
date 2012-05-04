@@ -2,33 +2,69 @@
 ///
 /// @file   onza-fdtd.cc
 /// @author Ladutenko Konstantin <kostyfisik at gmail (.) com>
+/// @copyright 2012 Ladutenko Konstantin
 /// @date   Wed Apr 25 15:01:02 2012
-/// 
+///
 /// @brief  Top level calls for FDTD simulation, Doxygen mainpage description.
-#include <cstdio>
 #include <mpi.h>
-/// @todo blitz is internal implementation of model storge, move 
-/// `#include <blitz/array.h>` there.
-#include <blitz/array.h>
+#include <cstdio>
 #include "mpi-decomposition/halo-exchange-process.h"
 /// @brief Init, run and complete simulation.
 ///
-/// @param argc 
-/// @param argv well known input parameters
+/// @param argc
+/// @param argv well known input parameters.
 ///
-/// @return Zero by default.1
-int main(int argc, char *argv[])
-{
+/// @return Zero by default.
+int main(int argc, char *argv[]) {
   MPI::Init(argc, argv);
-  printf("Starting Onza!!!\n");
-  HaloExchangeProcess halo_exchange_process;
-  halo_exchange_process.init();
-  printf("My rank is %i\n",halo_exchange_process.process_rank());
-  int size = MPI::COMM_WORLD.Get_size( ), rank = MPI::COMM_WORLD.Get_rank( );
-  printf("My MPI rank is %i\n",rank);  
+  onza::HaloExchangeProcess halo_exchange_process;
+  halo_exchange_process.Init();
   MPI::Finalize();
   return 0;
 }
+/// @namespace onza
+/// @brief Top level namespace of Onza FDTD project.
+///
+/// some more
+// ************************************************************************* //
+/// @page ChangeLog
+///
+/// #ChangeLog
+/// @Section Version 0.0.1
+///- CMake files are configured for ease of use.
+// ************************************************************************* //
+/// @page "Coding Style"
+/// [Google style]: http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml
+/// #Coding Style
+/// @section Main
+/// Use [Google style]!
+///
+/// @section Additional
+///- Allways end class (methods, functions, namespaces, etc.) declaration
+///  with comment
+///
+///        class GridInputConfig {
+///          ...
+///        };  // end of class GridInputConfig
+///        int  BasicSimulationCore::Init() {
+///          ...
+///        }  // end of BasicSimulationCore::Init
+///- All classes, containing input parameters for simulation should end
+/// with *InputConfig*
+// /// \page page2 New page
+// /// \tableofcontents
+// /// Leading text.
+// /// \section sec An example section
+// /// This page contains the subsections \ref subsection1 and \ref subsection2.
+// /// For more info see page \ref page2.
+// /// \subsection subsection1 The first subsection
+// /// Text.
+// /// \subsection subsection2 The second subsection
+// /// More text.
+// ///
+// ************************************************************************* //
+// ************************************************************************* //
+// ************************************************************************* //
 /// @mainpage Onza FDTD Documentation
 ///
 /// [FDTD]: http://en.wikipedia.org/wiki/Finite-difference_time-domain_method "Go to Wikipedia"
@@ -39,7 +75,7 @@ int main(int argc, char *argv[])
 /// [CMake]: http://www.cmake.org "CMake"
 /// [Ioffe Institute]: http://www.ioffe.ru/index_en.html "Ioffe Physical Technical Instute"
 ///
-/// #Generic electromagnetic simulation software
+/// #Parallel generic electromagnetic simulation software
 ///
 /// Onza FDTD is a high performance electromagnetic simulation
 /// software using [finite-difference time-domain (FDTD)
@@ -63,34 +99,19 @@ int main(int argc, char *argv[])
 ///
 ///- MPI (to use Onza FDTD, to compile it)
 ///
-///  Onza FDTD needs some MPI realization to be compiled and to be
-///  run. It was developed using [OpenMPI]. For Debian/Ubuntu systems
-///  it can be installed with:
+///   Onza FDTD needs some MPI realization to be compiled and to be
+///   run. It was developed using [OpenMPI]. For Debian/Ubuntu systems
+///   it can be installed with:
 ///
-///      # apt-get install openmpi-bin openmpi-doc libopenmpi-dev    
+///       # apt-get install openmpi-bin openmpi-doc libopenmpi-dev
 ///
 ///- [Blitz++] library (to compile Onza FDTD)
 ///
-///  For Debian/Ubuntu systems it can be installed with
+///   For Debian/Ubuntu systems it can be installed with
 ///
-///      # apt-get install libblitz0-dev
+///       # apt-get install libblitz0-dev
 ///
 ///- [CMake] build system (to compile Onza FDTD)
 ///
-///  Use it on Linux/Unix and other operation systems.
-///
-/// \page page1 ChangeLog
-/// #Version 0.0.1
-///- CMake files are configured for ease of use.
-///
-/// \page page2 New page
-/// \tableofcontents
-/// Leading text.
-/// \section sec An example section
-/// This page contains the subsections \ref subsection1 and \ref subsection2.
-/// For more info see page \ref page2.
-/// \subsection subsection1 The first subsection
-/// Text.
-/// \subsection subsection2 The second subsection
-/// More text.
+///   Use it on Linux/Unix and other operation systems.
 ///
