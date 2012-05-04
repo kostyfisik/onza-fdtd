@@ -19,7 +19,7 @@ namespace onza {
     processes_total_number_ = MPI::COMM_WORLD.Get_size();
     printf("My MPI rank is %i from %i total\n",
            process_rank_, processes_total_number_);
-    simulation_core_.Init();
+    simulation_core_.Init();    
     return 0;
   }  // end of HaloExchangeProcess::Init()
 }  // end of namespace onza
