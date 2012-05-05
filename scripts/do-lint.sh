@@ -1,12 +1,12 @@
 #!/bin/bash
-FILES="../src/onza-fdtd.cc
-../src/common.h
-../src/mpi-decomposition/halo-exchange-process.h
-../src/mpi-decomposition/halo-exchange-process.cc
-../src/simulation-core/basic-fdtd.h
-../src/simulation-core/basic-fdtd.cc"
+FILES=`find ../src -type f -name \*.cc -o -name \*.h`
 for file in $FILES
 do
- echo 
- ./cpplint.py $file
+ echo >> result-cpplint.log    
+ ./cpplint.py $file 2>>result-cpplint.log
 done
+cat result-cpplint.log
+echo
+echo
+cat result-cpplint.log |grep errors
+rm result-cpplint.log

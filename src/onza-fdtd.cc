@@ -19,16 +19,25 @@ int main(int argc, char *argv[]) {
   MPI::Init(argc, argv);
   onza::HaloExchangeProcess halo_exchange_process;
   halo_exchange_process.Init();
+  halo_exchange_process.RunDecomposition();
   MPI::Finalize();
   return 0;
 }
-/// @namespace onza
-/// @brief Top level namespace of Onza FDTD project.
+// ************************************************************************* //
+/// @page TopLevelAlgorithm Top level algorithm steps
+///- Get MPI runtime parameters (onza::HaloExchangeProcess::Init())
+///- For each MPI process read simulation global input config
+///  (onza::SimulationInputConfig::ReadConfig()).
+///- Cary out domain decomposition onza::HaloExchangeProcess::RunDecomposition().
+///  For early stages of development we
+///  will assume star topology, decomposition is optimized do minize volume
+///  of exchange data.
 ///
-/// some more
+///  @todo Domain decomposition should be correlated with mesh topology of cluster.
+///
+///- Start simulation on subdomain with help of onza::BasicSimulationCore
 // ************************************************************************* //
 /// @page ChangeLog
-///
 /// #ChangeLog
 /// @Section Version 0.0.1
 ///- CMake files are configured for ease of use.
@@ -51,6 +60,7 @@ int main(int argc, char *argv[]) {
 ///        }  // end of BasicSimulationCore::Init
 ///- All classes, containing input parameters for simulation should end
 /// with *InputConfig*
+// ************************************************************************* //
 // /// \page page2 New page
 // /// \tableofcontents
 // /// Leading text.
@@ -62,6 +72,11 @@ int main(int argc, char *argv[]) {
 // /// \subsection subsection2 The second subsection
 // /// More text.
 // ///
+// ************************************************************************* //
+/// @namespace onza
+/// @brief Top level namespace of Onza FDTD project.
+///
+/// Also using names from MPI, blitz and std namespaces.
 // ************************************************************************* //
 // ************************************************************************* //
 // ************************************************************************* //

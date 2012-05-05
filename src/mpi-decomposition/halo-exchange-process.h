@@ -15,6 +15,8 @@ namespace onza {
   class HaloExchangeProcess {
    public:
     int Init();
+    /// @brief Run simulation domain decomposition
+    int RunDecomposition();
    private:
     /// @brief To carry out all non-communication work.
     BasicSimulationCore simulation_core_;

@@ -8,6 +8,10 @@
 ///
 /// @brief  Global variables, enumerations, macros, types, etc..
 #include <stdint.h>  // Including stdint.h to use int64_t.
+/// @brief Status of reading input config.
+///
+/// For use with onza::SimulationInputConfig::status_
+enum InputConfig {kInputConfigUndefined = 0, kInputConfigAllDone = 10000};
 /// @brief Names for Cartesian axes.
 ///
 /// Use them to access dimesion relative arrays.

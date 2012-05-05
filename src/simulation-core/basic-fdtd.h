@@ -44,11 +44,17 @@ namespace onza {
   /// @brief Parsing all input parameters into one object.
   class SimulationInputConfig {
    public:
+    /// @brief Constructor. Initially status of reading config is unread.
+    SimulationInputConfig():status_(static_cast<int>(kInputConfigUndefined)) {}
     /// @brief Read top level config file
-    int ReadSimulationInputConfig();
-   private:
-    /// @brief Grid properties from ReadSimulationInputConfig().
+    int ReadConfig();
+    /// @brief Grid properties from ReadConfig().
     GridInputConfig grid_input_config_;
+   private:
+    /// @brief Status of reading config with ReadConfig()
+    ///
+    /// Should be value from #InputConfig
+    int status_;
   };  // end of class SimulationInputConfig
   // *********************************************************************** //
   /// @brief Basic class for FDTD simulation.
@@ -58,9 +64,9 @@ namespace onza {
   class BasicSimulationCore {
    public:
     int Init();
-   private:
     /// @brief Parsing all input parameters into one object.
     SimulationInputConfig simulation_input_config_;
+   private:
     /// @brief Some array for construction tests only.
     blitz::Array<double, 3> test_array_;
   };  // end of class BasicSimulationCore
