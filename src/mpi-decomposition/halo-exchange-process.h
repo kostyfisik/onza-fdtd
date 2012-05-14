@@ -15,9 +15,17 @@ namespace onza {
   class HaloExchangeProcess {
    public:
     int Init();
-    /// @brief Run simulation domain decomposition
+    /// @brief Run decomposition of simulation domain.
     int RunDecomposition();
    private:
+    /// @brief Optized decomposition for star topology of supercomputer.
+    int StarTopologyDecomposition(const int64_t all_processes,
+                                  const int64_t length_x,
+                                  const int64_t length_y,
+                                  const int64_t length_z,
+                                  int64_t &best_nx,
+                                  int64_t &best_ny,
+                                  int64_t &best_nz);
     /// @brief To carry out all non-communication work.
     BasicSimulationCore simulation_core_;
     /// @brief Fast access (without MPI call) to process rank of

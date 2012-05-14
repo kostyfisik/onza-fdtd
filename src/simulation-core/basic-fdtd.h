@@ -49,7 +49,10 @@ namespace onza {
     /// @brief Read top level config file
     int ReadConfig();
     /// @brief Grid properties from ReadConfig().
-    GridInputConfig grid_input_config_;
+    GridInputConfig grid_input_config_;  // public member to allow direct
+                                         // access to GridInputConfig parameters
+    /// @brief Accesor to status of simulation input config.
+    int status() {return status_;}
    private:
     /// @brief Status of reading config with ReadConfig()
     ///

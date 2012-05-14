@@ -1,4 +1,4 @@
-// Using Doxygen 1.8.0
+// Using Doxygen 1.8.0 (with Markdown)
 ///
 /// @file   onza-fdtd.cc
 /// @author Ladutenko Konstantin <kostyfisik at gmail (.) com>
@@ -18,24 +18,29 @@
 int main(int argc, char *argv[]) {
   MPI::Init(argc, argv);
   onza::HaloExchangeProcess halo_exchange_process;
-  halo_exchange_process.Init();
+  int init_status = halo_exchange_process.Init();
+  if (init_status != onza::kDone) {
+    MPI::Finalize();
+    return init_status;
+  }
   halo_exchange_process.RunDecomposition();
   MPI::Finalize();
   return 0;
 }
 // ************************************************************************* //
 /// @page TopLevelAlgorithm Top level algorithm steps
-///- Get MPI runtime parameters (onza::HaloExchangeProcess::Init())
-///- For each MPI process read simulation global input config
+///- Start exchange process (onza::HaloExchangeProcess::Init()). For each
+/// MPI process:
+/// * Get MPI runtime parameters 
+/// * Read simulation global input config
 ///  (onza::SimulationInputConfig::ReadConfig()).
-///- Cary out domain decomposition onza::HaloExchangeProcess::RunDecomposition().
-///  For early stages of development we
-///  will assume star topology, decomposition is optimized do minize volume
-///  of exchange data.
-///
-///  @todo Domain decomposition should be correlated with mesh topology of cluster.
-///
+/// * Cary out domain decomposition
+///  onza::HaloExchangeProcess::RunDecomposition().  For early stages
+///  of development we will assume star topology, decomposition is
+///  optimized do minize volume of exchange data.
 ///- Start simulation on subdomain with help of onza::BasicSimulationCore
+///
+/// @todo (For all project) Should be some logging system in Onza.
 // ************************************************************************* //
 /// @page ChangeLog
 /// #ChangeLog

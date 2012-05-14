@@ -35,9 +35,9 @@ cp gcc/run-onza-fdtd run-onza-fdtd-gcc
 echo
 echo "Executing clang version"
 echo
-mpirun -np 2 ./run-onza-fdtd-clang
+time mpirun -np 2 --bind-to-core ./run-onza-fdtd-clang
 echo
 echo "Executing gcc version"
 echo
-mpirun -np 2 ./run-onza-fdtd-gcc
+time mpirun -np 2 --bind-to-core ./run-onza-fdtd-gcc
 echo
