@@ -17,28 +17,31 @@ namespace onza {
     /// @brief Default constructor.
     ///
     /// Define zero grid with no elements.
-    GridInputConfig() {set_total_grid_length(0, 0, 0);}
+    GridInputConfig() {set_total_grid_length(0);}
     /// @brief Accesor.
     /// @param[in] axis_name Input axis.
     /// @return Size of grid along input axis.
     inline int64_t get_total_grid_length(Axis axis_name) {
+      if (axis_name > kDimensions - 1) return 0;
       return total_grid_length_[static_cast<int>(axis_name)];
     };
     /// @brief Mutator.
     /// @param[in] length_x, length_y, length_z Length of grid in
     /// corresponding direction.
     /// @return 0 is OK.
-    int set_total_grid_length(int64_t length_x, int64_t length_y,
-                              int64_t length_z) {
-      total_grid_length_[0] = length_x;
-      total_grid_length_[1] = length_y;
-      total_grid_length_[2] = length_z;
+    int set_total_grid_length(int64_t length_x, int64_t length_y = 0,
+                              int64_t length_z = 0) {
+      if (kDimensions > 0) total_grid_length_[kAxisX] = length_x;
+      if (kDimensions > 1) total_grid_length_[kAxisY] = length_y;
+      if (kDimensions > 2) total_grid_length_[kAxisZ] = length_z;
       return 0;
     };  // end of set_total_grid_length
 
    private:
     /// @brief Grid length in each direction.
-    int64_t total_grid_length_[3];
+    ///
+    /// Each value is number of grid vertices in corresponding direction.
+    int64_t total_grid_length_[kDimensions];
   };  // end of class GridInputConfig
   // *********************************************************************** //
   /// @brief Parsing all input parameters into one object.
@@ -53,7 +56,30 @@ namespace onza {
                                          // access to GridInputConfig parameters
     /// @brief Accesor to status of simulation input config.
     int status() {return status_;}
+    /// @brief Accesor
+    int pml_width() {return pml_width_;}
+    /// @brief Accesor
+    double pml_computational_ratio() {return pml_computational_ratio_;}
+    /// @brief Accesor
+    int boundary_condition(BorderPosition requested_border) {
+      return boundary_condition_[requested_border];};
    private:
+    /// @brief Array of boundary conditions
+    ///
+    /// Due to order in enum #BorderPosition using max(kDimensions)*2
+    /// size of array for all kDimensions. Values are from
+    /// #BoundaryCondition
+    int boundary_condition_[6];
+    /// @brief PML width for model boundary
+    ///
+    /// Number of grid nodes in PML.
+    int pml_width_;
+    /// @brief PML nodes computational complexity
+    ///
+    /// Each node in PML needs more computations compared to regular nodes.
+    /// Parameters value is ratio of computational loads from PML node
+    /// to regular node. Should be geather than 1.0.
+    double pml_computational_ratio_;
     /// @brief Status of reading config with ReadConfig()
     ///
     /// Should be value from #InputConfig
@@ -71,7 +97,7 @@ namespace onza {
     SimulationInputConfig simulation_input_config_;
    private:
     /// @brief Some array for construction tests only.
-    blitz::Array<double, 3> test_array_;
+    blitz::Array<double, kDimensions> test_array_;
   };  // end of class BasicSimulationCore
 }  // end of namespace onza
 #endif  // SRC_SIMULATION_CORE_BASIC_FDTD_H_

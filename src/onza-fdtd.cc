@@ -16,16 +16,20 @@
 ///
 /// @return Zero by default.
 int main(int argc, char *argv[]) {
-  MPI::Init(argc, argv);
+  MPI_Init(&argc, &argv);
   onza::HaloExchangeProcess halo_exchange_process;
-  int init_status = halo_exchange_process.Init();
-  if (init_status != onza::kDone) {
-    MPI::Finalize();
-    return init_status;
+  int done_status = onza::kDone;
+  while (1) { // use break to report error with done_status.
+    done_status = halo_exchange_process.Init();
+    if (done_status != onza::kDone) break;
+    done_status = halo_exchange_process.RunDecomposition();
+    if (done_status != onza::kDone) break;
+    break;
   }
-  halo_exchange_process.RunDecomposition();
-  MPI::Finalize();
-  return 0;
+  if (halo_exchange_process.process_rank() == 0)
+    printf("Done status = %i\n", done_status);
+  MPI_Finalize();  
+  return done_status;
 }
 // ************************************************************************* //
 /// @page TopLevelAlgorithm Top level algorithm steps
@@ -40,7 +44,7 @@ int main(int argc, char *argv[]) {
 ///  optimized do minize volume of exchange data.
 ///- Start simulation on subdomain with help of onza::BasicSimulationCore
 ///
-/// @todo (For all project) Should be some logging system in Onza.
+/// @todo2 (For all project) Should be some logging system in Onza.
 // ************************************************************************* //
 /// @page ChangeLog
 /// #ChangeLog
