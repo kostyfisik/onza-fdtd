@@ -1,7 +1,7 @@
 #!/bin/bash
 isNEW=$1
 corepath=$PWD
-MPIsize=16
+MPIsize=64
 # MPIoptions=--bind-to-core
 echo $corepath
 find -L src  -name "*.cc" -o  -name "*.h" | xargs etags

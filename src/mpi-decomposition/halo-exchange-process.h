@@ -60,6 +60,12 @@ namespace onza {
     BasicSimulationCore simulation_core_;
     /// @brief Current process subdomain size in each dimension.
     int64_t subdomain_size_[kDimensions];
+    /// @breif 0 index of subdomain should refer to same part of model
+    /// as subdomain_start_index_
+    int64_t subdomain_start_index_[kDimensions];
+    /// @breif subdomain_size_-1 index of subdomain should refer to
+    /// same part of model as subdomain_finish_index_
+    int64_t subdomain_finish_index_[kDimensions];
     /// @brief Evaluate current process subdomain size.
     int EvaluateSubdomainSize();
     // @}

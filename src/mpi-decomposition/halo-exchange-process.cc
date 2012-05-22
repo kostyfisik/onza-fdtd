@@ -26,7 +26,7 @@ namespace onza {
     double pml_computational_ratio = simulation_core_.simulation_input_config_.
       pml_computational_ratio();
     int boundary_condition[kDimensions * 2];
-    for (int border = kBorderLeft; border < kDimensions*2; ++border) 
+    for (int border = kBorderLeft; border < kDimensions*2; ++border)
       boundary_condition[border] = simulation_core_.simulation_input_config_.
         boundary_condition(static_cast<BorderPosition>(border));
     // Split for each axis.
@@ -62,14 +62,14 @@ namespace onza {
           = floor(pml_width/pml_subdomain_size);
         transient_subdomain_pml_vertices_from_left = pml_width -
           pml_subdomain_size * pml_subdomains_number_from_left;
-      } // end of if first boundary is PML
+      }  // end of if first boundary is PML
       // Second (right, top, front) side of domain.
       if (boundary_condition[axis+kDimensions] == kBoudaryConditionPML) {
         pml_subdomains_number_from_right
           = pml_subdomains_number_from_left;
         transient_subdomain_pml_vertices_from_right =
           transient_subdomain_pml_vertices_from_left;
-      } // end of if second boundary is PML
+      }  // end of if second boundary is PML
       // Inside PML - pure pml subdomains.
       /// Overlaping PML in same directions should be forbidden
       /// in config file with SimulationInputConfig::ReadConfig().
@@ -90,16 +90,18 @@ namespace onza {
       // Transient subdomain, partly with PML.
       double left_transient_subdomain_start_coord =
         pml_subdomain_size * pml_subdomains_number_from_left;
-      double right_transient_subdomain_finish_coord = total_size 
+      double right_transient_subdomain_finish_coord = total_size
         - pml_subdomain_size * pml_subdomains_number_from_right;
       // Transient subdomains are bigger than pure pml subdomain and
       // less or equal to computational subdomain size.
       double left_transient_subdomain_finish_coord =
-        left_transient_subdomain_start_coord + subdomain_computational_size - 
-        transient_subdomain_pml_vertices_from_left*(pml_computational_ratio - 1.0);
+        left_transient_subdomain_start_coord + subdomain_computational_size
+        - transient_subdomain_pml_vertices_from_left
+          * (pml_computational_ratio - 1.0);
       double right_transient_subdomain_start_coord =
-        right_transient_subdomain_finish_coord - subdomain_computational_size + 
-        transient_subdomain_pml_vertices_from_right*(pml_computational_ratio - 1.0);
+        right_transient_subdomain_finish_coord - subdomain_computational_size
+        + transient_subdomain_pml_vertices_from_right
+          * (pml_computational_ratio - 1.0);
       if (my_coords_[axis] == pml_subdomains_number_from_left) {
         subdomain_start_coord = left_transient_subdomain_start_coord;
         subdomain_finish_coord = left_transient_subdomain_finish_coord;
@@ -107,8 +109,10 @@ namespace onza {
         if (subdomain_finish_coord > right_transient_subdomain_finish_coord)
           subdomain_finish_coord = right_transient_subdomain_finish_coord;
       }  // end of if transient subdomain near first boundary
-      if (subdomains_[axis] - 1 - my_coords_[axis] == pml_subdomains_number_from_right
-          // Exclude special case: left and right PML are in same transient subdomain.
+      if (subdomains_[axis] - 1 - my_coords_[axis]
+          == pml_subdomains_number_from_right
+          // Exclude special case: left and right PML are in same
+          // transient subdomain.
           && subdomain_finish_coord < 0) {
         subdomain_finish_coord = right_transient_subdomain_finish_coord;
         subdomain_start_coord =  right_transient_subdomain_start_coord;
@@ -123,21 +127,24 @@ namespace onza {
         subdomain_finish_coord = subdomain_start_coord
           + subdomain_computational_size;
       }  // end of if subdomian in inner area (without PML)
-      // Output.
+      subdomain_start_index_[axis] = ceil(subdomain_start_coord);
+      subdomain_finish_index_[axis] = ceil(subdomain_finish_coord) - 1;
+      subdomain_size_[axis] = subdomain_finish_index_[axis]
+        - subdomain_start_index_[axis] + 1;
+      /// @todo3 remove output in HaloExchangeProcess::EvaluateSubdomainSize().
       int zeros = 0;
       int non_zero_axis = -1;
       for (int i = 0; i < kDimensions; ++i)
         if (my_coords_[i] == 0) zeros += 1;
         else non_zero_axis = i;
       if ((zeros == 2 && axis == non_zero_axis) || zeros == 3) {
-        printf("(%2i,%2i,%2i) axis[%i] computational: total vert %7.2f, sub vert%7.2f, \
-start %7.2f finish %7.2f\n",
+        printf("(%2i,%2i,%2i) axis[%i]: %3li -> %3li  (%3li): vert%7.2f\n",
                my_coords_[kAxisX], my_coords_[kAxisY], my_coords_[kAxisZ],
-               axis, total_computational_size, subdomain_computational_size,
-               ceil(subdomain_start_coord),
-               ceil(subdomain_finish_coord) - 1);
+               axis,
+               subdomain_start_index_[axis],
+               subdomain_finish_index_[axis],
+               subdomain_size_[axis], subdomain_computational_size);
       }  // end if process with coords output
-      subdomain_size_[axis] = 0;
     }  // end of for axis
     return kDone;
   }  // end of HaloExchangeProcess::EvaluateSubdomainSize()
@@ -170,7 +177,7 @@ start %7.2f finish %7.2f\n",
     double pml_computational_ratio = simulation_core_.simulation_input_config_.
       pml_computational_ratio();
     int boundary_condition[kDimensions * 2];
-    for (int border = kBorderLeft; border < kDimensions*2; ++border) 
+    for (int border = kBorderLeft; border < kDimensions*2; ++border)
       boundary_condition[border] = simulation_core_.simulation_input_config_.
         boundary_condition(static_cast<BorderPosition>(border));
     // Length of simulation domain with computational ajustment.
@@ -184,12 +191,13 @@ start %7.2f finish %7.2f\n",
     // (1) Topology decomposition.
     SimpleTopologyDecomposition3D(all_processes, length, subdomains_);
     if (process_rank_ == 0) {
-      printf("Used MPI procs %li of %i (%.3g%%), ",
+      printf("Used MPI procs %li of %i (%.3g%%), subdomains_ (%li,%li,%li), ",
              MultiplyComponents(subdomains_), processes_total_number_,
-             MultiplyComponents(subdomains_)/double(processes_total_number_)*100);
-      printf("subdomains_ (%li,%li,%li), domain length (%li,%li,%li) equiv ->(%li,%li,%li)\n",
+             MultiplyComponents(subdomains_)
+             /static_cast<double>(processes_total_number_)*100,
              subdomains_[kAxisX],
-             subdomains_[kAxisY], subdomains_[kAxisZ],
+             subdomains_[kAxisY], subdomains_[kAxisZ]);
+      printf("domain length (%li,%li,%li) equiv ->(%li,%li,%li)\n",
              orig_length[kAxisX],
              orig_length[kAxisY], orig_length[kAxisZ],
              length[kAxisX],
@@ -230,7 +238,7 @@ start %7.2f finish %7.2f\n",
     }  // end of for dimensions
     // Set periodical boundary conditions.
     int boundary_condition[kDimensions * 2];
-    for (int border = kBorderLeft; border < kDimensions*2; ++border) 
+    for (int border = kBorderLeft; border < kDimensions*2; ++border)
       boundary_condition[border] = simulation_core_.simulation_input_config_.
         boundary_condition(static_cast<BorderPosition>(border));
     for (int border = kBorderLeft; border < kDimensions*2; ++border) {
@@ -239,7 +247,7 @@ start %7.2f finish %7.2f\n",
       int direction_to_border = border < kDimensions ? 1 : -1;
       int max_shift = (subdomains_[axis] - 1);
       int rank_source, rank_dest;
-      if (my_coords_[axis] == 0 && direction_to_border < 0) {        
+      if (my_coords_[axis] == 0 && direction_to_border < 0) {
         MPI_Cart_shift(cartesian_grid_communicator_, axis,
                        max_shift, &rank_source, &rank_dest);
         neighbors_ranks_[border] = rank_dest;
@@ -269,7 +277,7 @@ start %7.2f finish %7.2f\n",
       processes_in_each_dimension[i] = subdomains_[i];
       // Set no periodicity. If periodicity is needed it should be set
       // up inside EvaluateCoordsAndRanks()
-      is_grid_periodic[i] = 0;  
+      is_grid_periodic[i] = 0;
     }  // end of for dimensions
     bool reorder_processes_ranks = true;
     // Set new MPI communicator: cartesian_grid_communicator_.
@@ -351,15 +359,17 @@ start %7.2f finish %7.2f\n",
     /// %todo3 Remove debug output
     // if (process_rank_ == 0) {
     //   printf("optimal_length %.3g \n", optimal_length);
-    //   printf("single_cell_optimal_volume %.3g \n", single_cell_optimal_volume);
-    //   printf("optimal_dimension %i \n", optimal_dimension);      
+    //   printf("single_cell_optimal_volume %.3g \n",
+    //          single_cell_optimal_volume);
+    //   printf("optimal_dimension %i \n", optimal_dimension);
     // }
     // Set floor and ceil normalized_length guess.
     for (int i = kAxisX; i < kDimensions; ++i) {
-      if (is_dimension_reduced[i] == 1) {  // Reduced dimenstion is not optimized.
+      // Reduced dimenstion is not optimized.
+      if (is_dimension_reduced[i] == 1) {
         floor_normalized_length[i] = 1;
         ceil_normalized_length[i] = 1;
-        continue;  
+        continue;
       }
       normalized_length[i] = length[i]/optimal_length;
       floor_normalized_length[i]
@@ -380,7 +390,7 @@ start %7.2f finish %7.2f\n",
     // Selecting "guessed" values for decomposition,
     // 4 integer values are less than the optimal float value,
     // 3 integer values are bigger than the optimal value.
-    const int variant_size = 7; 
+    const int variant_size = 7;
     // Propable number of processes (subdomains) in selected dimension.
     int64_t variant[kDimensions][variant_size];
     for (int i = kAxisX; i < kDimensions; ++i) {
