@@ -17,16 +17,15 @@ namespace onza {
     int Init();
     /// @brief Run decomposition of simulation domain.
     int RunDecomposition();
-    /// @breif accesor 
+    /// @breif accesor
     int process_rank() {return process_rank_;}
+
    private:
     /// @brief Optized decomposition for star topology of supercomputer
     /// for 3D simulation model.
     int SimpleTopologyDecomposition3D(const int64_t all_processes,
-                                  const int64_t in_length[],
-                                  int64_t subdomains[]);
-    /// @brief To carry out all non-communication work.
-    BasicSimulationCore simulation_core_;
+                                      const int64_t in_length[],
+                                      int64_t subdomains[]);
     /// @name MPI section
     // @{
     /// @brief Fast access (without MPI call) to process rank of
@@ -38,8 +37,11 @@ namespace onza {
     /// @brief Cartesian grid communicator. Initiallized during model
     /// decomposition with RunDecomposition().
     MPI_Comm cartesian_grid_communicator_;
-    /// @brief Initialize HaloExchangeProcess::cartesian_grid_communicator_ 
-    int StartCartesianGridCommunicator(int64_t subdomains[]);
+    /// @brief Number of subdomains in each direction after domain
+    /// decomposition.
+    int64_t subdomains_[kDimensions];
+    /// @brief Initialize HaloExchangeProcess::cartesian_grid_communicator_
+    int StartCartesianGridCommunicator();
     /// @brief This process coords in Cartesian topology of MPI processes.
     int my_coords_[kDimensions];
     /// @brief My neighbors ranks
@@ -51,6 +53,15 @@ namespace onza {
     ///
     /// Call after StartCartesianGridCommunicator()
     int EvaluateCoordsAndRanks();
+    // @}
+    /// @name Computational section
+    // @{
+    /// @brief To carry out all simulation work.
+    BasicSimulationCore simulation_core_;
+    /// @brief Current process subdomain size in each dimension.
+    int64_t subdomain_size_[kDimensions];
+    /// @brief Evaluate current process subdomain size.
+    int EvaluateSubdomainSize();
     // @}
   };  // end of class HaloExchangeProcess
 }  // end of namespace onza

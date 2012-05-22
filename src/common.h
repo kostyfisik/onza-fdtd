@@ -15,25 +15,39 @@ namespace onza {
   /// @brief Error codes
   ///
   /// Error codes used with onza.
-  enum Errors {kDone = 0,  /// < no error
-               kErrorProcessNotInGrid,  /// < After splitting model to Cartesian
-               /// current process was not used.
-               kErrorUsingInputConfigTooEarly  /// < Using InputConfig too early
+  enum Errors {
+    /// no error
+    kDone = 0,
+    /// After splitting model to Cartesian grid current procces was
+    /// not found in it.
+    kErrorProcessNotInGrid,
+    /// onza::SimulationInputConfig forced to set total pml width in
+    /// some dimension bigger than size of this dimension.
+    kErrorTooWidePml,
+    /// Using InputConfig too early
+    kErrorUsingInputConfigTooEarly
   };
   /// @brief Status of reading input config.
   ///
   /// For use with onza::SimulationInputConfig::status_
-  enum InputConfig {kInputConfigUndefined = 0, kInputConfigAllDone = 10000};
+  enum InputConfig {kInputConfigUndefined = 0,
+                    kInputConfigErrorWidePml,
+                    kInputConfigAllDone = 10000};
   /// @brief Type of boundary conditions for simulation model.
   ///
-  /// Currently only PML condition is valid, 
-  enum BoundaryCondition {kBoudaryConditionUndefined = 0,
-                          kBoudaryConditionHalo,
-                          kBoudaryConditionPML};
+  /// Currently only PML condition is valid
+  enum BoundaryCondition {
+    /// Uninitialized boundary condition.
+    kBoudaryConditionUndefined = 0,
+    /// Boundary is periodical.
+    kBoudaryConditionPeriodical,
+    /// There is PML region near this boundary inside current domain.
+    kBoudaryConditionPML
+  };  // end of enum BoundaryCondition
   /// @brief Total number of Cartesian axes.
   ///
-  /// It is tested for 3D models, sometimes 1D and 2D are also tested.
-  /// Valid values are only 1, 2 and 3 (dimensions).
+  /// Should allways be 3!!! To define 1D or 2D model set
+  /// corresponding grid length to be equal to 1.
   const int kDimensions = 3;
   /// @brief Names for Cartesian axes.
   ///
@@ -42,8 +56,8 @@ namespace onza {
   /// @brief Position of halo borders to exchange relative to current process.
   ///
   /// Order in enum is used by GetOppositeBorder()
-  enum BorderPosition {kBorderRight = 0, kBorderTop, kBorderFront,
-                       kBorderLeft, kBorderBottom, kBorderBack};
+  enum BorderPosition {kBorderLeft = 0, kBorderBottom, kBorderBack,
+                       kBorderRight, kBorderTop, kBorderFront};
   // ********************************************************************** //
   // **********************     Global inline functions    **************** //
   // ********************************************************************** //

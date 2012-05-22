@@ -62,7 +62,8 @@ namespace onza {
     double pml_computational_ratio() {return pml_computational_ratio_;}
     /// @brief Accesor
     int boundary_condition(BorderPosition requested_border) {
-      return boundary_condition_[requested_border];};
+      return boundary_condition_[requested_border];}
+
    private:
     /// @brief Array of boundary conditions
     ///

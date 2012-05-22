@@ -19,23 +19,21 @@ int main(int argc, char *argv[]) {
   MPI_Init(&argc, &argv);
   onza::HaloExchangeProcess halo_exchange_process;
   int done_status = onza::kDone;
-  while (1) { // use break to report error with done_status.
+  while (1) {  // use break to report error with done_status.
     done_status = halo_exchange_process.Init();
     if (done_status != onza::kDone) break;
     done_status = halo_exchange_process.RunDecomposition();
     if (done_status != onza::kDone) break;
     break;
   }
-  if (halo_exchange_process.process_rank() == 0)
-    printf("Done status = %i\n", done_status);
-  MPI_Finalize();  
+  MPI_Finalize();
   return done_status;
 }
 // ************************************************************************* //
 /// @page TopLevelAlgorithm Top level algorithm steps
 ///- Start exchange process (onza::HaloExchangeProcess::Init()). For each
 /// MPI process:
-/// * Get MPI runtime parameters 
+/// * Get MPI runtime parameters
 /// * Read simulation global input config
 ///  (onza::SimulationInputConfig::ReadConfig()).
 /// * Cary out domain decomposition
@@ -45,6 +43,8 @@ int main(int argc, char *argv[]) {
 ///- Start simulation on subdomain with help of onza::BasicSimulationCore
 ///
 /// @todo2 (For all project) Should be some logging system in Onza.
+/// @todo3 (For all project) Perform out of range check for all ceil and float
+/// operations.
 // ************************************************************************* //
 /// @page ChangeLog
 /// #ChangeLog
