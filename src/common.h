@@ -24,6 +24,9 @@ namespace onza {
     /// onza::SimulationInputConfig forced to set total pml width in
     /// some dimension bigger than size of this dimension.
     kErrorTooWidePml,
+    /// wrong index while checking with
+    /// HaloExchangeProcess::CheckSubdomainIndexes()
+    kErrorWrongIndexDifference,
     /// Using InputConfig too early
     kErrorUsingInputConfigTooEarly
   };
@@ -58,6 +61,8 @@ namespace onza {
   /// Order in enum is used by GetOppositeBorder()
   enum BorderPosition {kBorderLeft = 0, kBorderBottom, kBorderBack,
                        kBorderRight, kBorderTop, kBorderFront};
+  /// @brief Some values for tags for MPI messages.
+  enum MpiTag {kMpiTagCheckIndex = 1};
   // ********************************************************************** //
   // **********************     Global inline functions    **************** //
   // ********************************************************************** //

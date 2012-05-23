@@ -42,13 +42,13 @@ namespace onza {
     int64_t length_x = 113, length_y = 120, length_z = 79;  // !!
     // int64_t length_x = 101, length_y = 307, length_z = 908; // !!
     // int64_t length_x = 813, length_y = 1, length_z = 79; // !!
-    // int64_t length_x = 113, length_y = 1, length_z = 79;
+    // int64_t length_x = 100, length_y = 2, length_z = 2;
     // int64_t length_x = 360, length_y = 1, length_z = 1;
     // int64_t length_x = 4, length_y = 1, length_z = 1;
     grid_input_config_.set_total_grid_length(length_x, length_y, length_z);
     /// For CPML implementation see Taflove 3d ed. p.307 section 7.9.2
-    pml_width_ = 17;
-    pml_computational_ratio_ = 2.27;
+    pml_width_ = 7;
+    pml_computational_ratio_ = 1.27;
     boundary_condition_[kBorderRight] = kBoudaryConditionPML;
     boundary_condition_[kBorderLeft] = kBoudaryConditionPML;
     // boundary_condition_[kBorderRight] = kBoudaryConditionPeriodical;
@@ -59,6 +59,8 @@ namespace onza {
     // boundary_condition_[kBorderBottom] = kBoudaryConditionPeriodical;
     boundary_condition_[kBorderFront] = kBoudaryConditionPML;
     boundary_condition_[kBorderBack] = kBoudaryConditionPML;
+    // boundary_condition_[kBorderFront] = kBoudaryConditionPeriodical;
+    // boundary_condition_[kBorderBack] = kBoudaryConditionPeriodical;
     // Auto set periodical boundary condition for reduced dimenstions./
     if (length_x == 1) {
       boundary_condition_[kBorderRight] = kBoudaryConditionPeriodical;

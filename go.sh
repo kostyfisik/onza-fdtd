@@ -1,7 +1,7 @@
 #!/bin/bash
 isNEW=$1
 corepath=$PWD
-MPIsize=64
+MPIsize=127
 # MPIoptions=--bind-to-core
 echo $corepath
 find -L src  -name "*.cc" -o  -name "*.h" | xargs etags
@@ -9,8 +9,8 @@ rm -r $corepath/bin/* >/dev/null 2>&1
 if [[ ! $isNEW ]]; then
     isNEW="new"
 fi
-#export OMPI_CXXFLAGS=-O0 # Debug mode
-export OMPI_CXXFLAGS=-O2 # Benchmark mode
+export OMPI_CXXFLAGS=-O0 # Debug mode
+#export OMPI_CXXFLAGS=-O2 # Benchmark mode
 #export OMPI_CXXFLAGS=-O3 # Benchmark mode
 cd $corepath/build/clang
 export OMPI_CC=clang

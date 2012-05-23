@@ -23,12 +23,12 @@ int main(int argc, char *argv[]) {
     done_status = halo_exchange_process.Init();
     if (done_status != onza::kDone) break;
     done_status = halo_exchange_process.RunDecomposition();
-    if (done_status != onza::kDone) break;
+    if (done_status != onza::kDone) break;    
     break;
-  }
+  }  // end of while breaked with errors
   MPI_Finalize();
   return done_status;
-}
+}  // end of main
 // ************************************************************************* //
 /// @page TopLevelAlgorithm Top level algorithm steps
 ///- Start exchange process (onza::HaloExchangeProcess::Init()). For each

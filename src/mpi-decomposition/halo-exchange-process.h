@@ -9,6 +9,22 @@
 /// @brief  Exchange borders of computational domain
 #include "../simulation-core/basic-fdtd.h"
 namespace onza {
+  /// @brief Container for halo data to exchange.
+  class HaloToExchange {
+   public:
+    /// @brief Start non-blocking communications.
+    int StartNonBlockingExchange();
+    /// @brief Finish exchange initiated with StartNonBlockingExchange().
+    int FinishNonBlockingExchange();
+   private:
+    /// @brief My neighbours ranks
+    ///
+    /// Due to order in enum #BorderPosition using max(kDimensions)*2
+    /// size of array for all kDimensions.
+    /// @see HaloExchangeProcess::neighbours_ranks_
+    int neighbours_ranks_[6];
+    
+  };  // end of class HaloToExchange
   /// @brief Class for MPI process.
   /// Contains computational domain borders data, methods to exchange
   /// and update borders.
@@ -44,30 +60,44 @@ namespace onza {
     int StartCartesianGridCommunicator();
     /// @brief This process coords in Cartesian topology of MPI processes.
     int my_coords_[kDimensions];
-    /// @brief My neighbors ranks
+    /// @brief My neighbours ranks
     ///
     /// Due to order in enum #BorderPosition using max(kDimensions)*2
     /// size of array for all kDimensions.
-    int neighbors_ranks_[6];
-    /// @brief Evaluate current process coords and neighbors ranks.
+    int neighbours_ranks_[6];
+    /// @brief Evaluate current process coords and neighbours ranks.
     ///
     /// Call after StartCartesianGridCommunicator()
     int EvaluateCoordsAndRanks();
+    /// @brief Container for data to be exchange and methods to deal
+    /// with this data.
+    HaloToExchange halo_to_exchange_;
     // @}
     /// @name Computational section
     // @{
     /// @brief To carry out all simulation work.
     BasicSimulationCore simulation_core_;
     /// @brief Current process subdomain size in each dimension.
+    ///
+    /// size == number of vertices
     int64_t subdomain_size_[kDimensions];
-    /// @breif 0 index of subdomain should refer to same part of model
+    /// @breif Index of global model pointing to the beginnig of the
+    /// subdomain.
+    ///
+    /// 0 index of subdomain should refer to same part of model
     /// as subdomain_start_index_
     int64_t subdomain_start_index_[kDimensions];
+    /// @breif Index of global model pointing to the end of the
+    /// subdomain.
+    /// 
     /// @breif subdomain_size_-1 index of subdomain should refer to
     /// same part of model as subdomain_finish_index_
     int64_t subdomain_finish_index_[kDimensions];
     /// @brief Evaluate current process subdomain size.
     int EvaluateSubdomainSize();
+    /// @brief Check subdomains start and finish indexes to be
+    /// correlated with neighbours indexes.
+    int CheckSubdomainIndexes();
     // @}
   };  // end of class HaloExchangeProcess
 }  // end of namespace onza
