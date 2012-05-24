@@ -30,6 +30,11 @@ namespace onza {
     /// Using InputConfig too early
     kErrorUsingInputConfigTooEarly
   };
+  /// @brief Simulation core and halo border predefined names for data
+  /// components
+  enum DataComponents {kEx=0, kEy, kEz,
+                       kHx, kHy, kHz,
+                       kEps, kMu};
   /// @brief Status of reading input config.
   ///
   /// For use with onza::SimulationInputConfig::status_

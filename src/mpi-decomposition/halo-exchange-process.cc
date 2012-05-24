@@ -6,6 +6,7 @@
 ///
 /// @brief  Exchange borders of computational domain
 #include <mpi.h>
+#include <blitz/array.h>
 #include <cstdio>
 #include <cmath>
 #include "./halo-exchange-process.h"
@@ -34,24 +35,20 @@ namespace onza {
     MPI_Request isend_request[kDimensions*2];
     MPI_Request irecv_request[kDimensions*2];
     MPI_Status status;
-    // for (int border = kBorderLeft; border < kDimensions*2; ++border) {
-    //   printf("proc[%i] to [%i]   border[%i] ssi = %li sfi = %li \n",
-    //          process_rank_, neighbours_ranks_[border],
-    //          border,
-    //          index_for_output[border],
-    //          index_from_neighbour[border]);      
-    // }
     /// @todo3 Check for MPI_INT64_T type, change to it MPI_LONG_LONG
     for (int border = kBorderLeft; border < kDimensions*2; ++border) {
       if (neighbours_ranks_[border] == MPI_PROC_NULL) continue;
+      int direction_tag = border < kDimensions
+        ? border + kDimensions : border - kDimensions;
       MPI_Irecv(&index_from_neighbour[border], send_size, MPI_LONG_LONG,
-                neighbours_ranks_[border], kMpiTagCheckIndex,
+                neighbours_ranks_[border], direction_tag,
                 cartesian_grid_communicator_, &irecv_request[border]);
     }  // end of for borders receive
     for (int border = kBorderLeft; border < kDimensions*2; ++border) {
       if (neighbours_ranks_[border] == MPI_PROC_NULL) continue;
+      int direction_tag = border;
       MPI_Isend(&index_for_output[border], send_size, MPI_LONG_LONG,
-                neighbours_ranks_[border], kMpiTagCheckIndex,
+                neighbours_ranks_[border], direction_tag,
                 cartesian_grid_communicator_, &isend_request[border]);
     }  // end of for borders send
     for (int border = kBorderLeft; border < kDimensions*2; ++border) {
@@ -60,11 +57,20 @@ namespace onza {
       MPI_Wait(&irecv_request[border], &status);
     }  // end of for borders wait
     for (int border = kBorderLeft; border < kDimensions*2; ++border) {
+      int64_t size = simulation_core_.simulation_input_config_.
+        grid_input_config_.
+        get_total_grid_length(static_cast<Axis>(border%kDimensions))-1;
       if (index_from_neighbour[border] != -1) {
-        if (abs(index_for_output[border]
-                -index_from_neighbour[border]) !=1 ) {
-          printf("Process[%i]: Error! Wrong index difference!\n",
-                 process_rank_);
+        int64_t difference = abs(index_for_output[border]
+                                 -index_from_neighbour[border]);
+        if (difference !=1 && difference != size) {
+          printf("Process[%i] border[%i]: Error! Wrong index difference!\n\
+                  Index %li from, %li for: != 1 or %li\n",
+                 process_rank_, border,
+                 index_from_neighbour[border],
+                 index_for_output[border],
+                 size
+                 );
           return kErrorWrongIndexDifference;
         }  // end of if error
       } else {  // end of if border is domains internal
@@ -73,17 +79,14 @@ namespace onza {
                  process_rank_);
           return kErrorWrongIndexDifference;
         }  // end of if nonzero index of most left (bottom, back) border
-        if (border >= kDimensions &&
-            index_for_output[border] != simulation_core_.
-            simulation_input_config_.grid_input_config_.
-            get_total_grid_length(static_cast<Axis>(border-kDimensions))-1) {
+        if (border >= kDimensions && index_for_output[border] != size) {
           printf("Process[%i]: Error! Wrong finish index!\n",
                  process_rank_);
           return kErrorWrongIndexDifference;        
-        }  // end of if most right index doesn`t correlates with
-           // domain length
+        }  // end of if most right (top, front) index doesn`t
+           // correlates with domain length
       }  // end of else sudmain`s border is domain external border
-    }
+    }  // end of for borders check errors
     return kDone;
   }  // end of HaloExchangeProcess::CheckSubdomainIndexes()
   // ********************************************************************** //
@@ -146,6 +149,11 @@ namespace onza {
         transient_subdomain_pml_vertices_from_right  = pml_width -
           pml_subdomain_size * pml_subdomains_number_from_right;
       }  // end of if second boundary is PML
+      // printf("-------- axis[%i] tran  pml(l,r) = (%7.2f,%7.2f) pml_num (%li,%li)\n", axis,
+      //        transient_subdomain_pml_vertices_from_left,
+      //        transient_subdomain_pml_vertices_from_right,
+      //        pml_subdomains_number_from_left,
+      //        pml_subdomains_number_from_right);
       // Inside PML - pure pml subdomains.
       /// Overlaping PML in same directions should be forbidden
       /// in config file with SimulationInputConfig::ReadConfig().
@@ -178,12 +186,23 @@ namespace onza {
         right_transient_subdomain_finish_coord - subdomain_computational_size
         + transient_subdomain_pml_vertices_from_right
           * (pml_computational_ratio - 1.0);
+      // Special case: left and right PML are in same transient subdomain.
+      if (left_transient_subdomain_finish_coord
+          > right_transient_subdomain_finish_coord) {
+        left_transient_subdomain_finish_coord
+          = right_transient_subdomain_finish_coord;
+        // printf("axis[%i] Special case : 1 \n", axis);
+      }
+      if (left_transient_subdomain_start_coord
+          > right_transient_subdomain_start_coord) {
+        right_transient_subdomain_start_coord =
+          left_transient_subdomain_start_coord;
+        // printf("axis[%i] Special case : 2 \n", axis);
+      }
+      
       if (my_coords_[axis] == pml_subdomains_number_from_left) {
         subdomain_start_coord = left_transient_subdomain_start_coord;
         subdomain_finish_coord = left_transient_subdomain_finish_coord;
-        // Special case: left and right PML are in same transient subdomain.
-        if (subdomain_finish_coord > right_transient_subdomain_finish_coord)
-          subdomain_finish_coord = right_transient_subdomain_finish_coord;
       }  // end of if transient subdomain near first boundary
       if (subdomains_[axis] - 1 - my_coords_[axis]
           == pml_subdomains_number_from_right
@@ -203,8 +222,29 @@ namespace onza {
         subdomain_finish_coord = subdomain_start_coord
           + subdomain_computational_size;
       }  // end of if subdomian in inner area (without PML)
+      // HACK! try to deal with double rounding unstability.
+      double ceil_subdomain_start_coord = ceil(subdomain_start_coord);
+      if (abs(ceil_subdomain_start_coord - subdomain_start_coord) < 0.01
+          && subdomain_start_coord > 0.1) 
+        subdomain_start_coord -= 0.1;
+      double ceil_subdomain_finish_coord = ceil(subdomain_finish_coord);
+      if (abs(ceil_subdomain_finish_coord - subdomain_finish_coord) < 0.01
+          && abs(total_size - subdomain_finish_coord) > 0.1) 
+        subdomain_finish_coord -= 0.1;
+      // Evaluate index!
       subdomain_start_index_[axis] = ceil(subdomain_start_coord);
       subdomain_finish_index_[axis] = ceil(subdomain_finish_coord) - 1;
+   //    printf("axis[%i]  lts(s,f)c = (%7.2f,%7.2f) rts(s,f)c = (%7.2f,%7.2f)\
+   // s(s,f)c = (%7.2f,%7.2f)  s(s,f)i = (%li,%li)\n",
+   //           axis,
+   //           left_transient_subdomain_start_coord,
+   //           left_transient_subdomain_finish_coord,
+   //           right_transient_subdomain_start_coord,
+   //           right_transient_subdomain_finish_coord,
+   //           subdomain_start_coord,
+   //           subdomain_finish_coord,
+   //           subdomain_start_index_[axis],
+   //           subdomain_finish_index_[axis]);
       subdomain_size_[axis] = subdomain_finish_index_[axis]
         - subdomain_start_index_[axis] + 1;
       /// @todo3 remove output in HaloExchangeProcess::EvaluateSubdomainSize().
@@ -221,7 +261,8 @@ namespace onza {
       //          axis,
       //          subdomain_start_index_[axis],
       //          subdomain_finish_index_[axis],
-      //          subdomain_size_[axis], subdomain_computational_size);
+      //          subdomain_size_[axis],
+      //          subdomain_computational_size);
       // }  // end if process with coords output
     }  // end of for axis
     return kDone;
@@ -323,7 +364,7 @@ namespace onza {
     for (int border = kBorderLeft; border < kDimensions*2; ++border) {
       if (boundary_condition[border] != kBoudaryConditionPeriodical) continue;
       int axis = border % kDimensions;
-      int direction_to_border = border < kDimensions ? 1 : -1;
+      int direction_to_border = border < kDimensions ? -1 : 1;
       int max_shift = (subdomains_[axis] - 1);
       int rank_source, rank_dest;
       if (my_coords_[axis] == 0 && direction_to_border < 0) {
@@ -369,6 +410,11 @@ namespace onza {
     MPI_Comm_rank(cartesian_grid_communicator_, &process_rank_);
     return kDone;
   }  // end of HaloExchangeProcess::StartCartesianGridCommunicator()
+  int HaloExchangeProcess::InitSimulation() {
+    int init_status = simulation_core_.Init(subdomain_size_);
+    if (init_status != kDone) return init_status;
+    return kDone;
+  }  // end of HaloExchangeProcess::InitSimulation()
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
@@ -378,8 +424,8 @@ namespace onza {
   int  HaloExchangeProcess::Init() {
     MPI_Comm_size(MPI_COMM_WORLD, &processes_total_number_);
     MPI_Comm_rank(MPI_COMM_WORLD, &process_rank_);
-    int init_status = simulation_core_.Init();
-    if (init_status != kDone) return init_status;
+    if (simulation_core_.simulation_input_config_.ReadConfig() != kDone)
+      return kErrorTooWidePml;
     return kDone;
   }  // end of HaloExchangeProcess::Init()
   // ********************************************************************** //

@@ -23,7 +23,8 @@ int main(int argc, char *argv[]) {
     done_status = halo_exchange_process.Init();
     if (done_status != onza::kDone) break;
     done_status = halo_exchange_process.RunDecomposition();
-    if (done_status != onza::kDone) break;    
+    if (done_status != onza::kDone) break;
+    done_status = halo_exchange_process.InitSimulation();
     break;
   }  // end of while breaked with errors
   MPI_Finalize();
@@ -41,7 +42,9 @@ int main(int argc, char *argv[]) {
 ///  of development we will assume star topology, decomposition is
 ///  optimized do minize volume of exchange data.
 ///- Start simulation on subdomain with help of onza::BasicSimulationCore
-///
+/// * Note: division could be several times longer than
+///  multiplication. This way do not use division while time
+///  stepping. All divisions should be done at inititalizing step.
 /// @todo2 (For all project) Should be some logging system in Onza.
 /// @todo3 (For all project) Perform out of range check for all ceil and float
 /// operations.

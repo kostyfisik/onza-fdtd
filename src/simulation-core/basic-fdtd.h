@@ -63,14 +63,25 @@ namespace onza {
     /// @brief Accesor
     int boundary_condition(BorderPosition requested_border) {
       return boundary_condition_[requested_border];}
-
+    /// @brief Accesor
+    int halo_width() {return halo_width_;}
+    /// @brief Accesor
+    int core_data_components() {return core_data_components_;}
+    
    private:
+    /// @brief Nuber of simulation core data components
+    ///
+    /// @todo3 Set it automatically from stepping algorithm
+    /// description.
+    int core_data_components_;
     /// @brief Array of boundary conditions
     ///
     /// Due to order in enum #BorderPosition using max(kDimensions)*2
     /// size of array for all kDimensions. Values are from
     /// #BoundaryCondition
     int boundary_condition_[6];
+    /// @brief Width of halo to exchange.
+    int halo_width_;
     /// @brief PML width for model boundary
     ///
     /// Number of grid nodes in PML.
@@ -93,12 +104,17 @@ namespace onza {
   /// time step, methods to publish own border and to use foreign borders.
   class BasicSimulationCore {
    public:
-    int Init();
+    int Init(const int64_t subdomain_size[]);
     /// @brief Parsing all input parameters into one object.
     SimulationInputConfig simulation_input_config_;
    private:
-    /// @brief Some array for construction tests only.
-    blitz::Array<double, kDimensions> test_array_;
+    /// @brief Data components.
+    ///
+    /// First dimension enumerates data component. Each data component
+    /// is a kDimensions array. #DataComponents enum can be used to
+    /// access components values, e.g. data_(kEx, x, y, z) or
+    /// data_(kEps, x, y, z);
+    blitz::Array<double, 1+kDimensions> data_;
   };  // end of class BasicSimulationCore
 }  // end of namespace onza
 #endif  // SRC_SIMULATION_CORE_BASIC_FDTD_H_

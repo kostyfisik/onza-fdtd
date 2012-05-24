@@ -16,19 +16,19 @@ namespace onza {
   ///
   /// @return 0 or error code.
   ///
-  int  BasicSimulationCore::Init() {
-    if (simulation_input_config_.ReadConfig() != kDone)
-      return kErrorTooWidePml;
+  int  BasicSimulationCore::Init(const int64_t subdomain_size[]) {
     if (simulation_input_config_.status() != kInputConfigAllDone)
       return kErrorUsingInputConfigTooEarly;
-    /// @todo2 use length values from subdomain properties
-    int64_t length_x = simulation_input_config_.grid_input_config_.
-        get_total_grid_length(kAxisX);
-    int64_t length_y = simulation_input_config_.grid_input_config_.
-        get_total_grid_length(kAxisY);
-    int64_t length_z = simulation_input_config_.grid_input_config_.
-        get_total_grid_length(kAxisZ);
-    // test_array_.resize(length_x, length_y, length_z);
+    int core_data_components = simulation_input_config_.
+      core_data_components();
+    data_.resize(core_data_components,
+                 subdomain_size[kAxisX],
+                 subdomain_size[kAxisY],
+                 subdomain_size[kAxisZ]);
+    printf("data_.size() = %i %s\n", data_.size(),
+           (data_.isStorageContiguous())?"continguous":"sparse");
+    // getchar();
+    data_=0;
     // test_array_(0, 0, Range::all()) = 0;
     return kDone;
   }  // end of BasicSimulationCore::Init
@@ -39,28 +39,37 @@ namespace onza {
   /// for case if config file couldn be read.
   int SimulationInputConfig::ReadConfig() {
     // Length of whole model
-    int64_t length_x = 113, length_y = 120, length_z = 79;  // !!
+    // 1 x 16 000 x 16 000 vertices x 8 components = 16 Gb on deb00
+    // 630 x 630 x 630 vertices x 8 components = 16 Gb on deb00
+    // int64_t length_x = 1, length_y = 642, length_z = 380;  
+    // int64_t length_x = 113, length_y = 120, length_z = 179;  // !!
     // int64_t length_x = 101, length_y = 307, length_z = 908; // !!
     // int64_t length_x = 813, length_y = 1, length_z = 79; // !!
-    // int64_t length_x = 100, length_y = 2, length_z = 2;
+    int64_t length_x = 10, length_y = 2, length_z = 2;
     // int64_t length_x = 360, length_y = 1, length_z = 1;
     // int64_t length_x = 4, length_y = 1, length_z = 1;
     grid_input_config_.set_total_grid_length(length_x, length_y, length_z);
+    halo_width_ = 1;
+    // For most simple case we will need Ex, Ey, Ez, epsilon, Hx, Hy,
+    // Hz, mu.
+    core_data_components_ = 8;
     /// For CPML implementation see Taflove 3d ed. p.307 section 7.9.2
-    pml_width_ = 7;
-    pml_computational_ratio_ = 1.27;
+    // pml_width_ = 7;
+    // pml_computational_ratio_ = 1.27;
+    pml_width_ = 2;
+    pml_computational_ratio_ = 1.02;
     boundary_condition_[kBorderRight] = kBoudaryConditionPML;
     boundary_condition_[kBorderLeft] = kBoudaryConditionPML;
     // boundary_condition_[kBorderRight] = kBoudaryConditionPeriodical;
     // boundary_condition_[kBorderLeft] = kBoudaryConditionPeriodical;
-    boundary_condition_[kBorderTop] = kBoudaryConditionPML;
-    boundary_condition_[kBorderBottom] = kBoudaryConditionPML;
-    // boundary_condition_[kBorderTop] = kBoudaryConditionPeriodical;
-    // boundary_condition_[kBorderBottom] = kBoudaryConditionPeriodical;
-    boundary_condition_[kBorderFront] = kBoudaryConditionPML;
-    boundary_condition_[kBorderBack] = kBoudaryConditionPML;
-    // boundary_condition_[kBorderFront] = kBoudaryConditionPeriodical;
-    // boundary_condition_[kBorderBack] = kBoudaryConditionPeriodical;
+    // boundary_condition_[kBorderTop] = kBoudaryConditionPML;
+    // boundary_condition_[kBorderBottom] = kBoudaryConditionPML;
+    boundary_condition_[kBorderTop] = kBoudaryConditionPeriodical;
+    boundary_condition_[kBorderBottom] = kBoudaryConditionPeriodical;
+    // boundary_condition_[kBorderFront] = kBoudaryConditionPML;
+    // boundary_condition_[kBorderBack] = kBoudaryConditionPML;
+    boundary_condition_[kBorderFront] = kBoudaryConditionPeriodical;
+    boundary_condition_[kBorderBack] = kBoudaryConditionPeriodical;
     // Auto set periodical boundary condition for reduced dimenstions./
     if (length_x == 1) {
       boundary_condition_[kBorderRight] = kBoudaryConditionPeriodical;

@@ -7,6 +7,7 @@
 /// @date   Thu Apr 26 19:27:05 2012
 ///
 /// @brief  Exchange borders of computational domain
+#include <blitz/array.h>
 #include "../simulation-core/basic-fdtd.h"
 namespace onza {
   /// @brief Container for halo data to exchange.
@@ -23,7 +24,8 @@ namespace onza {
     /// size of array for all kDimensions.
     /// @see HaloExchangeProcess::neighbours_ranks_
     int neighbours_ranks_[6];
-    
+    /// @brief Width of halo to exchange.
+    int halo_width_;
   };  // end of class HaloToExchange
   /// @brief Class for MPI process.
   /// Contains computational domain borders data, methods to exchange
@@ -31,6 +33,8 @@ namespace onza {
   class HaloExchangeProcess {
    public:
     int Init();
+    /// @breif Prepare simulation_core_ to start simulation.
+    int InitSimulation();
     /// @brief Run decomposition of simulation domain.
     int RunDecomposition();
     /// @breif accesor
