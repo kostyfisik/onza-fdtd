@@ -27,9 +27,18 @@ namespace onza {
     /// wrong index while checking with
     /// HaloExchangeProcess::CheckSubdomainIndexes()
     kErrorWrongIndexDifference,
+    /// found uninitiated simulation core when
+    /// HaloExchangeProcess::RunSimulation()
+    kErrorUninitiatedSimulationCore,
     /// Using InputConfig too early
     kErrorUsingInputConfigTooEarly
   };
+  /// @brief Simulation status
+  enum SimulationStatus {kSimulationStatusFinished = 0,
+                         kSimulationStatusRunning,
+                         kSimulationStatusInitiated,
+                         kSimulationStatusUndefined
+                         };
   /// @brief Simulation core and halo border predefined names for data
   /// components
   enum DataComponents {kEx=0, kEy, kEz,
@@ -55,7 +64,7 @@ namespace onza {
   /// @brief Total number of Cartesian axes.
   ///
   /// Should allways be 3!!! To define 1D or 2D model set
-  /// corresponding grid length to be equal to 1.
+  /// corresponding grid length(s) to 1.
   const int kDimensions = 3;
   /// @brief Names for Cartesian axes.
   ///
@@ -64,6 +73,7 @@ namespace onza {
   /// @brief Position of halo borders to exchange relative to current process.
   ///
   /// Order in enum is used by GetOppositeBorder()
+  /// Simple math (due to order in enums): border_axis = border % kDimensions;
   enum BorderPosition {kBorderLeft = 0, kBorderBottom, kBorderBack,
                        kBorderRight, kBorderTop, kBorderFront};
   /// @brief Some values for tags for MPI messages.

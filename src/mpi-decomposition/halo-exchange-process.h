@@ -24,8 +24,6 @@ namespace onza {
     /// size of array for all kDimensions.
     /// @see HaloExchangeProcess::neighbours_ranks_
     int neighbours_ranks_[6];
-    /// @brief Width of halo to exchange.
-    int halo_width_;
   };  // end of class HaloToExchange
   /// @brief Class for MPI process.
   /// Contains computational domain borders data, methods to exchange
@@ -33,10 +31,12 @@ namespace onza {
   class HaloExchangeProcess {
    public:
     int Init();
-    /// @breif Prepare simulation_core_ to start simulation.
-    int InitSimulation();
     /// @brief Run decomposition of simulation domain.
     int RunDecomposition();
+    /// @breif Prepare simulation_core_ to start simulation.
+    int InitSimulation();
+    /// @breif Run simulation_core_ and halo exchange.
+    int RunSimulation();
     /// @breif accesor
     int process_rank() {return process_rank_;}
 

@@ -410,9 +410,16 @@ namespace onza {
     MPI_Comm_rank(cartesian_grid_communicator_, &process_rank_);
     return kDone;
   }  // end of HaloExchangeProcess::StartCartesianGridCommunicator()
+  // ********************************************************************** //
+  // ********************************************************************** //
+  // ********************************************************************** //
+  /// @breif Prepare simulation_core_ to start simulation.
+  ///
+  /// Initialize simulation_core_ member data.
   int HaloExchangeProcess::InitSimulation() {
-    int init_status = simulation_core_.Init(subdomain_size_);
+    int init_status = simulation_core_.Init(subdomain_size_,process_rank_);
     if (init_status != kDone) return init_status;
+    simulation_core_.SetGridData();
     return kDone;
   }  // end of HaloExchangeProcess::InitSimulation()
   // ********************************************************************** //
@@ -583,4 +590,21 @@ namespace onza {
     for (int i = kAxisX; i < kDimensions; ++i) subdomains[i] = best_n[i];
     return kDone;
   }  // end of HaloExchangeProcess::StarTopologyDecomposition
+  // ********************************************************************** //
+  // ********************************************************************** //
+  // ********************************************************************** //
+  /// @breif Run simulation_core_ and halo exchange.
+  int HaloExchangeProcess::RunSimulation() {
+    if (simulation_core_.status() != kSimulationStatusInitiated) {
+      printf("Process[%i] Error! Trying to run uninitiated simulation core\n",
+             process_rank_);
+      return kErrorUninitiatedSimulationCore;
+    }  // end of if simulation core is not initiated
+    int isRunning = 1;
+    do {
+      isRunning = simulation_core_.DoStep();
+      if (process_rank_ == 0) printf("Running!\n");
+    } while (isRunning);
+    return kDone;
+  }  // end of HaloExchangeProcess::RunSimulation()
 }  // end of namespace onza

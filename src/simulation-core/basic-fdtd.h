@@ -66,14 +66,16 @@ namespace onza {
     /// @brief Accesor
     int halo_width() {return halo_width_;}
     /// @brief Accesor
-    int core_data_components() {return core_data_components_;}
+    int number_of_grid_data_components() {return number_of_grid_data_components_;}
+    /// @brief Accesor
+    int64_t total_time_steps() {return total_time_steps_;}
     
    private:
     /// @brief Nuber of simulation core data components
     ///
     /// @todo3 Set it automatically from stepping algorithm
     /// description.
-    int core_data_components_;
+    int number_of_grid_data_components_;
     /// @brief Array of boundary conditions
     ///
     /// Due to order in enum #BorderPosition using max(kDimensions)*2
@@ -92,6 +94,8 @@ namespace onza {
     /// Parameters value is ratio of computational loads from PML node
     /// to regular node. Should be geather than 1.0.
     double pml_computational_ratio_;
+    /// @brief Total time steps in simulation.
+    int64_t total_time_steps_;
     /// @brief Status of reading config with ReadConfig()
     ///
     /// Should be value from #InputConfig
@@ -104,17 +108,55 @@ namespace onza {
   /// time step, methods to publish own border and to use foreign borders.
   class BasicSimulationCore {
    public:
-    int Init(const int64_t subdomain_size[]);
     /// @brief Parsing all input parameters into one object.
     SimulationInputConfig simulation_input_config_;
+    /// @breif Initialize member data.
+    int Init(const int64_t subdomain_size[], int process_rank);
+    /// @brief Initialize grid data for all components
+    int SetGridData();
+    /// @brief Do FDTD stepping for internal part of grid data.
+    int DoStep();
+    /// @brief Accesor.
+    int status() {return status_;}
+    
    private:
-    /// @brief Data components.
+    /// @brief Simulation current.
+    int status_;
+    /// @brief Total time steps in simulation.
+    int64_t total_time_steps_;
+    /// @brief Current time step for current MPI process.
+    int64_t local_time_step_;
+    /// @brief Current process subdomain size in each dimension.
+    ///
+    /// size == number of vertices
+    int64_t subdomain_size_[kDimensions];
+    /// @brief Fast access (without MPI call) to process rank of
+    /// containing object. Should be set in init()
+    int process_rank_;
+    /// @brief Width of halo to exchange.
+    int halo_width_;
+    /// @brief Nuber of simulation core data components
+    int number_of_grid_data_components_;
+    /// @brief Grid data components.
     ///
     /// First dimension enumerates data component. Each data component
     /// is a kDimensions array. #DataComponents enum can be used to
     /// access components values, e.g. data_(kEx, x, y, z) or
     /// data_(kEps, x, y, z);
     blitz::Array<double, 1+kDimensions> data_;
+    /// @bief Current process borders to be send to neighbours.
+    ///
+    /// First dim - border name (from kBorderLeft to kBorderFront)
+    /// Second dim - grid data component
+    /// Last three dims - kAxisX, kAxisY, kAxisZ.
+    blitz::Array<double, 2+kDimensions> borders_to_send_;
+    /// @brief Received borders
+    ///
+    /// Borders, received from neighbours. 
+    /// First dim - border name (from kBorderLeft to kBorderFront)
+    /// Second dim - grid data component
+    /// Last three dims - kAxisX, kAxisY, kAxisZ.
+    blitz::Array<double, 2+kDimensions> received_borders_;
   };  // end of class BasicSimulationCore
 }  // end of namespace onza
 #endif  // SRC_SIMULATION_CORE_BASIC_FDTD_H_

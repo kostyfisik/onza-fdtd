@@ -25,6 +25,8 @@ int main(int argc, char *argv[]) {
     done_status = halo_exchange_process.RunDecomposition();
     if (done_status != onza::kDone) break;
     done_status = halo_exchange_process.InitSimulation();
+    if (done_status != onza::kDone) break;
+    done_status = halo_exchange_process.RunSimulation();
     break;
   }  // end of while breaked with errors
   MPI_Finalize();
