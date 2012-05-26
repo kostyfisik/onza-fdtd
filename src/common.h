@@ -30,6 +30,8 @@ namespace onza {
     /// found uninitiated simulation core when
     /// HaloExchangeProcess::RunSimulation()
     kErrorUninitiatedSimulationCore,
+    /// case of too many processes during decomposition
+    kErrorSubdomainSizeLessThanHaloWidth,
     /// Using InputConfig too early
     kErrorUsingInputConfigTooEarly
   };

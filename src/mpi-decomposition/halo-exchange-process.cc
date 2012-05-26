@@ -247,6 +247,13 @@ namespace onza {
    //           subdomain_finish_index_[axis]);
       subdomain_size_[axis] = subdomain_finish_index_[axis]
         - subdomain_start_index_[axis] + 1;
+      int halo_width = simulation_core_.simulation_input_config_.halo_width();
+      if (subdomain_size_[axis] < halo_width) {
+        printf("Proc[%i] Error! Subdomain size[%i] %li less than halo width %i\n",
+               process_rank_, axis, subdomain_size_[axis], halo_width);
+        printf("Use less MPI processes, algorithm with smaller halo or bigger domain!\n");
+        return kErrorSubdomainSizeLessThanHaloWidth;
+      }
       /// @todo3 remove output in HaloExchangeProcess::EvaluateSubdomainSize().
       // int zeros = 0;
       // int non_zero_axis = -1;
@@ -594,6 +601,8 @@ namespace onza {
   // ********************************************************************** //
   // ********************************************************************** //
   /// @breif Run simulation_core_ and halo exchange.
+  ///
+  /// This function runs FDTD simulation in MPI enviroment.
   int HaloExchangeProcess::RunSimulation() {
     if (simulation_core_.status() != kSimulationStatusInitiated) {
       printf("Process[%i] Error! Trying to run uninitiated simulation core\n",
@@ -602,6 +611,7 @@ namespace onza {
     }  // end of if simulation core is not initiated
     int isRunning = 1;
     do {
+      simulation_core_.PrepareBordersToSend();
       isRunning = simulation_core_.DoStep();
       if (process_rank_ == 0) printf("Running!\n");
     } while (isRunning);

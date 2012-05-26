@@ -68,9 +68,18 @@ namespace onza {
     /// @brief Accesor
     int number_of_grid_data_components() {return number_of_grid_data_components_;}
     /// @brief Accesor
+    int number_of_components_to_exchange() {return number_of_components_to_exchange_;}
+    /// @brief Accesor
+    blitz::Array<int,1> components_to_exchange() {return components_to_exchange_;}
+    /// @brief Accesor
     int64_t total_time_steps() {return total_time_steps_;}
     
    private:
+    /// @brief Number of simulation core data components to exchange
+    /// in halo
+    int number_of_components_to_exchange_;
+    /// @brief List of components to exchange in halo.
+    blitz::Array<int,1> components_to_exchange_;
     /// @brief Nuber of simulation core data components
     ///
     /// @todo3 Set it automatically from stepping algorithm
@@ -114,12 +123,15 @@ namespace onza {
     int Init(const int64_t subdomain_size[], int process_rank);
     /// @brief Initialize grid data for all components
     int SetGridData();
+    /// @brief Prepare borders to send
+    void PrepareBordersToSend();
     /// @brief Do FDTD stepping for internal part of grid data.
     int DoStep();
     /// @brief Accesor.
     int status() {return status_;}
     
    private:
+    blitz::Range all_x_, all_y_, all_z_;
     /// @brief Simulation current.
     int status_;
     /// @brief Total time steps in simulation.
@@ -135,8 +147,13 @@ namespace onza {
     int process_rank_;
     /// @brief Width of halo to exchange.
     int halo_width_;
-    /// @brief Nuber of simulation core data components
+    /// @brief Number of simulation core data components
     int number_of_grid_data_components_;
+    /// @brief Number of simulation core data components to exchange
+    /// in halo
+    int number_of_components_to_exchange_;
+    /// @brief List of components to exchange in halo.
+    blitz::Array<int,1> components_to_exchange_;
     /// @brief Grid data components.
     ///
     /// First dimension enumerates data component. Each data component
@@ -149,14 +166,16 @@ namespace onza {
     /// First dim - border name (from kBorderLeft to kBorderFront)
     /// Second dim - grid data component
     /// Last three dims - kAxisX, kAxisY, kAxisZ.
-    blitz::Array<double, 2+kDimensions> borders_to_send_;
+    blitz::Array<blitz::Array<double, 1+kDimensions>,1> borders_to_send_;
     /// @brief Received borders
     ///
     /// Borders, received from neighbours. 
     /// First dim - border name (from kBorderLeft to kBorderFront)
     /// Second dim - grid data component
     /// Last three dims - kAxisX, kAxisY, kAxisZ.
-    blitz::Array<double, 2+kDimensions> received_borders_;
+    blitz::Array<blitz::Array<double, 1+kDimensions>,1> received_borders_;
+    /// @brief Borders ranges inside grid.
+    blitz::RectDomain<kDimensions> borders_range_[kDimensions*2];
   };  // end of class BasicSimulationCore
 }  // end of namespace onza
 #endif  // SRC_SIMULATION_CORE_BASIC_FDTD_H_

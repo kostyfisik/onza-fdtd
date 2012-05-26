@@ -12,11 +12,21 @@
 #include "./basic-fdtd.h"
 #include "../common.h"
 namespace onza {
-  using blitz::Range;
+  // ********************************************************************** //
+  // ********************************************************************** //
+  // ********************************************************************** //
+  /// @brief Prepare borders to send
+  ///
+  /// Copy grid data_ slices to borders_to_send_
+  void BasicSimulationCore::PrepareBordersToSend() {
+    //    borders_to_send_(kBorderLeft) //components_to_send;
+  }  // end of BasicSimulationCore::PrepareBordersToSend()
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
   /// @brief Do FDTD stepping for internal part of grid data.
+  ///
+  /// WARNING! It is repeated MANY times! 
   int BasicSimulationCore::DoStep() {
     local_time_step_++;
     if (total_time_steps_ - local_time_step_ < 1) return  kSimulationStatusFinished;
@@ -27,21 +37,29 @@ namespace onza {
   // ********************************************************************** //
   /// @brief Initialize grid data for all components
   int BasicSimulationCore::SetGridData() {
-    Range all_x = Range::all(), all_y = Range::all(), all_z = Range::all();
     int first = 0;
     // set all fields (Ex, Ey, Ez, Hx, Hy, Hz) to be zero.
-    for (int component = kEx; component <= kHz; ++component)
-      data_(component, all_x, all_y, all_z) = 0;
+    for (int component = kEx; component <= kHz; ++component) 
+      data_(component, all_x_, all_y_, all_z_) = 0;
     blitz::firstIndex component_position_x;
     blitz::secondIndex component_position_y;
     blitz::thirdIndex component_position_z;
-    blitz::Array<double, kDimensions> ex = data_(kEx, all_x, all_y, all_z); // view
+    blitz::Array<double, kDimensions> ex = data_(kEx, all_x_, all_y_, all_z_); // view
     /// @todo1 Remove debug assigment for field ex.
     ex = (component_position_y + component_position_x * 10
           + ex.columns() * process_rank_)
       * (component_position_z*2 - 1) * (-1);
-    if (process_rank_ == 0)
-      std::cout << data_(kEx, all_x, all_y, 0);
+    if (process_rank_ == 0) {
+      int z = 0;
+      // blitz::Range z(all_z_);
+      std::cout << data_(kEx, all_x_, all_y_, 0) << std::endl;
+      std::cout << ex(borders_range_[kBorderLeft])(all_x_, all_y_, z) << std::endl;
+      std::cout << ex(borders_range_[kBorderRight])(all_x_, all_y_, z) << std::endl; 
+      std::cout << ex(borders_range_[kBorderBottom])(all_x_, all_y_, z);
+      std::cout << ex(borders_range_[kBorderTop])(all_x_, all_y_, z) << std::endl;
+      std::cout << ex(borders_range_[kBorderBack])(all_x_, 2, all_z_);
+      std::cout << ex(borders_range_[kBorderFront])(all_x_, 2, all_z_) << std::endl;
+    }
     // if (ex.isStorageContiguous())
     //   printf("ex for proc %i is contiguous!\n", process_rank_);
     return kDone;
@@ -55,10 +73,16 @@ namespace onza {
   int  BasicSimulationCore::Init(const int64_t subdomain_size[], int process_rank) {
     status_ = kSimulationStatusUndefined;
     if (simulation_input_config_.status() != kInputConfigAllDone)
-      return kErrorUsingInputConfigTooEarly;
-    // Init member in alphabetical order
+      return kErrorUsingInputConfigTooEarly;    
+    // Init member in alphabetical order    
+    all_x_ = blitz::Range::all();
+    all_y_ = blitz::Range::all();
+    all_z_ = blitz::Range::all();
+    // components_to_exchange_ = simulation_input_config_.components_to_exchange();
     halo_width_ = simulation_input_config_.halo_width();
     local_time_step_ = 0;
+    number_of_components_to_exchange_ = simulation_input_config_.
+      number_of_components_to_exchange();
     number_of_grid_data_components_ = simulation_input_config_.
       number_of_grid_data_components();
     process_rank_ = process_rank;
@@ -66,10 +90,50 @@ namespace onza {
       subdomain_size_[axis] = subdomain_size[axis];
     total_time_steps_ = simulation_input_config_.total_time_steps();
     // Resize grid data to fit subdomain of current MPI process.
-    data_.resize(number_of_grid_data_components_,
-                 subdomain_size_[kAxisX],
-                 subdomain_size_[kAxisY],
-                 subdomain_size_[kAxisZ]);
+    int max_x = subdomain_size_[kAxisX]-1;
+    int max_y = subdomain_size_[kAxisY]-1;
+    int max_z = subdomain_size_[kAxisZ]-1;
+    data_.resize(number_of_grid_data_components_, max_x + 1, max_y + 1, max_z + 1);
+    // blitz::RectDomain<kDimensions> borders_range_[kDimensions*2];
+    {  // Describe indexes for each border.
+      typedef blitz::RectDomain<kDimensions> rd;
+      typedef blitz::TinyVector<int,3> vec;
+      borders_range_[kBorderLeft]  // -------------------------
+        = rd(vec(            0,     0,     0),
+             vec(halo_width_-1, max_y, max_z));
+      borders_range_[kBorderRight]  // ------------------------
+        = rd(vec(max_x - (halo_width_-1),     0,     0),
+             vec(max_x                  , max_y, max_z));
+      borders_range_[kBorderBottom]  // -----------------------
+        = rd(vec(    0,             0,     0),
+             vec(max_x, halo_width_-1, max_z));
+      borders_range_[kBorderTop]  // --------------------------
+        = rd(vec(    0, max_y - (halo_width_-1),     0),
+             vec(max_x, max_y                  , max_z));
+      borders_range_[kBorderBack]  // -------------------------
+        = rd(vec(    0,     0,             0),
+             vec(max_x, max_y, halo_width_-1));
+      borders_range_[kBorderFront]  // ------------------------
+        = rd(vec(    0,     0, max_z - (halo_width_-1)),
+             vec(max_x, max_y, max_z                  ));
+    }  // end of typedef block
+    // Resize buffer for border exchange.
+    borders_to_send_.resize(kDimensions*2);
+    borders_to_send_(kBorderLeft).resize(number_of_components_to_exchange_,
+                                         halo_width_, max_y + 1, max_z + 1);
+    borders_to_send_(kBorderRight).resize(borders_to_send_(kBorderLeft).shape());
+    borders_to_send_(kBorderBottom).resize(number_of_components_to_exchange_,
+                                           max_x + 1, halo_width_, max_z + 1);
+    borders_to_send_(kBorderTop).resize(borders_to_send_(kBorderBottom).shape());
+    borders_to_send_(kBorderBack).resize(number_of_components_to_exchange_,
+                                         max_x + 1, max_y + 1, halo_width_);
+    borders_to_send_(kBorderFront).resize(borders_to_send_(kBorderBack).shape());
+    received_borders_.resize(kDimensions*2);
+    for (int border = kBorderLeft; border < kDimensions*2; ++border) {
+      received_borders_(border).resize(borders_to_send_(border).shape());
+      borders_to_send_(border) = 0;
+      received_borders_(border) = 0;
+    }
     status_ = kSimulationStatusInitiated;
     return kDone;
   }  // end of BasicSimulationCore::Init
@@ -82,12 +146,18 @@ namespace onza {
   /// in ReadConfig(). Read them from real config file. Return some error
   /// for case if config file couldn be read.
   int SimulationInputConfig::ReadConfig() {
-    total_time_steps_ = 3;
+    total_time_steps_ = 1;
     // For most simple case we will need Ex, Ey, Ez, epsilon, Hx, Hy,
     // Hz, mu.
     number_of_grid_data_components_ = 8;
-    halo_width_ = 1;
-    /// For CPML implementation see Taflove 3d ed. p.307 section 7.9.2
+    halo_width_ = 2;
+    int components_to_exchange[] = {kEx, kEy, kEz, kHx, kHy, kHz};
+    number_of_components_to_exchange_ = sizeof(components_to_exchange) / sizeof(int);
+    components_to_exchange_.resize(number_of_components_to_exchange_);
+    for (int i = 0; i < number_of_components_to_exchange_; ++i)
+      components_to_exchange_(i) = components_to_exchange[i];
+    /// @brief Nuber of simulation core data components
+  /// For CPML implementation see Taflove 3d ed. p.307 section 7.9.2
     // pml_width_ = 7;
     // pml_computational_ratio_ = 1.27;
     pml_width_ = 2;
@@ -100,7 +170,7 @@ namespace onza {
     // int64_t length_x = 113, length_y = 120, length_z = 179;  // !!
     // int64_t length_x = 101, length_y = 307, length_z = 908; // !!
     // int64_t length_x = 813, length_y = 1, length_z = 79; // !!
-    int64_t length_x = 7, length_y = 9, length_z = 2;
+    int64_t length_x = 5, length_y = 9, length_z = 2;
     // int64_t length_x = 360, length_y = 1, length_z = 1;
     // int64_t length_x = 4, length_y = 1, length_z = 1;
     grid_input_config_.set_total_grid_length(length_x, length_y, length_z);
