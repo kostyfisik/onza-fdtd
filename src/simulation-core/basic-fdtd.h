@@ -157,7 +157,7 @@ namespace onza {
     int DoStep();
     /// @brief Accesor.
     int status() {return status_;}
-    
+    int64_t total_time_steps() {return total_time_steps_;}
    private:
     blitz::Range all_x_, all_y_, all_z_;
     /// @brief Simulation current.

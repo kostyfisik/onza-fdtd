@@ -31,17 +31,18 @@ namespace onza {
     int Init(
         blitz::Array<blitz::Array<double, 1+kDimensions>,1> borders_to_send,
         blitz::Array<blitz::Array<double, 1+kDimensions>,1> received_borders,
-        int process_rank);
+        int process_rank, int neighbours_ranks[],
+        MPI_Comm &cartesian_grid_communicator);
     /// @brief Start non-blocking communications.
-    int StartNonBlockingExchange();
+    void StartNonBlockingExchange();
     /// @brief Finish exchange initiated with StartNonBlockingExchange().
-    int FinishNonBlockingExchange();
+    void FinishNonBlockingExchange();
    private:
     /// @brief Pointers to the first element of halo array for each
     /// border to be send
     double *borders_to_send_[kDimensions*2];
     /// @brief Number of elements in halo border to be send (and received).
-    int number_of_elements_to_send_;
+    int number_of_elements_to_send_[kDimensions*2];
     /// @brief Pointers to the first element of receiver buffer for
     /// each border.
     double *received_borders_[kDimensions*2];
@@ -51,9 +52,29 @@ namespace onza {
     /// size of array for all kDimensions.
     /// @see HaloExchangeProcess::neighbours_ranks_
     int neighbours_ranks_[6];
+    /// @name MPI section
+    // @{
+    /// @brief Cartesian grid communicator. Initiallized during model
+    /// decomposition with RunDecomposition().
+    MPI_Comm cartesian_grid_communicator_;
+    /// @brief Communication requests for send message.
+    ///
+    /// Used to wait for message being send with
+    /// FinishNonBlockingExchange().
+    MPI_Request isend_request_[kDimensions*2];
+    /// @brief Communication requests for received message.
+    ///
+    /// Used to wait for message being received with
+    /// FinishNonBlockingExchange().
+    MPI_Request irecv_request_[kDimensions*2];
+    /// @brief Status of waiting for isend/irecv.
+    ///
+    /// May be not used (using MPI_STATUS_IGNORE insted).
+    MPI_Status status_;
     /// @brief Fast access (without MPI call) to process rank of
     /// containing object. Should be set in init()
     int process_rank_;
+    // @}
   };  // end of class HaloToExchange
   /// @brief Class for MPI process.
   /// Contains computational domain borders data, methods to exchange

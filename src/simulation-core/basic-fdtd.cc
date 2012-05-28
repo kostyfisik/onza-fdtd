@@ -40,8 +40,10 @@ namespace onza {
   // ********************************************************************** //
   /// @brief Do FDTD stepping for internal part of grid data.
   ///
-  /// WARNING! It is repeated MANY times! 
+  /// @warning  It is repeated MANY times! 
   int BasicSimulationCore::DoStep() {
+    data_*=0.98;    
+    // Step is done. Checking time...
     local_time_step_++;
     if (total_time_steps_ - local_time_step_ < 1) return  kSimulationStatusFinished;
     return kSimulationStatusRunning;
@@ -53,22 +55,22 @@ namespace onza {
   int BasicSimulationCore::SetGridData() {
     // set all fields (Ex, Ey, Ez, Hx, Hy, Hz) to be zero.
     for (int component = kEx; component <= kHz; ++component) { 
-      // data_(component, all_x_, all_y_, all_z_) = 0;
-      //debug
-      data_(component, all_x_, all_y_, all_z_) = component;      
+      //debug data_(component, all_x_, all_y_, all_z_) = 0;
+      data_(component, all_x_, all_y_, all_z_) = component*100;  //debug
     }
     blitz::firstIndex component_position_x;
     blitz::secondIndex component_position_y;
     blitz::thirdIndex component_position_z;
     blitz::Array<double, kDimensions> ex = data_(kEx, all_x_, all_y_, all_z_); // view
     /// @todo1 Remove debug assigment for field ex.
-    ex = 42 + (component_position_y + component_position_x * 10
+    ex = (component_position_y + component_position_x * 10
           + ex.columns() * process_rank_)
       * (component_position_z*2 - 1) * (-1);
-    if (process_rank_ == 0) {
-      int z = 0;
-      std::cout << data_(kEx, all_x_, all_y_, 0) << std::endl;
-    }
+    //debug
+    // if (process_rank_ == 0) {
+    //   int z = 0;
+    //   std::cout << data_(kEx, all_x_, all_y_, 0) << std::endl;
+    // }
     return kDone;
   }
   // ********************************************************************** //
@@ -162,13 +164,13 @@ namespace onza {
   /// in ReadConfig(). Read them from real config file. Return some error
   /// for case if config file couldn be read.
   int SimulationInputConfig::ReadConfig() {
-    total_time_steps_ = 1;
+    total_time_steps_ = 100;
     // For most simple case we will need Ex, Ey, Ez, epsilon, Hx, Hy,
     // Hz, mu.
     number_of_grid_data_components_ = 8;
-    halo_width_ = 2;
+    halo_width_ = 1;
     int components_to_exchange[] = {kEx, kEy, kEz, kHx, kHy, kHz};
-    // int components_to_exchange[] = {kEx, kEy, kEz};
+    // int components_to_exchange[] = {kEx, kEy};
     number_of_components_to_exchange_ = sizeof(components_to_exchange) / sizeof(int);
     components_to_exchange_.resize(number_of_components_to_exchange_);
     for (int i = 0; i < number_of_components_to_exchange_; ++i)
@@ -183,11 +185,11 @@ namespace onza {
     // Length of whole model
     // 1 x 16 000 x 16 000 vertices x 8 components = 16 Gb on deb00
     // 630 x 630 x 630 vertices x 8 components = 16 Gb on deb00
-    // int64_t length_x = 1, length_y = 642, length_z = 380;  
+    int64_t length_x = 1000, length_y = 1000, length_z = 1;  
     // int64_t length_x = 113, length_y = 120, length_z = 179;  // !!
     // int64_t length_x = 101, length_y = 307, length_z = 908; // !!
     // int64_t length_x = 813, length_y = 1, length_z = 79; // !!
-    int64_t length_x = 5, length_y = 9, length_z = 2;
+    // int64_t length_x = 5, length_y = 9, length_z = 2; // Best to go with MPIsize = 3 
     // int64_t length_x = 360, length_y = 1, length_z = 1;
     // int64_t length_x = 4, length_y = 1, length_z = 1;
     grid_input_config_.set_total_grid_length(length_x, length_y, length_z);

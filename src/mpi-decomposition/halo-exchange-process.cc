@@ -16,6 +16,66 @@ namespace onza {
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
+  /// @brief Start non-blocking communications.
+  ///
+  /// @warning  It is repeated MANY times!  
+  void HaloToExchange::StartNonBlockingExchange() {
+    for (int border = kBorderLeft; border < kDimensions*2; ++border) {
+      int send_size = number_of_elements_to_send_[border];
+      int direction_tag = border < kDimensions
+        ? border + kDimensions : border - kDimensions;
+      if (neighbours_ranks_[border] == MPI_PROC_NULL) continue;
+      if (neighbours_ranks_[border] == process_rank_)
+        for (int i = 0; i < send_size; ++i)
+          *(received_borders_[border] + i) =
+            *(borders_to_send_[direction_tag] + i);
+      MPI_Irecv(received_borders_[border], send_size, MPI_DOUBLE,
+                neighbours_ranks_[border], direction_tag,
+                cartesian_grid_communicator_, &irecv_request_[border]);
+    }  // end of for borders receive
+    for (int border = kBorderLeft; border < kDimensions*2; ++border) {
+      int send_size = number_of_elements_to_send_[border];
+      if (neighbours_ranks_[border] == MPI_PROC_NULL) continue;
+      if (neighbours_ranks_[border] == process_rank_) continue;
+      int direction_tag = border;
+      MPI_Isend(borders_to_send_[border], send_size, MPI_DOUBLE,
+                neighbours_ranks_[border], direction_tag,
+                cartesian_grid_communicator_, &isend_request_[border]);
+    }  // end of for borders send
+
+
+    // if (process_rank_ == 0) { 
+    //   printf("\n\nAfter!!!\n\n");
+    //   for (int border = kBorderLeft; border < kDimensions*2; ++border) {
+    //     printf("border[%i]:\nSending: ", border);
+    //     for (int i = 0; i < number_of_elements_to_send_[border]; ++i)
+    //       printf("%g, ",*(borders_to_send_[border]+i));
+    //     printf("\nReceiving: ");
+    //     for (int i = 0; i < number_of_elements_to_send_[border]; ++i)
+    //       printf("%g, ",*(received_borders_[border]+i));
+    //     printf("\n\n");
+    //   }  // end of for border
+    // }  // end of if process_rank_ == 0
+  }  // end of HaloToExchange::StartNonBlockingExchange()
+  // ********************************************************************** //
+  // ********************************************************************** //
+  // ********************************************************************** //
+  /// @brief Finish exchange initiated with StartNonBlockingExchange().
+  ///
+  /// @warning  It is repeated MANY times!  
+  void HaloToExchange::FinishNonBlockingExchange() {
+    for (int border = kBorderLeft; border < kDimensions*2; ++border) {
+      if (neighbours_ranks_[border] == MPI_PROC_NULL) continue;
+      if (neighbours_ranks_[border] == process_rank_) continue;
+      // MPI_Wait(&isend_request_[border], &status);
+      // MPI_Wait(&irecv_request_[border], &status);
+      MPI_Wait(&isend_request_[border], MPI_STATUS_IGNORE);
+      MPI_Wait(&irecv_request_[border], MPI_STATUS_IGNORE);
+    }  // end of for borders wait
+  }  // end of HaloToExchange::FinishNonBlockingExchange()
+  // ********************************************************************** //
+  // ********************************************************************** //
+  // ********************************************************************** //
   /// @brief Init exchange buffers parameters.
   ///
   /// Get addresses and sizes for input and output buffers to send and
@@ -23,9 +83,12 @@ namespace onza {
   int HaloToExchange::Init(
         blitz::Array<blitz::Array<double, 1+kDimensions>,1> borders_to_send,
         blitz::Array<blitz::Array<double, 1+kDimensions>,1> received_borders,
-        int process_rank) {
+        int process_rank, int neighbours_ranks[],
+        MPI_Comm &cartesian_grid_communicator) {
     process_rank_ = process_rank;
+    cartesian_grid_communicator_ = cartesian_grid_communicator;
     for (int border = kBorderLeft; border < kDimensions*2; ++border) {
+      neighbours_ranks_[border] = neighbours_ranks[border];
       // Check array are valid for pointer arithmetics
       if (!borders_to_send(border).isStorageContiguous() ||
           !received_borders(border).isStorageContiguous()) {
@@ -41,15 +104,8 @@ namespace onza {
       }  // end of if error: borders size send != receive
       borders_to_send_[border] = borders_to_send(border).data();
       received_borders_[border] = received_borders(border).data();
-      number_of_elements_to_send_ = borders_to_send(border).size();
+      number_of_elements_to_send_[border] = borders_to_send(border).size();
     }  // end of for border
-    if (process_rank_ == 0) {
-      *borders_to_send_[kBorderLeft] = 43;
-      std::cout << borders_to_send(kBorderLeft) << std::endl;
-      printf("border(kBorderLeft)(0,0,0,0) = %g, by pointer = %g\n",
-             borders_to_send(kBorderLeft)(0,0,0,0),
-             *borders_to_send_[kBorderLeft]);
-    }
     return kDone;
   }  // end of HaloToExchange::Init()
   // ********************************************************************** //
@@ -466,10 +522,10 @@ namespace onza {
     int init_status = simulation_core_.Init(subdomain_size_,process_rank_);
     if (init_status != kDone) return init_status;
     simulation_core_.SetGridData();
-    simulation_core_.PrepareBordersToSend();  //debug
     init_status = halo_to_exchange_.Init(simulation_core_.borders_to_send_,
                                          simulation_core_.received_borders_,
-                                         process_rank_);
+                                         process_rank_, neighbours_ranks_,
+                                         cartesian_grid_communicator_);
     if (init_status != kDone) return init_status;
     return kDone;
   }  // end of HaloExchangeProcess::InitSimulation()
@@ -654,11 +710,24 @@ namespace onza {
       return kErrorUninitiatedSimulationCore;
     }  // end of if simulation core is not initiated
     int isRunning = 1;
+    if (process_rank_ == 0) printf("Start of stepping!\n");
+    double start_time, end_time;
+    start_time = MPI_Wtime();
     do {
       simulation_core_.PrepareBordersToSend();
+      // Sending borders, prepared with simulation_core see
+      // HaloExchangeProcess::InitSimulation(). Borders are used
+      // directly by pointer.
+      halo_to_exchange_.StartNonBlockingExchange();
       isRunning = simulation_core_.DoStep();
-      if (process_rank_ == 0) printf("Running!\n");
+      halo_to_exchange_.FinishNonBlockingExchange();
     } while (isRunning);
+    end_time   = MPI_Wtime();
+    double total_time_stepping = end_time-start_time;
+    if (process_rank_ == 0)
+      printf("Stepping finidhed!\nThat took %f seconds(%f s/step).\n",
+             total_time_stepping,
+             total_time_stepping/simulation_core_.total_time_steps());
     return kDone;
   }  // end of HaloExchangeProcess::RunSimulation()
 }  // end of namespace onza
