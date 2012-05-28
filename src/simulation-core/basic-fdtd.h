@@ -175,7 +175,7 @@ namespace onza {
     /// Last three dims - kAxisX, kAxisY, kAxisZ.
     blitz::Array<blitz::Array<double, 1+kDimensions>,1> received_borders_;
     /// @brief Borders ranges inside grid.
-    blitz::RectDomain<kDimensions> borders_range_[kDimensions*2];
+    blitz::RectDomain<1+kDimensions> borders_range_[kDimensions*2];
   };  // end of class BasicSimulationCore
 }  // end of namespace onza
 #endif  // SRC_SIMULATION_CORE_BASIC_FDTD_H_

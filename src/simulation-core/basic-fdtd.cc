@@ -19,7 +19,26 @@ namespace onza {
   ///
   /// Copy grid data_ slices to borders_to_send_
   void BasicSimulationCore::PrepareBordersToSend() {
+    for (int border = kBorderLeft; border < kDimensions*2; ++border) {
+      for (int component = 0;
+           component < number_of_components_to_exchange_;
+           ++component) {
+        // borders_to_send_(border)(component, all_x_, all_y_, all_z_) =
+        //   data_
+
+      }  // end of for component
+    }  // end of for border
     //    borders_to_send_(kBorderLeft) //components_to_send;
+    if (process_rank_ == 0) {
+      int z = 0;
+      // blitz::Array<double, kDimensions> ex = data_(kEx, all_x_, all_y_, all_z_); // view
+      // std::cout << ex(borders_range_[kBorderLeft])(all_x_, all_y_, z) << std::endl;
+      // std::cout << ex(borders_range_[kBorderRight])(all_x_, all_y_, z) << std::endl; 
+      // std::cout << ex(borders_range_[kBorderBottom])(all_x_, all_y_, z);
+      // std::cout << ex(borders_range_[kBorderTop])(all_x_, all_y_, z) << std::endl;
+      // std::cout << ex(borders_range_[kBorderBack])(all_x_, 2, all_z_);
+      // std::cout << ex(borders_range_[kBorderFront])(all_x_, 2, all_z_) << std::endl;
+    }
   }  // end of BasicSimulationCore::PrepareBordersToSend()
   // ********************************************************************** //
   // ********************************************************************** //
@@ -37,7 +56,6 @@ namespace onza {
   // ********************************************************************** //
   /// @brief Initialize grid data for all components
   int BasicSimulationCore::SetGridData() {
-    int first = 0;
     // set all fields (Ex, Ey, Ez, Hx, Hy, Hz) to be zero.
     for (int component = kEx; component <= kHz; ++component) 
       data_(component, all_x_, all_y_, all_z_) = 0;
@@ -53,12 +71,12 @@ namespace onza {
       int z = 0;
       // blitz::Range z(all_z_);
       std::cout << data_(kEx, all_x_, all_y_, 0) << std::endl;
-      std::cout << ex(borders_range_[kBorderLeft])(all_x_, all_y_, z) << std::endl;
-      std::cout << ex(borders_range_[kBorderRight])(all_x_, all_y_, z) << std::endl; 
-      std::cout << ex(borders_range_[kBorderBottom])(all_x_, all_y_, z);
-      std::cout << ex(borders_range_[kBorderTop])(all_x_, all_y_, z) << std::endl;
-      std::cout << ex(borders_range_[kBorderBack])(all_x_, 2, all_z_);
-      std::cout << ex(borders_range_[kBorderFront])(all_x_, 2, all_z_) << std::endl;
+      // std::cout << ex(borders_range_[kBorderLeft])(all_x_, all_y_, z) << std::endl;
+      // std::cout << ex(borders_range_[kBorderRight])(all_x_, all_y_, z) << std::endl; 
+      // std::cout << ex(borders_range_[kBorderBottom])(all_x_, all_y_, z);
+      // std::cout << ex(borders_range_[kBorderTop])(all_x_, all_y_, z) << std::endl;
+      // std::cout << ex(borders_range_[kBorderBack])(all_x_, 2, all_z_);
+      // std::cout << ex(borders_range_[kBorderFront])(all_x_, 2, all_z_) << std::endl;
     }
     // if (ex.isStorageContiguous())
     //   printf("ex for proc %i is contiguous!\n", process_rank_);
@@ -78,11 +96,12 @@ namespace onza {
     all_x_ = blitz::Range::all();
     all_y_ = blitz::Range::all();
     all_z_ = blitz::Range::all();
-    // components_to_exchange_ = simulation_input_config_.components_to_exchange();
     halo_width_ = simulation_input_config_.halo_width();
     local_time_step_ = 0;
     number_of_components_to_exchange_ = simulation_input_config_.
       number_of_components_to_exchange();
+    components_to_exchange_.resize(number_of_components_to_exchange_);
+    components_to_exchange_ = simulation_input_config_.components_to_exchange();
     number_of_grid_data_components_ = simulation_input_config_.
       number_of_grid_data_components();
     process_rank_ = process_rank;
@@ -95,27 +114,29 @@ namespace onza {
     int max_z = subdomain_size_[kAxisZ]-1;
     data_.resize(number_of_grid_data_components_, max_x + 1, max_y + 1, max_z + 1);
     // blitz::RectDomain<kDimensions> borders_range_[kDimensions*2];
-    {  // Describe indexes for each border.
-      typedef blitz::RectDomain<kDimensions> rd;
-      typedef blitz::TinyVector<int,3> vec;
+    for (int component = 0; component < number_of_components_to_exchange_; ++component) {
+      // Describe indexes for each border.
+      typedef blitz::RectDomain<1+kDimensions> rd;
+      typedef blitz::TinyVector<int,4> vec;
+      int c = components_to_exchange_(component);
       borders_range_[kBorderLeft]  // -------------------------
-        = rd(vec(            0,     0,     0),
-             vec(halo_width_-1, max_y, max_z));
+        = rd(vec(c,            0,     0,     0),
+             vec(c,halo_width_-1, max_y, max_z));
       borders_range_[kBorderRight]  // ------------------------
-        = rd(vec(max_x - (halo_width_-1),     0,     0),
-             vec(max_x                  , max_y, max_z));
+        = rd(vec(c,max_x - (halo_width_-1),     0,     0),
+             vec(c,max_x                  , max_y, max_z));
       borders_range_[kBorderBottom]  // -----------------------
-        = rd(vec(    0,             0,     0),
-             vec(max_x, halo_width_-1, max_z));
+        = rd(vec(c,    0,             0,     0),
+             vec(c,max_x, halo_width_-1, max_z));
       borders_range_[kBorderTop]  // --------------------------
-        = rd(vec(    0, max_y - (halo_width_-1),     0),
-             vec(max_x, max_y                  , max_z));
+        = rd(vec(c,    0, max_y - (halo_width_-1),     0),
+             vec(c,max_x, max_y                  , max_z));
       borders_range_[kBorderBack]  // -------------------------
-        = rd(vec(    0,     0,             0),
-             vec(max_x, max_y, halo_width_-1));
+        = rd(vec(c,    0,     0,             0),
+             vec(c,max_x, max_y, halo_width_-1));
       borders_range_[kBorderFront]  // ------------------------
-        = rd(vec(    0,     0, max_z - (halo_width_-1)),
-             vec(max_x, max_y, max_z                  ));
+        = rd(vec(c,    0,     0, max_z - (halo_width_-1)),
+             vec(c,max_x, max_y, max_z                  ));
     }  // end of typedef block
     // Resize buffer for border exchange.
     borders_to_send_.resize(kDimensions*2);
@@ -133,10 +154,15 @@ namespace onza {
       received_borders_(border).resize(borders_to_send_(border).shape());
       borders_to_send_(border) = 0;
       received_borders_(border) = 0;
+      if (!borders_to_send_.isStorageContiguous() ||
+          !received_borders_.isStorageContiguous()) {
+        printf("Proc[%i]: Error! Halo exchange buffer is not contiguous!\n", process_rank_);
+        return kErrorExchangeBufferIsNotContiguous;
+      }
     }
     status_ = kSimulationStatusInitiated;
     return kDone;
-  }  // end of BasicSimulationCore::Init
+  }  // end of BasicSimulationCore::Init()
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
