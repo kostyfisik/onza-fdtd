@@ -23,22 +23,21 @@ namespace onza {
       for (int component = 0;
            component < number_of_components_to_exchange_;
            ++component) {
-        // borders_to_send_(border)(component, all_x_, all_y_, all_z_) =
-        //   data_
-
+        // Get address of data_ slice for current border and component
+        // In fist (component) dimension it will have the only element
+        // (current component)
+        blitz::Array<double, 1+kDimensions> reference_to_component_border_data
+          = data_(borders_range_(border, component));
+        // Get address of borders_to_send_ element for current border
+        blitz::Array<double, 1+kDimensions> reference_to_component_to_send
+          = borders_to_send_(border);
+        // Copy data referred by referrence.
+        int the_only_component_index = 0;
+        reference_to_component_to_send(component, all_x_, all_y_, all_z_) =
+          reference_to_component_border_data(the_only_component_index,
+                                             all_x_, all_y_, all_z_);
       }  // end of for component
     }  // end of for border
-    //    borders_to_send_(kBorderLeft) //components_to_send;
-    if (process_rank_ == 0) {
-      int z = 0;
-      // blitz::Array<double, kDimensions> ex = data_(kEx, all_x_, all_y_, all_z_); // view
-      // std::cout << ex(borders_range_[kBorderLeft])(all_x_, all_y_, z) << std::endl;
-      // std::cout << ex(borders_range_[kBorderRight])(all_x_, all_y_, z) << std::endl; 
-      // std::cout << ex(borders_range_[kBorderBottom])(all_x_, all_y_, z);
-      // std::cout << ex(borders_range_[kBorderTop])(all_x_, all_y_, z) << std::endl;
-      // std::cout << ex(borders_range_[kBorderBack])(all_x_, 2, all_z_);
-      // std::cout << ex(borders_range_[kBorderFront])(all_x_, 2, all_z_) << std::endl;
-    }
   }  // end of BasicSimulationCore::PrepareBordersToSend()
   // ********************************************************************** //
   // ********************************************************************** //
@@ -57,8 +56,11 @@ namespace onza {
   /// @brief Initialize grid data for all components
   int BasicSimulationCore::SetGridData() {
     // set all fields (Ex, Ey, Ez, Hx, Hy, Hz) to be zero.
-    for (int component = kEx; component <= kHz; ++component) 
-      data_(component, all_x_, all_y_, all_z_) = 0;
+    for (int component = kEx; component <= kHz; ++component) { 
+      // data_(component, all_x_, all_y_, all_z_) = 0;
+      //debug
+      data_(component, all_x_, all_y_, all_z_) = component;      
+    }
     blitz::firstIndex component_position_x;
     blitz::secondIndex component_position_y;
     blitz::thirdIndex component_position_z;
@@ -69,17 +71,8 @@ namespace onza {
       * (component_position_z*2 - 1) * (-1);
     if (process_rank_ == 0) {
       int z = 0;
-      // blitz::Range z(all_z_);
       std::cout << data_(kEx, all_x_, all_y_, 0) << std::endl;
-      // std::cout << ex(borders_range_[kBorderLeft])(all_x_, all_y_, z) << std::endl;
-      // std::cout << ex(borders_range_[kBorderRight])(all_x_, all_y_, z) << std::endl; 
-      // std::cout << ex(borders_range_[kBorderBottom])(all_x_, all_y_, z);
-      // std::cout << ex(borders_range_[kBorderTop])(all_x_, all_y_, z) << std::endl;
-      // std::cout << ex(borders_range_[kBorderBack])(all_x_, 2, all_z_);
-      // std::cout << ex(borders_range_[kBorderFront])(all_x_, 2, all_z_) << std::endl;
     }
-    // if (ex.isStorageContiguous())
-    //   printf("ex for proc %i is contiguous!\n", process_rank_);
     return kDone;
   }
   // ********************************************************************** //
@@ -114,27 +107,28 @@ namespace onza {
     int max_z = subdomain_size_[kAxisZ]-1;
     data_.resize(number_of_grid_data_components_, max_x + 1, max_y + 1, max_z + 1);
     // blitz::RectDomain<kDimensions> borders_range_[kDimensions*2];
+    borders_range_.resize(kDimensions*2, number_of_components_to_exchange_);
     for (int component = 0; component < number_of_components_to_exchange_; ++component) {
       // Describe indexes for each border.
       typedef blitz::RectDomain<1+kDimensions> rd;
       typedef blitz::TinyVector<int,4> vec;
       int c = components_to_exchange_(component);
-      borders_range_[kBorderLeft]  // -------------------------
+      borders_range_(static_cast<int>(kBorderLeft), component)
         = rd(vec(c,            0,     0,     0),
              vec(c,halo_width_-1, max_y, max_z));
-      borders_range_[kBorderRight]  // ------------------------
+      borders_range_(static_cast<int>(kBorderRight), component)
         = rd(vec(c,max_x - (halo_width_-1),     0,     0),
              vec(c,max_x                  , max_y, max_z));
-      borders_range_[kBorderBottom]  // -----------------------
+      borders_range_(static_cast<int>(kBorderBottom), component)
         = rd(vec(c,    0,             0,     0),
              vec(c,max_x, halo_width_-1, max_z));
-      borders_range_[kBorderTop]  // --------------------------
+      borders_range_(static_cast<int>(kBorderTop), component)
         = rd(vec(c,    0, max_y - (halo_width_-1),     0),
              vec(c,max_x, max_y                  , max_z));
-      borders_range_[kBorderBack]  // -------------------------
+      borders_range_(static_cast<int>(kBorderBack), component)
         = rd(vec(c,    0,     0,             0),
              vec(c,max_x, max_y, halo_width_-1));
-      borders_range_[kBorderFront]  // ------------------------
+      borders_range_(static_cast<int>(kBorderFront), component)
         = rd(vec(c,    0,     0, max_z - (halo_width_-1)),
              vec(c,max_x, max_y, max_z                  ));
     }  // end of typedef block
