@@ -117,6 +117,34 @@ namespace onza {
   /// time step, methods to publish own border and to use foreign borders.
   class BasicSimulationCore {
    public:
+    /// @name Borders.
+    /// @warning This members are direclty accessed with
+    /// onza::HaloToExchange by pointer arithmetics. Be sure to
+    /// synchronize reads and writes with it. It is intended to be
+    /// done with HaloExchangeProcess::RunSimulation().
+    // @{
+    /// @bief Current process borders to be send to neighbours.
+    ///
+    /// First dim - border name (from kBorderLeft to kBorderFront)
+    /// Second dim - grid data component
+    /// Last three dims - kAxisX, kAxisY, kAxisZ.
+    /// @warning This member is direclty accessed with
+    /// onza::HaloToExchange by pointer arithmetics. Be sure to
+    /// synchronize reads and writes with it. It is intended to be
+    /// done with HaloExchangeProcess::RunSimulation().
+    blitz::Array<blitz::Array<double, 1+kDimensions>,1> borders_to_send_;
+    /// @brief Received borders
+    ///
+    /// Borders, received from neighbours. 
+    /// First dim - border name (from kBorderLeft to kBorderFront)
+    /// Second dim - grid data component
+    /// Last three dims - kAxisX, kAxisY, kAxisZ.
+    /// @warning This member is direclty accessed with
+    /// onza::HaloToExchange by pointer arithmetics. Be sure to
+    /// synchronize reads and writes with it. It is intended to be
+    /// done with HaloExchangeProcess::RunSimulation().
+    blitz::Array<blitz::Array<double, 1+kDimensions>,1> received_borders_;
+    // @}
     /// @brief Parsing all input parameters into one object.
     SimulationInputConfig simulation_input_config_;
     /// @breif Initialize member data.
@@ -161,19 +189,6 @@ namespace onza {
     /// access components values, e.g. data_(kEx, x, y, z) or
     /// data_(kEps, x, y, z);
     blitz::Array<double, 1+kDimensions> data_;
-    /// @bief Current process borders to be send to neighbours.
-    ///
-    /// First dim - border name (from kBorderLeft to kBorderFront)
-    /// Second dim - grid data component
-    /// Last three dims - kAxisX, kAxisY, kAxisZ.
-    blitz::Array<blitz::Array<double, 1+kDimensions>,1> borders_to_send_;
-    /// @brief Received borders
-    ///
-    /// Borders, received from neighbours. 
-    /// First dim - border name (from kBorderLeft to kBorderFront)
-    /// Second dim - grid data component
-    /// Last three dims - kAxisX, kAxisY, kAxisZ.
-    blitz::Array<blitz::Array<double, 1+kDimensions>,1> received_borders_;
     /// @brief Borders ranges inside grid.
     /// First dim - border name (from kBorderLeft to kBorderFront)
     /// Second dim - grid data component.

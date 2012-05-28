@@ -10,24 +10,59 @@
 #include <blitz/array.h>
 #include "../simulation-core/basic-fdtd.h"
 namespace onza {
-  /// @brief Container for halo data to exchange.
+  /// @brief Pure halo data exchange, no calculations.
+  ///
+  /// Let`s try to split FDTD stepping in BasicSimulationCore and halo
+  /// exchange. As far as simulation core also needs borders data (to
+  /// perform calculations) there is a possibility to store border
+  /// data in any location (here or in simulation core). It was
+  /// relativly easy to make a copy of halo data inside simulaiton
+  /// core in unified way (from predefined list of data components to
+  /// exchange and halo width) with blitz++ library.
+  /// @warning To
+  /// avoid exessive copying (and to reserve memory bandwidth for
+  /// something more usefull) this object is using pointers to
+  /// HaloExchangeProcess::simulation_core_ members
+  /// BasicSimulationCore::borders_to_send_ and
+  /// BasicSimulationCore::received_borders_.
   class HaloToExchange {
    public:
+    /// @brief Init exchange buffers parameters.
+    int Init(
+        blitz::Array<blitz::Array<double, 1+kDimensions>,1> borders_to_send,
+        blitz::Array<blitz::Array<double, 1+kDimensions>,1> received_borders,
+        int process_rank);
     /// @brief Start non-blocking communications.
     int StartNonBlockingExchange();
     /// @brief Finish exchange initiated with StartNonBlockingExchange().
     int FinishNonBlockingExchange();
    private:
+    /// @brief Pointers to the first element of halo array for each
+    /// border to be send
+    double *borders_to_send_[kDimensions*2];
+    /// @brief Number of elements in halo border to be send (and received).
+    int number_of_elements_to_send_;
+    /// @brief Pointers to the first element of receiver buffer for
+    /// each border.
+    double *received_borders_[kDimensions*2];
     /// @brief My neighbours ranks
     ///
     /// Due to order in enum #BorderPosition using max(kDimensions)*2
     /// size of array for all kDimensions.
     /// @see HaloExchangeProcess::neighbours_ranks_
     int neighbours_ranks_[6];
+    /// @brief Fast access (without MPI call) to process rank of
+    /// containing object. Should be set in init()
+    int process_rank_;
   };  // end of class HaloToExchange
   /// @brief Class for MPI process.
   /// Contains computational domain borders data, methods to exchange
   /// and update borders.
+  ///
+  /// As far as to exchange borders it is needed to calculate them
+  /// before, simulation_core_ member is present. All FDTD
+  /// calculations are performed with it. Pure halo data exchange is
+  /// done with halo_to_exchange_ member.
   class HaloExchangeProcess {
    public:
     int Init();

@@ -32,9 +32,13 @@ namespace onza {
     kErrorUninitiatedSimulationCore,
     /// case of too many processes during decomposition
     kErrorSubdomainSizeLessThanHaloWidth,
-    /// exchange buffer was initiated to be not contiguous.
-    /// BasicSimulationCore::Init()
+    /// exchange buffer was initiated to be not contiguous with
+    /// BasicSimulationCore::Init() or was detected to be not
+    /// contiguous with HaloToExchange::Init().
     kErrorExchangeBufferIsNotContiguous,
+    /// Buffers to send and recieve  halo has different sizes.
+    /// Checked with HaloToExchange::Init().
+    kErrorSendAndReceiveBuffersHasDifferentSizes,
     /// Using InputConfig too early
     kErrorUsingInputConfigTooEarly
   };

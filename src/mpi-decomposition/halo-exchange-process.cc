@@ -16,6 +16,45 @@ namespace onza {
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
+  /// @brief Init exchange buffers parameters.
+  ///
+  /// Get addresses and sizes for input and output buffers to send and
+  /// receive borders.
+  int HaloToExchange::Init(
+        blitz::Array<blitz::Array<double, 1+kDimensions>,1> borders_to_send,
+        blitz::Array<blitz::Array<double, 1+kDimensions>,1> received_borders,
+        int process_rank) {
+    process_rank_ = process_rank;
+    for (int border = kBorderLeft; border < kDimensions*2; ++border) {
+      // Check array are valid for pointer arithmetics
+      if (!borders_to_send(border).isStorageContiguous() ||
+          !received_borders(border).isStorageContiguous()) {
+        printf("Proc[%i]: Some of buffers for halo exchange is not contiguous!!!\n",
+               process_rank_);
+        return kErrorExchangeBufferIsNotContiguous;
+      }  // end of if error: buffers are not contiguous
+      if (borders_to_send(border).size() !=
+          received_borders(border).size()) {
+        printf("Proc[%i]: Buffers to send and recieve  halo has different sizes!!!\n",
+               process_rank_);
+        return kErrorSendAndReceiveBuffersHasDifferentSizes;
+      }  // end of if error: borders size send != receive
+      borders_to_send_[border] = borders_to_send(border).data();
+      received_borders_[border] = received_borders(border).data();
+      number_of_elements_to_send_ = borders_to_send(border).size();
+    }  // end of for border
+    if (process_rank_ == 0) {
+      *borders_to_send_[kBorderLeft] = 43;
+      std::cout << borders_to_send(kBorderLeft) << std::endl;
+      printf("border(kBorderLeft)(0,0,0,0) = %g, by pointer = %g\n",
+             borders_to_send(kBorderLeft)(0,0,0,0),
+             *borders_to_send_[kBorderLeft]);
+    }
+    return kDone;
+  }  // end of HaloToExchange::Init()
+  // ********************************************************************** //
+  // ********************************************************************** //
+  // ********************************************************************** //
   /// @brief Check subdomains start and finish indexes to be
   /// correlated with neighbours indexes.
   ///
@@ -427,6 +466,11 @@ namespace onza {
     int init_status = simulation_core_.Init(subdomain_size_,process_rank_);
     if (init_status != kDone) return init_status;
     simulation_core_.SetGridData();
+    simulation_core_.PrepareBordersToSend();  //debug
+    init_status = halo_to_exchange_.Init(simulation_core_.borders_to_send_,
+                                         simulation_core_.received_borders_,
+                                         process_rank_);
+    if (init_status != kDone) return init_status;
     return kDone;
   }  // end of HaloExchangeProcess::InitSimulation()
   // ********************************************************************** //

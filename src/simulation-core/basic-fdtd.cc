@@ -23,19 +23,15 @@ namespace onza {
       for (int component = 0;
            component < number_of_components_to_exchange_;
            ++component) {
-        // Get address of data_ slice for current border and component
-        // In fist (component) dimension it will have the only element
-        // (current component)
-        blitz::Array<double, 1+kDimensions> reference_to_component_border_data
-          = data_(borders_range_(border, component));
-        // Get address of borders_to_send_ element for current border
-        blitz::Array<double, 1+kDimensions> reference_to_component_to_send
-          = borders_to_send_(border);
-        // Copy data referred by referrence.
-        int the_only_component_index = 0;
-        reference_to_component_to_send(component, all_x_, all_y_, all_z_) =
-          reference_to_component_border_data(the_only_component_index,
-                                             all_x_, all_y_, all_z_);
+        // Get slice of data_ for current border and current
+        // component.  In fist (component) dimension it will have the
+        // only element (current component). Copy slice (reduced to 3D
+        // array by component index) from data_ to corresponding slice of
+        // borders_to_send_.
+        const int the_only_component_index = 0;
+        borders_to_send_(border)(component, all_x_, all_y_, all_z_)
+          = data_(borders_range_(border, component))(the_only_component_index,
+                                                     all_x_, all_y_, all_z_);
       }  // end of for component
     }  // end of for border
   }  // end of BasicSimulationCore::PrepareBordersToSend()
@@ -66,7 +62,7 @@ namespace onza {
     blitz::thirdIndex component_position_z;
     blitz::Array<double, kDimensions> ex = data_(kEx, all_x_, all_y_, all_z_); // view
     /// @todo1 Remove debug assigment for field ex.
-    ex = (component_position_y + component_position_x * 10
+    ex = 42 + (component_position_y + component_position_x * 10
           + ex.columns() * process_rank_)
       * (component_position_z*2 - 1) * (-1);
     if (process_rank_ == 0) {
@@ -172,6 +168,7 @@ namespace onza {
     number_of_grid_data_components_ = 8;
     halo_width_ = 2;
     int components_to_exchange[] = {kEx, kEy, kEz, kHx, kHy, kHz};
+    // int components_to_exchange[] = {kEx, kEy, kEz};
     number_of_components_to_exchange_ = sizeof(components_to_exchange) / sizeof(int);
     components_to_exchange_.resize(number_of_components_to_exchange_);
     for (int i = 0; i < number_of_components_to_exchange_; ++i)
