@@ -50,9 +50,8 @@ namespace onza {
                          };
   /// @brief Simulation core and halo border predefined names for data
   /// components
-  enum DataComponents {kEx=0, kEy, kEz,
-                       kHx, kHy, kHz,
-                       kEps, kMu};
+  enum DataComponents {kEz=0, kHy, kInvEps, kSrcEz,// enougth for 1D simple FDTD
+                       kEx, kEy, kHx, kHz, kMu};
   /// @brief Status of reading input config.
   ///
   /// For use with onza::SimulationInputConfig::status_
@@ -67,6 +66,8 @@ namespace onza {
     kBoudaryConditionUndefined = 0,
     /// Boundary is periodical.
     kBoudaryConditionPeriodical,
+    /// Boundary is reduced.
+    kBoudaryConditionReduced,
     /// There is PML region near this boundary inside current domain.
     kBoudaryConditionPML
   };  // end of enum BoundaryCondition
@@ -149,5 +150,6 @@ namespace onza {
       return product;
     }  // end of if dimensions
   }  // end of template SumUpComponents
+  template <class T> inline T pow2(const T value2pow) {return value2pow*value2pow;}
 }  // end of namespace onza
 #endif  // SRC_COMMON_H_

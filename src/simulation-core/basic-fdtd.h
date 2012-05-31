@@ -72,6 +72,8 @@ namespace onza {
     /// @brief Accesor
     blitz::Array<int,1> components_to_exchange() {return components_to_exchange_;}
     /// @brief Accesor
+    double snapshot_interval() {return snapshot_interval_;}
+    /// @brief Accesor
     int64_t total_time_steps() {return total_time_steps_;}
     
    private:
@@ -109,6 +111,8 @@ namespace onza {
     ///
     /// Should be value from #InputConfig
     int status_;
+    /// @breif snapshot interval
+    double snapshot_interval_;
   };  // end of class SimulationInputConfig
   // *********************************************************************** //
   /// @brief Basic class for FDTD simulation.
@@ -148,38 +152,70 @@ namespace onza {
     /// @brief Parsing all input parameters into one object.
     SimulationInputConfig simulation_input_config_;
     /// @breif Initialize member data.
-    int Init(const int64_t subdomain_size[], int process_rank);
+    int Init(const int64_t subdomain_size[], int process_rank,
+             int neighbours_ranks[],int my_coords[]);
     /// @brief Initialize grid data for all components
     int SetGridData();
     /// @brief Prepare borders to send
     void PrepareBordersToSend();
+    /// @brief Snapshot component from data_ to fiel.
+    void Snapshot();
+    /// @brief Prepare source component in data_.
+    void PrepareSource();
+    /// @brief FDTD algorithm for 1D case (length in kAxisX dimenstion).
+    void FDTD_1D_axis_x(
+      blitz::Array<double, 1+kDimensions> data,
+      blitz::Range x,
+      blitz::Range y,
+      blitz::Range z);
+    /// @brief Do FDTD stepping for border part of grid data.
+    void DoBorderStep();
     /// @brief Do FDTD stepping for internal part of grid data.
-    int DoStep();
+    void DoStep();
+    /// @brief 
+    int StepTime();
     /// @brief Accesor.
     int status() {return status_;}
     int64_t total_time_steps() {return total_time_steps_;}
    private:
+    /// @brief Predefined ranges for all grid points in x, y and z dimensions.
     blitz::Range all_x_, all_y_, all_z_;
-    /// @brief Simulation current.
-    int status_;
-    /// @brief Total time steps in simulation.
-    int64_t total_time_steps_;
+    /// @brief Width of halo to exchange.
+    int halo_width_;
+    /// @brief Predefined ranges for inner grid points in x, y and z dimensions.
+    ///
+    /// Inner - means that next step for inner point could be
+    /// calculated without using borders information.
+    blitz::Range inner_x_, inner_y_, inner_z_;
     /// @brief Current time step for current MPI process.
     int64_t local_time_step_;
+    /// @brief This process coords in Cartesian topology of MPI processes.
+    int my_coords_[kDimensions];
+    /// @brief My neighbours ranks
+    ///
+    /// Due to order in enum #BorderPosition using max(kDimensions)*2
+    /// size of array for all kDimensions.
+    /// @see HaloExchangeProcess::neighbours_ranks_
+    int neighbours_ranks_[6];
+    /// @brief Number of simulation core data components to exchange
+    /// in halo
+    int number_of_components_to_exchange_;
+    /// @brief Number of simulation core data components
+    int number_of_grid_data_components_;
+    /// @brief Fast access (without MPI call) to process rank of
+    /// containing object. Should be set in init()
+    int process_rank_;
+    /// @breif snapshot interval
+    double snapshot_interval_;
+    int snapshot_frame_;
+    /// @brief Simulation current.
+    int status_;
     /// @brief Current process subdomain size in each dimension.
     ///
     /// size == number of vertices
     int64_t subdomain_size_[kDimensions];
-    /// @brief Fast access (without MPI call) to process rank of
-    /// containing object. Should be set in init()
-    int process_rank_;
-    /// @brief Width of halo to exchange.
-    int halo_width_;
-    /// @brief Number of simulation core data components
-    int number_of_grid_data_components_;
-    /// @brief Number of simulation core data components to exchange
-    /// in halo
-    int number_of_components_to_exchange_;
+    /// @brief Total time steps in simulation.
+    int64_t total_time_steps_;
     /// @brief List of components to exchange in halo.
     blitz::Array<int,1> components_to_exchange_;
     /// @brief Grid data components.

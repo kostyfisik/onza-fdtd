@@ -25,10 +25,10 @@ namespace onza {
       int direction_tag = border < kDimensions
         ? border + kDimensions : border - kDimensions;
       if (neighbours_ranks_[border] == MPI_PROC_NULL) continue;
-      if (neighbours_ranks_[border] == process_rank_)
-        for (int i = 0; i < send_size; ++i)
-          *(received_borders_[border] + i) =
-            *(borders_to_send_[direction_tag] + i);
+      // Case of border transfer from one side of subdomain to
+      // opposite side is treated during preparing borders in
+      // BasicSimulationCore::PrepareBordersToSend()
+      if (neighbours_ranks_[border] == process_rank_) continue;
       MPI_Irecv(received_borders_[border], send_size, MPI_DOUBLE,
                 neighbours_ranks_[border], direction_tag,
                 cartesian_grid_communicator_, &irecv_request_[border]);
@@ -519,7 +519,8 @@ namespace onza {
   ///
   /// Initialize simulation_core_ member data.
   int HaloExchangeProcess::InitSimulation() {
-    int init_status = simulation_core_.Init(subdomain_size_,process_rank_);
+    int init_status = simulation_core_.Init(subdomain_size_,process_rank_,
+                                            neighbours_ranks_, my_coords_);
     if (init_status != kDone) return init_status;
     simulation_core_.SetGridData();
     init_status = halo_to_exchange_.Init(simulation_core_.borders_to_send_,
@@ -709,23 +710,25 @@ namespace onza {
              process_rank_);
       return kErrorUninitiatedSimulationCore;
     }  // end of if simulation core is not initiated
-    int isRunning = 1;
     if (process_rank_ == 0) printf("Start of stepping!\n");
     double start_time, end_time;
     start_time = MPI_Wtime();
-    do {
+    while (simulation_core_.StepTime()) {
       simulation_core_.PrepareBordersToSend();
-      // Sending borders, prepared with simulation_core see
+      // Sending borders, prepared with simulation_core. See also
       // HaloExchangeProcess::InitSimulation(). Borders are used
       // directly by pointer.
       halo_to_exchange_.StartNonBlockingExchange();
-      isRunning = simulation_core_.DoStep();
+      simulation_core_.Snapshot();
+      simulation_core_.PrepareSource();
+      simulation_core_.DoStep();
       halo_to_exchange_.FinishNonBlockingExchange();
-    } while (isRunning);
+      simulation_core_.DoBorderStep();
+    }  // end of while time is stepping 
     end_time   = MPI_Wtime();
     double total_time_stepping = end_time-start_time;
     if (process_rank_ == 0)
-      printf("Stepping finidhed!\nThat took %f seconds(%f s/step).\n",
+      printf("Stepping finished!\nThat took %f seconds (%f s/step).\n",
              total_time_stepping,
              total_time_stepping/simulation_core_.total_time_steps());
     return kDone;
