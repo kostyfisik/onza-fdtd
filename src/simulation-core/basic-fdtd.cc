@@ -33,12 +33,13 @@ namespace onza {
         if (neighbours_ranks_[border] != MPI_PROC_NULL) {
           if (neighbours_ranks_[border] != process_rank_)
             borders_to_send_(border)(component, all_x_, all_y_, all_z_)
-              = data_(borders_range_(border, component))(the_only_component_index,
-                                                         all_x_, all_y_, all_z_);
+              = data_(borders_to_send_range_(border, component))
+              (the_only_component_index, all_x_, all_y_, all_z_);
           else
-            received_borders_(opposite_border)(component, all_x_, all_y_, all_z_)
-              = data_(borders_range_(border, component))(the_only_component_index,
-                                                         all_x_, all_y_, all_z_);
+            received_borders_(opposite_border)
+              (component, all_x_, all_y_, all_z_)
+              = data_(borders_to_send_range_(border, component))
+              (the_only_component_index, all_x_, all_y_, all_z_);
         }  // end of if neighbour receiver if valid
       }  // end of for component
     }  // end of for border
@@ -70,9 +71,8 @@ namespace onza {
               my_coords_[kAxisX], my_coords_[kAxisY], my_coords_[kAxisZ]);      
       FILE *snapshot;
       snapshot = fopen(filename, "w");
-      int data_x_dimension = 1;
-      int offset_x = my_coords_[kAxisX] * data_.extent(data_x_dimension);
-      for (int i = 0; i < data_.extent(data_x_dimension); ++i)
+      int offset_x = my_coords_[kAxisX] * subdomain_size_[kAxisX];
+      for (int i = 0; i < subdomain_size_[kAxisX]; ++i)
         fprintf(snapshot,"%i\t%g\n", offset_x + i,
                 data_(static_cast<int>(kEz), i, 0, 0));
       fclose(snapshot);
@@ -97,40 +97,97 @@ namespace onza {
   ///
   /// @warning  It is repeated MANY times!
   /// @todo1 Check not doing data copying during algorithm call.
-  void BasicSimulationCore::FDTD_1D_axis_x(
-      blitz::Array<double, 1+kDimensions> data,
-      blitz::Range x,
-      blitz::Range y,
-      blitz::Range z) {
+  void BasicSimulationCore::FDTD_1D_axis_x(blitz::Range x,
+                                           blitz::Range y,
+                                           blitz::Range z) {
     // 1D test FDTD algorithm
     /// @todo1 Implement variable sized array for constants.
     // impedance of free space.    
     double imp0 = 377.0;
     double inv_imp0 = 1.0/imp0;
-    data(kHy    , x    , y, z) =
-        data(kHy, x    , y, z)
-      + data(kEz, x + 1, y, z) * inv_imp0
-      - data(kEz, x    , y, z) * inv_imp0;
-    //  ez[mm] = ez[mm] + (hy[mm] - hy[mm - 1]) * imp0 / epsR[mm];
-    data(kEz          , x  , y, z) =
-        data(kEz      , x  , y, z)
-      + data(kHy      , x  , y, z)
-        * data(kInvEps, x  , y, z)
+    // current time snapshot in snapshots array
+    int t = time_depth_ - 2;
+    // Hy
+    data_snapshot_    (t)(kHy, x    , y, z) =
+      data_snapshot_  (t  )(kHy, x    , y, z)
+      + data_snapshot_(t  )(kEz, x + 1, y, z) * inv_imp0
+      - data_snapshot_(t  )(kEz, x    , y, z) * inv_imp0;
+    // Ez
+    data_snapshot_      (t)(kEz    , x  , y, z) =
+        data_snapshot_  (t  )(kEz    , x  , y, z)
+      + data_snapshot_  (t)(kHy    , x  , y, z)
+        * data_snapshot_(t  )(kInvEps, x  , y, z)
         * imp0
-      - data(kHy      , x-1, y, z)
-        * data(kInvEps, x  , y, z)
+      - data_snapshot_  (t)(kHy    , x-1, y, z)
+        * data_snapshot_(t  )(kInvEps, x  , y, z)
         * imp0
-      + data(kSrcEz   , x  , y, z);
+      + data_snapshot_  (t  )(kSrcEz , x  , y, z);
+    // // Hy
+    // data_snapshot_    (t+1)(kHy, x    , y, z) =
+    //   data_snapshot_  (t  )(kHy, x    , y, z)
+    //   + data_snapshot_(t  )(kEz, x + 1, y, z) * inv_imp0
+    //   - data_snapshot_(t  )(kEz, x    , y, z) * inv_imp0;
+    // // Ez
+    // data_snapshot_      (t+1)(kEz    , x  , y, z) =
+    //     data_snapshot_  (t  )(kEz    , x  , y, z)
+    //   + data_snapshot_  (t+1)(kHy    , x  , y, z)
+    //     * data_snapshot_(t  )(kInvEps, x  , y, z)
+    //     * imp0
+    //   - data_snapshot_  (t+1)(kHy    , x-1, y, z)
+    //     * data_snapshot_(t  )(kInvEps, x  , y, z)
+    //     * imp0
+    //   + data_snapshot_  (t  )(kSrcEz , x  , y, z);
   }  // end of BasicSimulationCore::FDTD_1D_axis_x()
+  // ********************************************************************** //
+  // ********************************************************************** //
+  // ********************************************************************** //
+  /// @brief Cycle snapshots before new timestep.
+  ///
+  /// Rearrange references to snapshot array so that
+  /// data_snapshot_(timestep) has data of data_snapshot_(timestep+1)
+  /// @warning It is repeated MANY times!
+  void BasicSimulationCore::CycleSnapshots() {
+    data_snapshot_(time_depth_-1) = data_snapshot_(time_depth_-2); //debug
+    data_.reference(data_snapshot_(0));
+    for (int time = 0; time < time_depth_-1; ++time)
+      data_snapshot_(time).reference(data_snapshot_(time+1));
+    data_snapshot_(time_depth_-1).reference(data_);
+    data_.reference(data_snapshot_(time_depth_-2));
+  }  // end of BasicSimulationCore::CycleSnapshots()
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
   /// @brief Do FDTD stepping for border part of grid data.
   ///
+  /// @see PrepareBordersToSend().
   /// @warning  It is repeated MANY times! 
   void BasicSimulationCore::DoBorderStep() {
+    // Copy received border do grid data.
+    for (int border = kBorderLeft; border < kDimensions*2; ++border) {
+      for (int component = 0;
+           component < number_of_components_to_exchange_;
+           ++component) {
+        const int the_only_component_index = 0;
+        int opposite_border = (border + kDimensions) % (kDimensions*2);
+        if (neighbours_ranks_[border] != MPI_PROC_NULL)
+          data_(received_borders_range_(border, component))
+                  (the_only_component_index, all_x_, all_y_, all_z_)
+            = received_borders_(border)(component, all_x_, all_y_, all_z_);
+      }  // end of for component
+    }  // end of for border
     //debug Hardly selecting FDTD algorithm.
-    // FDTD_1D_axis_x(data_, inner_x_, inner_y_, inner_z_);
+    if (neighbours_ranks_[kBorderLeft] != MPI_PROC_NULL)
+      FDTD_1D_axis_x(data_border_range_[kBorderLeft], all_y_, all_z_);
+    if (neighbours_ranks_[kBorderRight] != MPI_PROC_NULL)
+      FDTD_1D_axis_x(data_border_range_[kBorderRight], all_y_, all_z_);
+    if (neighbours_ranks_[kBorderBottom] != MPI_PROC_NULL)
+      FDTD_1D_axis_x(all_x_, data_border_range_[kBorderBottom], all_z_);
+    if (neighbours_ranks_[kBorderTop] != MPI_PROC_NULL)
+      FDTD_1D_axis_x(all_x_, data_border_range_[kBorderTop], all_z_);
+    if (neighbours_ranks_[kBorderBack] != MPI_PROC_NULL)
+      FDTD_1D_axis_x(all_x_, all_y_, data_border_range_[kBorderBack]);
+    if (neighbours_ranks_[kBorderFront] != MPI_PROC_NULL)
+      FDTD_1D_axis_x(all_x_, all_y_, data_border_range_[kBorderFront]);
   }  // end of BasicSimulationCore::DoStep()
   // ********************************************************************** //
   // ********************************************************************** //
@@ -140,7 +197,7 @@ namespace onza {
   /// @warning  It is repeated MANY times! 
   void BasicSimulationCore::DoStep() {
     //debug Hardly selecting FDTD algorithm.
-    FDTD_1D_axis_x(data_, inner_x_, inner_y_, inner_z_);
+    FDTD_1D_axis_x(inner_x_, inner_y_, inner_z_);
   }  // end of BasicSimulationCore::DoStep()
   // ********************************************************************** //
   // ********************************************************************** //
@@ -156,6 +213,11 @@ namespace onza {
     //   int z = 0;
     //   std::cout << data_(kEz, all_x_, all_y_, 0) << std::endl;
     // }
+    // Prepare snapshots.
+    for (int i = 0; i < time_depth_; ++i) {
+      if (i == time_depth_ - 2) continue;
+      data_snapshot_(i) = data_snapshot_(time_depth_-2);
+    }
     return kDone;
   }
   // ********************************************************************** //
@@ -191,52 +253,101 @@ namespace onza {
     process_rank_ = process_rank;
     snapshot_interval_ = simulation_input_config_.snapshot_interval();
     snapshot_frame_ = 0;
-      for (int axis = kAxisX; axis < kDimensions; ++axis)
+    for (int axis = kAxisX; axis < kDimensions; ++axis)
       subdomain_size_[axis] = subdomain_size[axis];
+    time_depth_ = simulation_input_config_.time_depth();
     total_time_steps_ = simulation_input_config_.total_time_steps();
     // Resize grid data to fit subdomain of current MPI process.
     int max_x = subdomain_size_[kAxisX]-1;
     int max_y = subdomain_size_[kAxisY]-1;
     int max_z = subdomain_size_[kAxisZ]-1;
-    data_.resize(number_of_grid_data_components_, max_x + 1, max_y + 1, max_z + 1);
+    if (time_depth_ < 2) {
+      printf("Error! FDTD algorithm`s time depth should be >= 2!\n");
+      return kErrorWrongTimeDepth;
+    }
+    data_snapshot_.resize(time_depth_);
+    // data_.resize(blitz::shape(number_of_grid_data_components_,
+    //                           max_x + 1 + halo_width_*2,
+    //                           max_y + 1 + halo_width_*2,
+    //                           max_z + 1 + halo_width_*2));
+    // data_.reindexSelf(blitz::shape(0, -halo_width_,
+    //                                -halo_width_, -halo_width_));
+    for (int time = 0; time < time_depth_; ++time) {
+      data_snapshot_(time).resize(blitz::shape(number_of_grid_data_components_,
+                                max_x + 1 + halo_width_*2,
+                                max_y + 1 + halo_width_*2,
+                                max_z + 1 + halo_width_*2));
+      data_snapshot_(time).reindexSelf(blitz::shape(0, -halo_width_,
+                                     -halo_width_, -halo_width_));
+    }
+    data_.reference(data_snapshot_(time_depth_-2));
+    // data_snapshot_(time_depth_ - 2).reference(data_);
     // Specify inner range in each dimension.
-    if (max_x - halo_width_ > 0)
+    if (max_x - 2*halo_width_ > 0)
       inner_x_ = blitz::Range(halo_width_, max_x - halo_width_);
-    else
+    else  // reduced x dimension
       inner_x_ = blitz::Range(0          , max_x);
-    if (max_y - halo_width_ > 0)
+    if (max_y - 2*halo_width_ > 0)
       inner_y_ = blitz::Range(halo_width_, max_y - halo_width_);
-    else
+    else  // reduced y dimension
       inner_y_ = blitz::Range(0          , max_y);
-    if (max_z - halo_width_ > 0)
+    if (max_z - 2*halo_width_ > 0)
       inner_z_ = blitz::Range(halo_width_, max_z - halo_width_);
-    else
+    else  // reduced z dimension
       inner_z_ = blitz::Range(0          , max_z);
+    // Specify data border range for each border.
+    data_border_range_[kBorderLeft] = blitz::Range(0, halo_width_ - 1);
+    data_border_range_[kBorderBottom] = blitz::Range(0, halo_width_ - 1);
+    data_border_range_[kBorderBack] = blitz::Range(0, halo_width_ - 1);
+    data_border_range_[kBorderRight] = blitz::Range(max_x - halo_width_ + 1, max_x);
+    data_border_range_[kBorderTop] = blitz::Range(max_y - halo_width_ + 1, max_y);
+    data_border_range_[kBorderFront] = blitz::Range(max_z - halo_width_ + 1, max_z);
     // Define ranges for borders selection.
-    borders_range_.resize(kDimensions*2, number_of_components_to_exchange_);
+    borders_to_send_range_.resize(kDimensions*2, number_of_components_to_exchange_);
+    received_borders_range_.resize(kDimensions*2, number_of_components_to_exchange_);
     for (int component = 0; component < number_of_components_to_exchange_; ++component) {
       // Describe indexes for each border.
       typedef blitz::RectDomain<1+kDimensions> rd;
       typedef blitz::TinyVector<int,4> vec;
       int c = components_to_exchange_(component);
-      borders_range_(static_cast<int>(kBorderLeft), component)
+      // Ranges for border to be send.
+      borders_to_send_range_(static_cast<int>(kBorderLeft), component)
         = rd(vec(c, 0            , 0    , 0    ),
              vec(c, halo_width_-1, max_y, max_z));
-      borders_range_(static_cast<int>(kBorderRight), component)
+      borders_to_send_range_(static_cast<int>(kBorderRight), component)
         = rd(vec(c, max_x - (halo_width_-1), 0    , 0    ),
              vec(c, max_x                  , max_y, max_z));
-      borders_range_(static_cast<int>(kBorderBottom), component)
+      borders_to_send_range_(static_cast<int>(kBorderBottom), component)
         = rd(vec(c, 0    , 0            , 0    ),
              vec(c, max_x, halo_width_-1, max_z));
-      borders_range_(static_cast<int>(kBorderTop), component)
+      borders_to_send_range_(static_cast<int>(kBorderTop), component)
         = rd(vec(c, 0    , max_y - (halo_width_-1), 0    ),
              vec(c, max_x, max_y                  , max_z));
-      borders_range_(static_cast<int>(kBorderBack), component)
+      borders_to_send_range_(static_cast<int>(kBorderBack), component)
         = rd(vec(c, 0    , 0    , 0            ),
              vec(c, max_x, max_y, halo_width_-1));
-      borders_range_(static_cast<int>(kBorderFront), component)
+      borders_to_send_range_(static_cast<int>(kBorderFront), component)
         = rd(vec(c, 0    , 0    , max_z - (halo_width_-1)),
              vec(c, max_x, max_y, max_z                  ));
+      // Ranges for border to be received.
+      received_borders_range_(static_cast<int>(kBorderLeft), component)
+        = rd(vec(c, -halo_width_, 0    , 0    ),
+             vec(c, -1          , max_y, max_z));
+      received_borders_range_(static_cast<int>(kBorderRight), component)
+        = rd(vec(c, max_x + 1           , 0    , 0    ),
+             vec(c, max_x + halo_width_ , max_y, max_z));
+      received_borders_range_(static_cast<int>(kBorderBottom), component)
+        = rd(vec(c, 0    , -halo_width_, 0    ),
+             vec(c, max_x, -1          , max_z));
+      received_borders_range_(static_cast<int>(kBorderTop), component)
+        = rd(vec(c, 0    , max_y +1           , 0    ),
+             vec(c, max_x, max_y + halo_width_, max_z));
+      received_borders_range_(static_cast<int>(kBorderBack), component)
+        = rd(vec(c, 0    , 0    , -halo_width_),
+             vec(c, max_x, max_y, -1          ));
+      received_borders_range_(static_cast<int>(kBorderFront), component)
+        = rd(vec(c, 0    , 0    , max_z + 1          ),
+             vec(c, max_x, max_y, max_z + halo_width_));
     }  // end of typedef block
     // Resize buffer for border exchange.
     borders_to_send_.resize(kDimensions*2);
@@ -287,10 +398,10 @@ namespace onza {
     grid_input_config_.set_total_grid_length(length_x, length_y, length_z);
     // ********************************************************************** //
     // Setting boundary_condition_.
-    // boundary_condition_[kBorderRight] = kBoudaryConditionPML;
-    // boundary_condition_[kBorderLeft] = kBoudaryConditionPML;
-    boundary_condition_[kBorderRight] = kBoudaryConditionPeriodical;
-    boundary_condition_[kBorderLeft] = kBoudaryConditionPeriodical;
+    boundary_condition_[kBorderRight] = kBoudaryConditionPML;
+    boundary_condition_[kBorderLeft] = kBoudaryConditionPML;
+    // boundary_condition_[kBorderRight] = kBoudaryConditionPeriodical;
+    // boundary_condition_[kBorderLeft] = kBoudaryConditionPeriodical;
     boundary_condition_[kBorderTop] = kBoudaryConditionPML;
     boundary_condition_[kBorderBottom] = kBoudaryConditionPML;
     // boundary_condition_[kBorderTop] = kBoudaryConditionPeriodical;
@@ -347,6 +458,7 @@ namespace onza {
     // For most simple case of 1D  we will need Ez, Hy, epsilon, srcEz.
     snapshot_interval_ = 5.0;
     halo_width_ = 1;
+    time_depth_ = 2;
     number_of_grid_data_components_ = 4;
     int components_to_exchange[] = {kEz, kHy};
     // int components_to_exchange[] = {kEx, kEy};
@@ -355,6 +467,7 @@ namespace onza {
     for (int i = 0; i < number_of_components_to_exchange_; ++i)
       components_to_exchange_(i) = components_to_exchange[i];
     total_time_steps_ = 450;
+    // total_time_steps_ = 90;
     status_ = kInputConfigAllDone;
     return kDone;
   };  // end of SimulationInputConfig::ReadConfig

@@ -715,6 +715,10 @@ namespace onza {
     start_time = MPI_Wtime();
     while (simulation_core_.StepTime()) {
       simulation_core_.PrepareBordersToSend();
+      halo_to_exchange_.Init(simulation_core_.borders_to_send_,
+                             simulation_core_.received_borders_,
+                             process_rank_, neighbours_ranks_,
+                             cartesian_grid_communicator_);
       // Sending borders, prepared with simulation_core. See also
       // HaloExchangeProcess::InitSimulation(). Borders are used
       // directly by pointer.
@@ -724,6 +728,7 @@ namespace onza {
       simulation_core_.DoStep();
       halo_to_exchange_.FinishNonBlockingExchange();
       simulation_core_.DoBorderStep();
+      simulation_core_.CycleSnapshots();
     }  // end of while time is stepping 
     end_time   = MPI_Wtime();
     double total_time_stepping = end_time-start_time;

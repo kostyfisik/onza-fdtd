@@ -39,6 +39,8 @@ namespace onza {
     /// Buffers to send and recieve  halo has different sizes.
     /// Checked with HaloToExchange::Init().
     kErrorSendAndReceiveBuffersHasDifferentSizes,
+    /// FDTD algorithm`s time depth should be >= 1!
+    kErrorWrongTimeDepth,
     /// Using InputConfig too early
     kErrorUsingInputConfigTooEarly
   };

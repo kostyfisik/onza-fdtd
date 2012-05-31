@@ -66,6 +66,8 @@ namespace onza {
     /// @brief Accesor
     int halo_width() {return halo_width_;}
     /// @brief Accesor
+    int time_depth() {return time_depth_;}
+    /// @brief Accesor
     int number_of_grid_data_components() {return number_of_grid_data_components_;}
     /// @brief Accesor
     int number_of_components_to_exchange() {return number_of_components_to_exchange_;}
@@ -93,6 +95,11 @@ namespace onza {
     /// size of array for all kDimensions. Values are from
     /// #BoundaryCondition
     int boundary_condition_[6];
+    /// @brief Depth of FDTD in time.
+    ///
+    /// Simple FDTD has depth equal to 2 - to get data for next step
+    /// it needs data from previous step.
+    int time_depth_;
     /// @brief Width of halo to exchange.
     int halo_width_;
     /// @brief PML width for model boundary
@@ -163,11 +170,11 @@ namespace onza {
     /// @brief Prepare source component in data_.
     void PrepareSource();
     /// @brief FDTD algorithm for 1D case (length in kAxisX dimenstion).
-    void FDTD_1D_axis_x(
-      blitz::Array<double, 1+kDimensions> data,
-      blitz::Range x,
-      blitz::Range y,
-      blitz::Range z);
+    void FDTD_1D_axis_x(blitz::Range x,
+                        blitz::Range y,
+                        blitz::Range z);
+    /// @brief Cycle snapshots before new timestep.
+    void CycleSnapshots();
     /// @brief Do FDTD stepping for border part of grid data.
     void DoBorderStep();
     /// @brief Do FDTD stepping for internal part of grid data.
@@ -180,6 +187,13 @@ namespace onza {
    private:
     /// @brief Predefined ranges for all grid points in x, y and z dimensions.
     blitz::Range all_x_, all_y_, all_z_;
+    /// @brief Predefined ranges for data grid points inside border.
+    blitz::Range data_border_range_[kDimensions*2];
+    /// @brief Depth of FDTD in time.
+    ///
+    /// Simple FDTD has depth equal to 2 - to get data for next step
+    /// it needs data from previous step.
+    int time_depth_;
     /// @brief Width of halo to exchange.
     int halo_width_;
     /// @brief Predefined ranges for inner grid points in x, y and z dimensions.
@@ -225,13 +239,21 @@ namespace onza {
     /// access components values, e.g. data_(kEx, x, y, z) or
     /// data_(kEps, x, y, z);
     blitz::Array<double, 1+kDimensions> data_;
+    /// @brief Grid data components snapshots at different timesteps.
+    ///
+    /// data_snapshot_(time_depth_ - 2) is a reference to data_ and an only
+    /// data_snapshot_ exchanging its borders.
+    /// data_snapshot_(time_depth_ - 1) is reserved for the results, calculated at
+    /// current step.
+    blitz::Array<blitz::Array<double, 1+kDimensions>,1> data_snapshot_;
     /// @brief Borders ranges inside grid.
     /// First dim - border name (from kBorderLeft to kBorderFront)
     /// Second dim - grid data component.
-    /// e.g borders_range_(kBorderLeft, 2) is range of indexes in
+    /// e.g borders_to_send_range_(kBorderLeft, 2) is range of indexes in
     /// data_ for border kBorderLeft and component
     /// components_to_exchange_(2).
-    blitz::Array<blitz::RectDomain<1+kDimensions>,2> borders_range_;
+    blitz::Array<blitz::RectDomain<1+kDimensions>,2> borders_to_send_range_,
+        received_borders_range_;
   };  // end of class BasicSimulationCore
 }  // end of namespace onza
 #endif  // SRC_SIMULATION_CORE_BASIC_FDTD_H_
