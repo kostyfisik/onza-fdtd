@@ -148,23 +148,22 @@ namespace onza {
   /// @warning It is repeated MANY times!
   void BasicSimulationCore::CycleSnapshots() {
     // //debug
-    // if (process_rank_ == kOutput && local_time_step_ >= 50 &&
-    //     local_time_step_ < 54) {
-    //   int z = 0;
-    //   using namespace blitz;
-    //   std::cout << "Cycle Do step["<<local_time_step_ <<"}: "
-    //             << data_snapshot_(time_depth_-2)(Range(0,1),
-    //                                              all_x_,
-    //                                              // Range(subdomain_size_[kAxisX]-10,
-    //                                              //       subdomain_size_[kAxisX]-1),
-    //                                              0, 0) << std::endl;
-    //   // std::cout << "Do step next["<<local_time_step_ <<"}: "
-    //   //           << data_snapshot_(time_depth_-1)(Range(0,1),
-    //   //                                            Range(subdomain_size_[kAxisX]-10,
-    //   //                                                  subdomain_size_[kAxisX]-1),
-    //   //                                            0, 0) << std::endl;
-    // }
-  //data_snapshot_(time_depth_-1) = data_snapshot_(time_depth_-2); //debug
+    if (process_rank_ == kOutput && local_time_step_ >= 50 &&
+        local_time_step_ < 56) {
+      int z = 0;
+      using namespace blitz;
+      std::cout << "Cycle Do step["<<local_time_step_ <<"}: "
+                << data_snapshot_(time_depth_-2)(Range(0,1),
+                                                 all_x_,
+                                                 // Range(subdomain_size_[kAxisX]-10,
+                                                 //       subdomain_size_[kAxisX]-1),
+                                                 0, 0) << std::endl;
+      // std::cout << "Do step next["<<local_time_step_ <<"}: "
+      //           << data_snapshot_(time_depth_-1)(Range(0,1),
+      //                                            Range(subdomain_size_[kAxisX]-10,
+      //                                                  subdomain_size_[kAxisX]-1),
+      //                                            0, 0) << std::endl;
+    }//end of if debug
     data_.reference(data_snapshot_(0));
     for (int time = 0; time < time_depth_-1; ++time)
       data_snapshot_(time).reference(data_snapshot_(time+1));
@@ -351,11 +350,17 @@ namespace onza {
     }  // end of for time of snapshot
     // Special reference to current time step data.
     data_.reference(data_snapshot_(time_depth_-2));
-    // Specify inner range in each dimension.
-    inner_x_ = blitz::Range(-halo_width_ * is_reduced_x, max_x);
-    inner_y_ = blitz::Range(-halo_width_ * is_reduced_y, max_y);
-    inner_z_ = blitz::Range(-halo_width_ * is_reduced_z, max_z);
-    // Specify data border range for each border.
+    // Specify ranges in each dimension for FDTD time stepping. For
+    // ease of defining FDTD equations range can be shifted in forward
+    // or backwrd direction for any decimal value less or equal
+    // halo_width_. Note that aligment shift for each FDTD equation
+    // should be applied to provide all ranges to be valid.
+    inner_x_ = blitz::Range(0, max_x);
+    inner_y_ = blitz::Range(0, max_y);
+    inner_z_ = blitz::Range(0, max_z);
+    // Specify data border range for each border. Due to choice of
+    // aligment shift in FDTD equation low and hi index ranges have
+    // different number of elements.
     data_border_range_[kBorderLeft] = blitz::Range(-halo_width_, halo_width_);
     // data_border_range_[kBorderBottom] = blitz::Range(-halo_width_, halo_width_);
     // data_border_range_[kBorderBack] = blitz::Range(-halo_width_, halo_width_);
