@@ -43,18 +43,6 @@ namespace onza {
         }  // end of if neighbour receiver if valid
       }  // end of for component
     }  // end of for border
-    // if (process_rank_ == kOutput) { 
-    //   printf("\nPrepare!!!\n");
-    //   for (int border = kBorderLeft; border < kDimensions*2; ++border) {
-    //     //if (border != kBorderLeft) continue;
-    //     printf("border[%i]:\nSending: ", border);
-    //     std::cout << borders_to_send_(border);
-    //     printf("\nReceiving: ");
-    //     std::cout << received_borders_(border);
-    //     printf("\n");
-    //   }  // end of for border
-    // }  // end of if process_rank_ == kOutput
-
   }  // end of BasicSimulationCore::PrepareBordersToSend()
   // ********************************************************************** //
   // ********************************************************************** //
@@ -147,23 +135,16 @@ namespace onza {
   /// data_snapshot_(timestep) has data of data_snapshot_(timestep+1)
   /// @warning It is repeated MANY times!
   void BasicSimulationCore::CycleSnapshots() {
-    // //debug
-    if (process_rank_ == kOutput && local_time_step_ >= 50 &&
-        local_time_step_ < 56) {
-      int z = 0;
-      using namespace blitz;
-      std::cout << "Cycle Do step["<<local_time_step_ <<"}: "
-                << data_snapshot_(time_depth_-2)(Range(0,1),
-                                                 all_x_,
-                                                 // Range(subdomain_size_[kAxisX]-10,
-                                                 //       subdomain_size_[kAxisX]-1),
-                                                 0, 0) << std::endl;
-      // std::cout << "Do step next["<<local_time_step_ <<"}: "
-      //           << data_snapshot_(time_depth_-1)(Range(0,1),
-      //                                            Range(subdomain_size_[kAxisX]-10,
-      //                                                  subdomain_size_[kAxisX]-1),
-      //                                            0, 0) << std::endl;
-    }//end of if debug
+    //debug
+    // if (process_rank_ == kOutput && local_time_step_ >= 50 &&
+    //     local_time_step_ < 56) {
+    //   int z = 0;
+    //   using namespace blitz;
+    //   std::cout << "Cycle Do step["<<local_time_step_ <<"}: "
+    //             << data_snapshot_(time_depth_-2)(Range(0,1),
+    //                                              all_x_,
+    //                                              0, 0) << std::endl;
+    // }//end of if debug
     data_.reference(data_snapshot_(0));
     for (int time = 0; time < time_depth_-1; ++time)
       data_snapshot_(time).reference(data_snapshot_(time+1));
@@ -178,14 +159,6 @@ namespace onza {
   /// @see PrepareBordersToSend().
   /// @warning  It is repeated MANY times! 
   void BasicSimulationCore::DoBorderStep() {
-    //debug
-    // if (process_rank_ == kOutput && local_time_step_ >= 50 &&
-    //     local_time_step_ < 54) {
-    //   int z = 0;
-    //   std::cout << "After Finish Exchange  step["<<local_time_step_ <<"}: "
-    //             << data_snapshot_(time_depth_-2)(blitz::Range(0,1),
-    //                                              all_x_, all_y_, 0) << std::endl;
-    // }
     // Copy received border do grid data.
     for (int border = kBorderLeft; border < kDimensions*2; ++border) {
       for (int component = 0;
@@ -212,24 +185,6 @@ namespace onza {
       FDTD_1D_axis_x(all_x_, all_y_, data_border_range_[kBorderBack]);
     if (neighbours_ranks_[kBorderFront] != MPI_PROC_NULL)
       FDTD_1D_axis_x(all_x_, all_y_, data_border_range_[kBorderFront]);
-    // //debug
-    // if (process_rank_ == kOutput && local_time_step_ >= 50 &&
-    //     local_time_step_ < 54) {
-    //   int z = 0;
-    //   using namespace blitz;
-    //   std::cout << "After border step["<<local_time_step_ <<"}: "
-    //             << data_snapshot_(time_depth_-2)(Range(0,1),
-    //                                              all_x_,
-    //                                              // Range(subdomain_size_[kAxisX]-10,
-    //                                              //       subdomain_size_[kAxisX]-1),
-    //                                              0, 0) << std::endl;
-    //   std::cout << "After border next step["<<local_time_step_ <<"}: "
-    //             << data_snapshot_(time_depth_-1)(Range(0,1),
-    //                                              all_x_,
-    //                                              // Range(subdomain_size_[kAxisX]-10,
-    //                                              //       subdomain_size_[kAxisX]-1),
-    //                                              0, 0) << std::endl;
-    // }
   }  // end of BasicSimulationCore::DoStep()
   // ********************************************************************** //
   // ********************************************************************** //
@@ -240,24 +195,6 @@ namespace onza {
   void BasicSimulationCore::DoStep() {
     //debug Hardly selecting FDTD algorithm.
     FDTD_1D_axis_x(inner_x_, inner_y_, inner_z_);
-    //debug
-    // if (process_rank_ == kOutput && local_time_step_ >= 50 &&
-    //     local_time_step_ < 54) {
-    //   int z = 0;
-    //   using namespace blitz;
-    //   std::cout << "After do step["<<local_time_step_ <<"}: inner " <<inner_x_ 
-    //             << data_snapshot_(time_depth_-2)(Range(0,1),
-    //                                              all_x_,
-    //                                              // Range(subdomain_size_[kAxisX]-10,
-    //                                              //       subdomain_size_[kAxisX]-1),
-    //                                              0, 0) << std::endl;
-    //   std::cout << "After do next step["<<local_time_step_ <<"}: "
-    //             << data_snapshot_(time_depth_-1)(Range(0,1),
-    //                                              all_x_,
-    //                                              // Range(subdomain_size_[kAxisX]-10,
-    //                                              //       subdomain_size_[kAxisX]-1),
-    //                                              0, 0) << std::endl;
-    // }// end of if debug
   }  // end of BasicSimulationCore::DoStep()
   // ********************************************************************** //
   // ********************************************************************** //
@@ -334,19 +271,19 @@ namespace onza {
     int is_reduced_x = max_x == 0 ? 0 : 1;
     int is_reduced_y = max_y == 0 ? 0 : 1;
     int is_reduced_z = max_z == 0 ? 0 : 1;
+    int halo_width_x = halo_width_ * is_reduced_x;
+    int halo_width_y = halo_width_ * is_reduced_y;
+    int halo_width_z = halo_width_ * is_reduced_z;
     for (int time = 0; time < time_depth_; ++time) {
       // Reduced dimensions are excluded from halo exchange to allow
       // pure 1D and 2D simulations with minimal overhead. While
       // reading config boundary conditions kBoudaryConditionReduced
       // should be set in this dimension.
       data_snapshot_(time).resize(blitz::shape(number_of_grid_data_components_,
-               max_x + 1 + halo_width_ * 2 * is_reduced_x,
-               max_y + 1 + halo_width_ * 2 * is_reduced_y,
-               max_z + 1 + halo_width_ * 2 * is_reduced_z));
-      data_snapshot_(time).reindexSelf(blitz::shape(0,
-                                 -halo_width_ * is_reduced_x,
-                                 -halo_width_ * is_reduced_y,
-                                 -halo_width_ * is_reduced_z));
+               max_x + 1 + halo_width_x * 2,   max_y + 1 + halo_width_y * 2,
+               max_z + 1 + halo_width_z * 2));
+      data_snapshot_(time).reindexSelf(blitz::shape(0, -halo_width_x,
+                                 -halo_width_y, -halo_width_z));
     }  // end of for time of snapshot
     // Special reference to current time step data.
     data_.reference(data_snapshot_(time_depth_-2));
@@ -358,28 +295,21 @@ namespace onza {
     inner_x_ = blitz::Range(0, max_x);
     inner_y_ = blitz::Range(0, max_y);
     inner_z_ = blitz::Range(0, max_z);
-    // Specify data border range for each border. Due to choice of
+    // Specify data range for each border. Due to choice of
     // aligment shift in FDTD equation low and hi index ranges have
     // different number of elements.
-    data_border_range_[kBorderLeft] = blitz::Range(-halo_width_, halo_width_);
-    // data_border_range_[kBorderBottom] = blitz::Range(-halo_width_, halo_width_);
-    // data_border_range_[kBorderBack] = blitz::Range(-halo_width_, halo_width_);
-    data_border_range_[kBorderRight] = blitz::Range(max_x - halo_width_, max_x);
-    // data_border_range_[kBorderTop] = blitz::Range(max_y - halo_width_, max_y);
-    // data_border_range_[kBorderFront] = blitz::Range(max_z - halo_width_, max_z);
-
-    // data_border_range_[kBorderLeft] = blitz::Range(0, halo_width_ - 1);
-    data_border_range_[kBorderBottom] = blitz::Range(0, halo_width_ - 1);
-    data_border_range_[kBorderBack] = blitz::Range(0, halo_width_ - 1);
-    // data_border_range_[kBorderRight] = blitz::Range(max_x - halo_width_ + 1,
-    //                                                 max_x);
-    data_border_range_[kBorderTop] = blitz::Range(max_y - halo_width_ + 1, max_y);
-    data_border_range_[kBorderFront] = blitz::Range(max_z - halo_width_ + 1, max_z);
-    // Define ranges for borders selection.
+    data_border_range_[kBorderLeft] = blitz::Range(-halo_width_x, halo_width_x);
+    data_border_range_[kBorderBottom] = blitz::Range(-halo_width_y, halo_width_y);
+    data_border_range_[kBorderBack] = blitz::Range(-halo_width_z, halo_width_z);
+    data_border_range_[kBorderRight] = blitz::Range(max_x - halo_width_x, max_x);
+    data_border_range_[kBorderTop] = blitz::Range(max_y - halo_width_y, max_y);
+    data_border_range_[kBorderFront] = blitz::Range(max_z - halo_width_z, max_z);
+    // Specify borders ranges for halo exchange.
+    // Used for quick selection in BasicSimulationCore::PrepareBordersToSend().
     borders_to_send_range_.resize(kDimensions*2, number_of_components_to_exchange_);
     received_borders_range_.resize(kDimensions*2, number_of_components_to_exchange_);
     for (int component = 0; component < number_of_components_to_exchange_; ++component) {
-      // Describe indexes for each border.
+      // Try to shorten notation
       typedef blitz::RectDomain<1+kDimensions> rd;
       typedef blitz::TinyVector<int,4> vec;
       int c = components_to_exchange_(component);
@@ -540,7 +470,8 @@ namespace onza {
     components_to_exchange_.resize(number_of_components_to_exchange_);
     for (int i = 0; i < number_of_components_to_exchange_; ++i)
       components_to_exchange_(i) = components_to_exchange[i];
-    total_time_steps_ = 450;
+    // total_time_steps_ = 450;
+    total_time_steps_ = 240;
     // total_time_steps_ = 100;
     // total_time_steps_ = 60;
     // total_time_steps_ = 4;

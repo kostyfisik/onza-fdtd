@@ -53,25 +53,12 @@ namespace onza {
     for (int border = kBorderLeft; border < kDimensions*2; ++border) {
       if (neighbours_ranks_[border] == MPI_PROC_NULL) continue;
       if (neighbours_ranks_[border] == process_rank_) continue;
+      // For debug it could be helpfull to have some status parser...
       // MPI_Wait(&isend_request_[border], &status);
       // MPI_Wait(&irecv_request_[border], &status);
       MPI_Wait(&isend_request_[border], MPI_STATUS_IGNORE);
       MPI_Wait(&irecv_request_[border], MPI_STATUS_IGNORE);
     }  // end of for borders wait
-    //debug
-    // if (process_rank_ == kOutput) { 
-    //   printf("\nAfter!!!\n");
-    //   for (int border = kBorderLeft; border < kDimensions*2; ++border) {
-    //     if (border != kBorderLeft) continue;
-    //     printf("border[%i]:\nWas sending: ", border);
-    //     for (int i = 0; i < number_of_elements_to_send_[border]; ++i)
-    //       printf("%g, ",*(borders_to_send_[border]+i));
-    //     printf("\nReceived: ");
-    //     for (int i = 0; i < number_of_elements_to_send_[border]; ++i)
-    //       printf("%g, ",*(received_borders_[border]+i));
-    //     printf("\n");
-    //   }  // end of for border
-    // }  // end of if process_rank_ == kOutput
   }  // end of HaloToExchange::FinishNonBlockingExchange()
   // ********************************************************************** //
   // ********************************************************************** //
@@ -598,13 +585,6 @@ namespace onza {
     // Re-evaluate optimization parameters for reduced (if present) case
     single_cell_optimal_volume /= static_cast<double>(all_processes);
     optimal_length = pow(single_cell_optimal_volume, 1.0/optimal_dimension);
-    /// %todo3 Remove debug output
-    // if (process_rank_ == kOutput) {
-    //   printf("optimal_length %.3g \n", optimal_length);
-    //   printf("single_cell_optimal_volume %.3g \n",
-    //          single_cell_optimal_volume);
-    //   printf("optimal_dimension %i \n", optimal_dimension);
-    // }
     // Set floor and ceil normalized_length guess.
     for (int i = kAxisX; i < kDimensions; ++i) {
       // Reduced dimenstion is not optimized.
