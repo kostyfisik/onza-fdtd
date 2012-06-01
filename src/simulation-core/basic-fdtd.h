@@ -159,8 +159,12 @@ namespace onza {
     /// @brief Parsing all input parameters into one object.
     SimulationInputConfig simulation_input_config_;
     /// @breif Initialize member data.
-    int Init(const int64_t subdomain_size[], int process_rank,
-             int neighbours_ranks[],int my_coords[]);
+    int Init(const int64_t subdomain_size[],
+             int process_rank, int neighbours_ranks[],
+             int my_coords[],
+             int64_t subdomain_start_index[],
+             int64_t subdomain_finish_index[]
+             );
     /// @brief Initialize grid data for all components
     int SetGridData();
     /// @brief Prepare borders to send
@@ -228,6 +232,18 @@ namespace onza {
     ///
     /// size == number of vertices
     int64_t subdomain_size_[kDimensions];
+    /// @breif Index of global model pointing to the beginnig of the
+    /// subdomain.
+    ///
+    /// 0 index of subdomain should refer to same part of model
+    /// as subdomain_start_index_
+    int64_t subdomain_start_index_[kDimensions];
+    /// @breif Index of global model pointing to the end of the
+    /// subdomain.
+    /// 
+    /// @breif subdomain_size_-1 index of subdomain should refer to
+    /// same part of model as subdomain_finish_index_
+    int64_t subdomain_finish_index_[kDimensions];
     /// @brief Total time steps in simulation.
     int64_t total_time_steps_;
     /// @brief List of components to exchange in halo.

@@ -42,20 +42,6 @@ namespace onza {
                 neighbours_ranks_[border], direction_tag,
                 cartesian_grid_communicator_, &isend_request_[border]);
     }  // end of for borders send
-
-
-    // if (process_rank_ == 0) { 
-    //   printf("\n\nAfter!!!\n\n");
-    //   for (int border = kBorderLeft; border < kDimensions*2; ++border) {
-    //     printf("border[%i]:\nSending: ", border);
-    //     for (int i = 0; i < number_of_elements_to_send_[border]; ++i)
-    //       printf("%g, ",*(borders_to_send_[border]+i));
-    //     printf("\nReceiving: ");
-    //     for (int i = 0; i < number_of_elements_to_send_[border]; ++i)
-    //       printf("%g, ",*(received_borders_[border]+i));
-    //     printf("\n\n");
-    //   }  // end of for border
-    // }  // end of if process_rank_ == 0
   }  // end of HaloToExchange::StartNonBlockingExchange()
   // ********************************************************************** //
   // ********************************************************************** //
@@ -72,6 +58,20 @@ namespace onza {
       MPI_Wait(&isend_request_[border], MPI_STATUS_IGNORE);
       MPI_Wait(&irecv_request_[border], MPI_STATUS_IGNORE);
     }  // end of for borders wait
+    //debug
+    // if (process_rank_ == kOutput) { 
+    //   printf("\nAfter!!!\n");
+    //   for (int border = kBorderLeft; border < kDimensions*2; ++border) {
+    //     if (border != kBorderLeft) continue;
+    //     printf("border[%i]:\nWas sending: ", border);
+    //     for (int i = 0; i < number_of_elements_to_send_[border]; ++i)
+    //       printf("%g, ",*(borders_to_send_[border]+i));
+    //     printf("\nReceived: ");
+    //     for (int i = 0; i < number_of_elements_to_send_[border]; ++i)
+    //       printf("%g, ",*(received_borders_[border]+i));
+    //     printf("\n");
+    //   }  // end of for border
+    // }  // end of if process_rank_ == kOutput
   }  // end of HaloToExchange::FinishNonBlockingExchange()
   // ********************************************************************** //
   // ********************************************************************** //
@@ -343,7 +343,7 @@ namespace onza {
       subdomain_size_[axis] = subdomain_finish_index_[axis]
         - subdomain_start_index_[axis] + 1;
       int halo_width = simulation_core_.simulation_input_config_.halo_width();
-      if (subdomain_size_[axis] < halo_width) {
+      if (subdomain_size_[axis] < halo_width && subdomain_size_[axis] != 1) {
         printf("Proc[%i] Error! Subdomain size[%i] %li less than halo width %i\n",
                process_rank_, axis, subdomain_size_[axis], halo_width);
         printf("Use less MPI processes, algorithm with smaller halo or bigger domain!\n");
@@ -411,7 +411,7 @@ namespace onza {
     const int64_t all_processes = processes_total_number_;
     // (1) Topology decomposition.
     SimpleTopologyDecomposition3D(all_processes, length, subdomains_);
-    if (process_rank_ == 0) {
+    if (process_rank_ == kOutput) {
       printf("Used MPI procs %li of %i (%.3g%%), subdomains_ (%li,%li,%li), ",
              MultiplyComponents(subdomains_), processes_total_number_,
              MultiplyComponents(subdomains_)
@@ -423,7 +423,7 @@ namespace onza {
              orig_length[kAxisY], orig_length[kAxisZ],
              length[kAxisX],
              length[kAxisY], length[kAxisZ]);
-    }  // end of if process_rank_ == 0 output
+    }  // end of if process_rank_ == kOutput
     // (2) Start new communicator.
     if (StartCartesianGridCommunicator() != kDone)
       return kErrorProcessNotInGrid;
@@ -520,7 +520,9 @@ namespace onza {
   /// Initialize simulation_core_ member data.
   int HaloExchangeProcess::InitSimulation() {
     int init_status = simulation_core_.Init(subdomain_size_,process_rank_,
-                                            neighbours_ranks_, my_coords_);
+                                            neighbours_ranks_, my_coords_,
+                                            subdomain_start_index_,
+                                            subdomain_finish_index_);
     if (init_status != kDone) return init_status;
     simulation_core_.SetGridData();
     init_status = halo_to_exchange_.Init(simulation_core_.borders_to_send_,
@@ -597,7 +599,7 @@ namespace onza {
     single_cell_optimal_volume /= static_cast<double>(all_processes);
     optimal_length = pow(single_cell_optimal_volume, 1.0/optimal_dimension);
     /// %todo3 Remove debug output
-    // if (process_rank_ == 0) {
+    // if (process_rank_ == kOutput) {
     //   printf("optimal_length %.3g \n", optimal_length);
     //   printf("single_cell_optimal_volume %.3g \n",
     //          single_cell_optimal_volume);
@@ -710,15 +712,11 @@ namespace onza {
              process_rank_);
       return kErrorUninitiatedSimulationCore;
     }  // end of if simulation core is not initiated
-    if (process_rank_ == 0) printf("Start of stepping!\n");
+    if (process_rank_ == kOutput) printf("Start of stepping!\n");
     double start_time, end_time;
     start_time = MPI_Wtime();
     while (simulation_core_.StepTime()) {
       simulation_core_.PrepareBordersToSend();
-      halo_to_exchange_.Init(simulation_core_.borders_to_send_,
-                             simulation_core_.received_borders_,
-                             process_rank_, neighbours_ranks_,
-                             cartesian_grid_communicator_);
       // Sending borders, prepared with simulation_core. See also
       // HaloExchangeProcess::InitSimulation(). Borders are used
       // directly by pointer.
@@ -732,7 +730,7 @@ namespace onza {
     }  // end of while time is stepping 
     end_time   = MPI_Wtime();
     double total_time_stepping = end_time-start_time;
-    if (process_rank_ == 0)
+    if (process_rank_ == kOutput)
       printf("Stepping finished!\nThat took %f seconds (%f s/step).\n",
              total_time_stepping,
              total_time_stepping/simulation_core_.total_time_steps());

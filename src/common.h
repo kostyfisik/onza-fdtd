@@ -12,6 +12,7 @@ namespace onza {
   // ********************************************************************** //
   // **********************     Constants           *********************** //
   // ********************************************************************** //
+  const int kOutput = 1;
   /// @brief Error codes
   ///
   /// Error codes used with onza.
@@ -39,6 +40,8 @@ namespace onza {
     /// Buffers to send and recieve  halo has different sizes.
     /// Checked with HaloToExchange::Init().
     kErrorSendAndReceiveBuffersHasDifferentSizes,
+    /// FDTD algorithm`s should have some subdomain halo.
+    kErrorWrongHaloWidth,
     /// FDTD algorithm`s time depth should be >= 1!
     kErrorWrongTimeDepth,
     /// Using InputConfig too early
