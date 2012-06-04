@@ -65,6 +65,7 @@ namespace onza {
   void BasicSimulationCore::Snapshot() {
     if ( snapshot_interval_ * snapshot_frame_ < local_time_step_) {
       snapshot_frame_++;
+      if (total_time_steps_ - local_time_step_ > 2*snapshot_interval_) return;
       char filename[100];
       sprintf(filename,"Ez(x)-time%.7li-domain(x%.3dy%.3dz%.3d).onza",
               local_time_step_,
@@ -97,7 +98,7 @@ namespace onza {
   ///
   /// @warning  It is repeated MANY times!
   /// @todo1 Check not doing data copying during algorithm call.
-  void BasicSimulationCore::FDTD_1D_axis_x(blitz::Range x,
+  void BasicSimulationCore::AlgorithmSimpleX1D(blitz::Range x,
                                            blitz::Range y,
                                            blitz::Range z) {
     // 1D test FDTD algorithm
@@ -125,7 +126,7 @@ namespace onza {
         * data_snapshot_(t  )(kInvEps, x     + c, y, z)
         * imp0
       + data_snapshot_  (t  )(kSrcEz , x     + c, y, z);
-  }  // end of BasicSimulationCore::FDTD_1D_axis_x()
+  }  // end of BasicSimulationCore::AlgorithmSimpleX1D()
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
@@ -172,19 +173,18 @@ namespace onza {
             = received_borders_(border)(component, all_x_, all_y_, all_z_);
       }  // end of for component
     }  // end of for border
-    //debug Hardly selecting FDTD algorithm.
     if (neighbours_ranks_[kBorderLeft] != MPI_PROC_NULL)
-      FDTD_1D_axis_x(data_border_range_[kBorderLeft], all_y_, all_z_);
+      (this->*RunAlgorithm)(data_border_range_[kBorderLeft], all_y_, all_z_);
     if (neighbours_ranks_[kBorderRight] != MPI_PROC_NULL)
-      FDTD_1D_axis_x(data_border_range_[kBorderRight], all_y_, all_z_);
+      (this->*RunAlgorithm)(data_border_range_[kBorderRight], all_y_, all_z_);
     if (neighbours_ranks_[kBorderBottom] != MPI_PROC_NULL)
-      FDTD_1D_axis_x(all_x_, data_border_range_[kBorderBottom], all_z_);
+      (this->*RunAlgorithm)(all_x_, data_border_range_[kBorderBottom], all_z_);
     if (neighbours_ranks_[kBorderTop] != MPI_PROC_NULL)
-      FDTD_1D_axis_x(all_x_, data_border_range_[kBorderTop], all_z_);
+      (this->*RunAlgorithm)(all_x_, data_border_range_[kBorderTop], all_z_);
     if (neighbours_ranks_[kBorderBack] != MPI_PROC_NULL)
-      FDTD_1D_axis_x(all_x_, all_y_, data_border_range_[kBorderBack]);
+      (this->*RunAlgorithm)(all_x_, all_y_, data_border_range_[kBorderBack]);
     if (neighbours_ranks_[kBorderFront] != MPI_PROC_NULL)
-      FDTD_1D_axis_x(all_x_, all_y_, data_border_range_[kBorderFront]);
+      (this->*RunAlgorithm)(all_x_, all_y_, data_border_range_[kBorderFront]);
   }  // end of BasicSimulationCore::DoStep()
   // ********************************************************************** //
   // ********************************************************************** //
@@ -193,8 +193,7 @@ namespace onza {
   ///
   /// @warning  It is repeated MANY times! 
   void BasicSimulationCore::DoStep() {
-    //debug Hardly selecting FDTD algorithm.
-    FDTD_1D_axis_x(inner_x_, inner_y_, inner_z_);
+    (this->*RunAlgorithm)(inner_x_, inner_y_, inner_z_);
   }  // end of BasicSimulationCore::DoStep()
   // ********************************************************************** //
   // ********************************************************************** //
@@ -222,8 +221,7 @@ namespace onza {
                                  int process_rank, int neighbours_ranks[],
                                  int my_coords[],
                                  int64_t subdomain_start_index[],
-                                 int64_t subdomain_finish_index[]
-)
+                                 int64_t subdomain_finish_index[])
   {
     if (simulation_input_config_.status() != kInputConfigAllDone)
       return kErrorUsingInputConfigTooEarly;    
@@ -243,6 +241,7 @@ namespace onza {
     number_of_components_to_exchange_ = simulation_input_config_.
       number_of_components_to_exchange();
     components_to_exchange_.resize(number_of_components_to_exchange_);
+    RunAlgorithm = &BasicSimulationCore::AlgorithmSimpleX1D;
     components_to_exchange_ = simulation_input_config_.components_to_exchange();
     number_of_grid_data_components_ = simulation_input_config_.
       number_of_grid_data_components();
@@ -396,6 +395,7 @@ namespace onza {
     // int64_t length_x = 101, length_y = 307, length_z = 908; // !!
     // int64_t length_x = 813, length_y = 1, length_z = 79; // !!
     // int64_t length_x = 5, length_y = 9, length_z = 2; // Best to go with MPIsize = 3 
+    // int64_t length_x = 800, length_y = 1, length_z = 1;
     int64_t length_x = 200, length_y = 1, length_z = 1;
     // int64_t length_x = 4, length_y = 1, length_z = 1;
     grid_input_config_.set_total_grid_length(length_x, length_y, length_z);
@@ -470,8 +470,9 @@ namespace onza {
     components_to_exchange_.resize(number_of_components_to_exchange_);
     for (int i = 0; i < number_of_components_to_exchange_; ++i)
       components_to_exchange_(i) = components_to_exchange[i];
+    // total_time_steps_ = 450000;
     // total_time_steps_ = 450;
-    total_time_steps_ = 240;
+    total_time_steps_ = 240; // check zero in 1D for Ez;
     // total_time_steps_ = 100;
     // total_time_steps_ = 60;
     // total_time_steps_ = 4;

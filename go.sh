@@ -10,10 +10,10 @@ rm -r $corepath/bin/* >/dev/null 2>&1
 if [[ ! $isNEW ]]; then
     isNEW="new"
 fi
-export OMPI_CXXFLAGS="-O0 -ftemplate-depth-30 -DBZ_DEBUG" # Debug mode
+#export OMPI_CXXFLAGS="-O0 -ftemplate-depth-30 -DBZ_DEBUG" # Debug mode
 #export OMPI_CXXFLAGS="-O2 -ftemplate-depth-30" # Benchmark mode
 #export OMPI_CXXFLAGS="-O3 -ftemplate-depth-30" # Benchmark mode
-#export OMPI_CXXFLAGS="-O3 -ffast-math -ftemplate-depth-30 -march=native -mtune=native -mfpmath=both -malign-double -mstackrealign" # Benchmark mode. May bring no seed up, only errors.
+export OMPI_CXXFLAGS="-O3 -ffast-math -ftemplate-depth-30 -march=native -mtune=native -mfpmath=both -malign-double -mstackrealign" # Benchmark mode. May bring no seed up, only errors.
 cd $corepath/build/clang
 export OMPI_CC=clang
 export OMPI_CXX=clang++

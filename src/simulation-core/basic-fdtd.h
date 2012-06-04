@@ -163,8 +163,7 @@ namespace onza {
              int process_rank, int neighbours_ranks[],
              int my_coords[],
              int64_t subdomain_start_index[],
-             int64_t subdomain_finish_index[]
-             );
+             int64_t subdomain_finish_index[]);
     /// @brief Initialize grid data for all components
     int SetGridData();
     /// @brief Prepare borders to send
@@ -173,10 +172,6 @@ namespace onza {
     void Snapshot();
     /// @brief Prepare source component in data_.
     void PrepareSource();
-    /// @brief FDTD algorithm for 1D case (length in kAxisX dimenstion).
-    void FDTD_1D_axis_x(blitz::Range x,
-                        blitz::Range y,
-                        blitz::Range z);
     /// @brief Cycle snapshots before new timestep.
     void CycleSnapshots();
     /// @brief Do FDTD stepping for border part of grid data.
@@ -189,6 +184,16 @@ namespace onza {
     int status() {return status_;}
     int64_t total_time_steps() {return total_time_steps_;}
    private:
+    /// @brief Pointer to FDTD algorithm used for stepping.
+    ///
+    /// FDTD algorithm should be selected during Init()
+    void (BasicSimulationCore::*RunAlgorithm)(blitz::Range x,
+                   blitz::Range y,
+                   blitz::Range z);
+    /// @brief FDTD algorithm for 1D case (length in kAxisX dimenstion).
+    void AlgorithmSimpleX1D(blitz::Range x,
+                            blitz::Range y,
+                            blitz::Range z);
     /// @brief Predefined ranges for all grid points in x, y and z dimensions.
     blitz::Range all_x_, all_y_, all_z_;
     /// @brief Predefined ranges for data grid points inside border.
