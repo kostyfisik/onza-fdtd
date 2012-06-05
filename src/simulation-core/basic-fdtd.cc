@@ -100,7 +100,8 @@ namespace onza {
       case kAlgorithmSimple3D:
         for (int i = 0; i < subdomain_size_[kAxisX]; ++i)
           fprintf(snapshot,"%li\t%g\n", i+subdomain_start_index_[kAxisX],
-                  data_(static_cast<int>(kEz), i, 10, 10));
+                  // data_(static_cast<int>(kEz), i, 10, 10)); // 20x20
+                  data_(static_cast<int>(kEz), i, 30, 30)); // 60x60
         break;
         // default:
         //   printf("Error! Should use some FDTD algorithm!\n");
@@ -141,6 +142,13 @@ namespace onza {
           exp(-pow2(local_time_step_ - 50.) / 200.);        
         break;
       case kAlgorithmSimple3D:
+        //point
+        // data_(static_cast<int>(kSrcEz), 50, 30, 30) =
+        //   exp(-pow2(local_time_step_ - 300.) / 4000.);
+        //line
+        // data_(static_cast<int>(kSrcEz), 50, 10, all_z_) =
+        //   exp(-pow2(local_time_step_ - 100.) / 400.);
+        // plane
         data_(static_cast<int>(kSrcEz), 50, all_y_, all_z_) =
           exp(-pow2(local_time_step_ - 100.) / 400.);
         break;
@@ -819,8 +827,9 @@ namespace onza {
     // int64_t length_x = 813, length_y = 1, length_z = 79; // !!
     // int64_t length_x = 5, length_y = 9, length_z = 2; // Best to go with MPIsize = 3 
     // int64_t length_x = 800, length_y = 1, length_z = 1;
-    // int64_t length_x = 200, length_y = 20, length_z = 20;  // check 3D algorithm !!!?small?!!!
-    int64_t length_x = 501, length_y = 281, length_z = 1; // check 2D algorithm TMz
+    // int64_t length_x = 200, length_y = 180, length_z = 180;  // check 3D algorithm point source
+    int64_t length_x = 200, length_y = 20, length_z = 20;  // check 3D algorithm !!!?small?!!!
+    // int64_t length_x = 501, length_y = 281, length_z = 1; // check 2D algorithm TMz
     // int64_t length_x = 200, length_y = 1, length_z = 1; // check 1D algorithm X
     // int64_t length_x = 1, length_y = 200, length_z = 1; // check 1D algorithm Y
     // int64_t length_x = 1, length_y = 1, length_z = 200; // check 1D algorithm Z
@@ -899,22 +908,22 @@ namespace onza {
     // ********************************************************************** //
     // 2D section
     // ********************************************************************** //
-    algorithm_ = kAlgorithmSimpleTMz2D;
-    number_of_grid_data_components_ = 11;
-    int components_to_exchange[] = {kEz, kHy, kHx};
+    // algorithm_ = kAlgorithmSimpleTMz2D;
+    // number_of_grid_data_components_ = 11;
+    // int components_to_exchange[] = {kEz, kHy, kHx};
     // ********************************************************************** //
     // 3D section
     // ********************************************************************** //
-    // algorithm_ = kAlgorithmSimple3D;
-    // number_of_grid_data_components_ = 20;
-    // int components_to_exchange[] = {kEx, kEy, kEz, kHx, kHy, kHz};
+    algorithm_ = kAlgorithmSimple3D;
+    number_of_grid_data_components_ = 20;
+    int components_to_exchange[] = {kEx, kEy, kEz, kHx, kHy, kHz};
     // ********************************************************************** //
     number_of_components_to_exchange_ = sizeof(components_to_exchange) / sizeof(int);
     components_to_exchange_.resize(number_of_components_to_exchange_);
     for (int i = 0; i < number_of_components_to_exchange_; ++i)
       components_to_exchange_(i) = components_to_exchange[i];
     // total_time_steps_ = 450000;
-    total_time_steps_ = 650;
+    total_time_steps_ = 640;
     //total_time_steps_ = 240; //check zero in 1D for Ez;
     // total_time_steps_ = 100;
     // total_time_steps_ = 60;
