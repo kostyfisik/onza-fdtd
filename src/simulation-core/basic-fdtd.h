@@ -77,24 +77,27 @@ namespace onza {
     double snapshot_interval() {return snapshot_interval_;}
     /// @brief Accesor
     int64_t total_time_steps() {return total_time_steps_;}
-    
+    /// @brief Accesor
+    int algorithm() {return algorithm_;};
    private:
-    /// @brief Number of simulation core data components to exchange
-    /// in halo
-    int number_of_components_to_exchange_;
+    /// @brief Algorithm selection (from #Algorithm)
+    int algorithm_;
     /// @brief List of components to exchange in halo.
     blitz::Array<int,1> components_to_exchange_;
-    /// @brief Nuber of simulation core data components
-    ///
-    /// @todo3 Set it automatically from stepping algorithm
-    /// description.
-    int number_of_grid_data_components_;
     /// @brief Array of boundary conditions
     ///
     /// Due to order in enum #BorderPosition using max(kDimensions)*2
     /// size of array for all kDimensions. Values are from
     /// #BoundaryCondition
     int boundary_condition_[6];
+    /// @brief Number of simulation core data components to exchange
+    /// in halo
+    int number_of_components_to_exchange_;
+    /// @brief Nuber of simulation core data components
+    ///
+    /// @todo3 Set it automatically from stepping algorithm
+    /// description.
+    int number_of_grid_data_components_;
     /// @brief Depth of FDTD in time.
     ///
     /// Simple FDTD has depth equal to 2 - to get data for next step
@@ -184,18 +187,32 @@ namespace onza {
     int status() {return status_;}
     int64_t total_time_steps() {return total_time_steps_;}
    private:
-    /// @brief Pointer to FDTD algorithm used for stepping.
-    ///
-    /// FDTD algorithm should be selected during Init()
-    void (BasicSimulationCore::*RunAlgorithm)(blitz::Range x,
-                   blitz::Range y,
-                   blitz::Range z);
+    /// @brief Algorithm selection (from #Algorithm)
+    int algorithm_;
+    /// @brief FDTD algorithm for 3D case.
+    void AlgorithmSimple3D(blitz::Range x,
+                           blitz::Range y,
+                           blitz::Range z);
+    /// @brief FDTD algorithm for TMz 2D case.
+    void AlgorithmSimpleTMz2D(blitz::Range x,
+                              blitz::Range y,
+                              blitz::Range z);
     /// @brief FDTD algorithm for 1D case (length in kAxisX dimenstion).
     void AlgorithmSimpleX1D(blitz::Range x,
                             blitz::Range y,
                             blitz::Range z);
+    /// @brief FDTD algorithm for 1D case (length in kAxisY dimenstion).
+    void AlgorithmSimpleY1D(blitz::Range x,
+                            blitz::Range y,
+                            blitz::Range z);
+    /// @brief FDTD algorithm for 1D case (length in kAxisZ dimenstion).
+    void AlgorithmSimpleZ1D(blitz::Range x,
+                            blitz::Range y,
+                            blitz::Range z);
     /// @brief Predefined ranges for all grid points in x, y and z dimensions.
     blitz::Range all_x_, all_y_, all_z_;
+    /// @brief Predefined ranges for all data grid points in x, y and z dimensions.
+    //debug blitz::Range all_data_x_, all_data_y_, all_data_z_;
     /// @brief Predefined ranges for data grid points inside border.
     blitz::Range data_border_range_[kDimensions*2];
     /// @brief Depth of FDTD in time.
@@ -228,6 +245,12 @@ namespace onza {
     /// @brief Fast access (without MPI call) to process rank of
     /// containing object. Should be set in init()
     int process_rank_;
+    /// @brief Pointer to FDTD algorithm used for stepping.
+    ///
+    /// FDTD algorithm should be selected during Init()
+    void (BasicSimulationCore::*RunAlgorithm)(blitz::Range x,
+                                              blitz::Range y,
+                                              blitz::Range z);
     /// @breif snapshot interval
     double snapshot_interval_;
     int snapshot_frame_;

@@ -12,7 +12,7 @@ namespace onza {
   // ********************************************************************** //
   // **********************     Constants           *********************** //
   // ********************************************************************** //
-  const int kOutput = 1;
+  const int kOutput = 0;
   /// @brief Error codes
   ///
   /// Error codes used with onza.
@@ -40,6 +40,8 @@ namespace onza {
     /// Buffers to send and recieve  halo has different sizes.
     /// Checked with HaloToExchange::Init().
     kErrorSendAndReceiveBuffersHasDifferentSizes,
+    /// Should use some FDTD algorithm.
+    kErrorWrongAlgorithm,
     /// FDTD algorithm`s should have some subdomain halo.
     kErrorWrongHaloWidth,
     /// FDTD algorithm`s time depth should be >= 1!
@@ -53,10 +55,21 @@ namespace onza {
                          kSimulationStatusInitiated,
                          kSimulationStatusUndefined
                          };
+  /// @brief Algorithm selection
+  enum Algorithm { kAlgorithmSimpleX1D=0, kAlgorithmSimpleY1D,
+                   kAlgorithmSimpleZ1D,
+                   kAlgorithmSimpleTMz2D,
+                   kAlgorithmSimple3D};
   /// @brief Simulation core and halo border predefined names for data
   /// components
-  enum DataComponents {kEz=0, kHy, kInvEps, kSrcEz,// enougth for 1D simple FDTD
-                       kEx, kEy, kHx, kHz, kMu};
+  ///
+  /// 
+  enum DataComponents {kEz=0, kHy, kInvEps, kSrcEz,// 1D axis x
+                       kCeze, kCezh, kChyh, kChye,
+                       kHx, kChxh, kChxe,          // 2D TM axis z
+                       kEx, kCexe, kCexh,
+                       kEy, kCeye, kCeyh,
+                       kHz, kChzh, kChze};  // 3D FDTD
   /// @brief Status of reading input config.
   ///
   /// For use with onza::SimulationInputConfig::status_

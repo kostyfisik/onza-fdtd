@@ -65,17 +65,47 @@ namespace onza {
   void BasicSimulationCore::Snapshot() {
     if ( snapshot_interval_ * snapshot_frame_ < local_time_step_) {
       snapshot_frame_++;
-      if (total_time_steps_ - local_time_step_ > 2*snapshot_interval_) return;
+      // if (total_time_steps_ - local_time_step_ > 20*snapshot_interval_) return;
       char filename[100];
-      sprintf(filename,"Ez(x)-time%.7li-domain(x%.3dy%.3dz%.3d).onza",
-              local_time_step_,
+      sprintf(filename,"Ez(x)[%i]-time%.7li-domain(x%.3dy%.3dz%.3d).onza",
+              algorithm_, local_time_step_,
               my_coords_[kAxisX], my_coords_[kAxisY], my_coords_[kAxisZ]);      
       FILE *snapshot;
       snapshot = fopen(filename, "w");
       int offset_x = my_coords_[kAxisX] * subdomain_size_[kAxisX];
-      for (int i = 0; i < subdomain_size_[kAxisX]; ++i)
-        fprintf(snapshot,"%li\t%g\n", i+subdomain_start_index_[kAxisX],
-                data_(static_cast<int>(kEz), i, 0, 0));
+      /// @todo2 make snapshot output  call be warper of algorithm
+      /// dependent function call (call snapshot  with function pointer
+      /// assigned at init time)
+      switch (algorithm_) {
+      case kAlgorithmSimpleX1D:
+        for (int i = 0; i < subdomain_size_[kAxisX]; ++i)
+          fprintf(snapshot,"%li\t%g\n", i+subdomain_start_index_[kAxisX],
+                  data_(static_cast<int>(kEz), i, 0, 0));
+        break;
+      case kAlgorithmSimpleY1D:
+        for (int i = 0; i < subdomain_size_[kAxisY]; ++i)
+          fprintf(snapshot,"%li\t%g\n", i+subdomain_start_index_[kAxisY],
+                  data_(static_cast<int>(kEz), 0, i, 0));
+        break;
+      case kAlgorithmSimpleZ1D:
+        for (int i = 0; i < subdomain_size_[kAxisZ]; ++i)
+          fprintf(snapshot,"%li\t%g\n", i+subdomain_start_index_[kAxisZ],
+                  data_(static_cast<int>(kEz), 0, 0, i));
+        break;
+      case kAlgorithmSimpleTMz2D:
+        for (int i = 0; i < subdomain_size_[kAxisX]; ++i)
+          fprintf(snapshot,"%li\t%g\n", i+subdomain_start_index_[kAxisX],
+                  data_(static_cast<int>(kEz), i, 140, 0));        
+        break;
+      case kAlgorithmSimple3D:
+        for (int i = 0; i < subdomain_size_[kAxisX]; ++i)
+          fprintf(snapshot,"%li\t%g\n", i+subdomain_start_index_[kAxisX],
+                  data_(static_cast<int>(kEz), i, 10, 10));
+        break;
+        // default:
+        //   printf("Error! Should use some FDTD algorithm!\n");
+        //   return kErrorWrongAlgorithm;
+      }  // end of switch algorithm
       fclose(snapshot);
     }  // end of if it is time to output snapshot
   }  //end of BasicSimulationCore::Snapshot()
@@ -86,11 +116,246 @@ namespace onza {
   ///
   /// @warning  It is repeated MANY times! 
   void BasicSimulationCore::PrepareSource() {
-    //debug 1D
+    //debug 3D
+    /// @todo2 make source preparation call be warper of algorithm
+    /// dependent function call (call prepare with function pointer
+    /// assigned at init time)
     if (process_rank_ == 0)
-      data_(kSrcEz, 50, all_y_, all_z_) =
-        exp(-pow2(local_time_step_ - 30.) / 100.);
+      switch (algorithm_) {
+      case kAlgorithmSimpleX1D:
+        data_(kSrcEz, 50, all_y_, all_z_) =
+          exp(-pow2(local_time_step_ - 30.) / 100.);
+        break;
+      case kAlgorithmSimpleY1D:
+        data_(kSrcEz, all_x_, 50, all_z_) =
+          exp(-pow2(local_time_step_ - 30.) / 100.);
+        break;
+      case kAlgorithmSimpleZ1D:
+        data_(kSrcEz, all_x_, all_y_, 50) =
+          exp(-pow2(local_time_step_ - 30.) / 100.);
+        break;
+      case kAlgorithmSimpleTMz2D:
+        // data_(static_cast<int>(kSrcEz), 110, 140, all_z_) =
+        //   exp(-pow2(local_time_step_ - 50.) / 200.);        
+        data_(static_cast<int>(kSrcEz), 110, all_y_, all_z_) =
+          exp(-pow2(local_time_step_ - 50.) / 200.);        
+        break;
+      case kAlgorithmSimple3D:
+        data_(static_cast<int>(kSrcEz), 50, all_y_, all_z_) =
+          exp(-pow2(local_time_step_ - 100.) / 400.);
+        break;
+      // default:
+      //   printf("Error! Should use some FDTD algorithm!\n");
+      //   return kErrorWrongAlgorithm;
+      }  // end of switch algorithm
   }  // end of BasicSimulationCore::PrepareSource()
+  // ********************************************************************** //
+  // ********************************************************************** //
+  // ********************************************************************** //
+  /// @brief FDTD algorithm for 3D case.
+  ///
+  /// @warning  It is repeated MANY times!
+  /// @todo1 Check not doing data copying during algorithm call.
+  void BasicSimulationCore::AlgorithmSimple3D(blitz::Range x,
+                                           blitz::Range y,
+                                           blitz::Range z) {
+    // current time snapshot in snapshots array
+    int t = time_depth_ - 2;
+    // constant shift to normalize equation to space range.
+    int c = 0;
+    // Hy time = -1/2, x = +1/2, Ez time = 0, x = 0
+    // // Update H
+    // // Hx
+    // data_snapshot_        (t+1)(kHx  , x    , y    , z    ) =
+    //   data_snapshot_      (t  )(kChxh, x    , y    , z    )
+    //   * data_snapshot_    (t  )(kHx  , x    , y    , z    )
+    //   +
+    //   data_snapshot_      (t  )(kChxe, x    , y    , z    )
+    //   * ((data_snapshot_  (t  )(kEy  , x    , y    , z + 1)
+    //       - data_snapshot_(t  )(kEy  , x    , y    , z    ))
+    //      -
+    //      (data_snapshot_  (t  )(kEz  , x    , y + 1, z    )
+    //       - data_snapshot_(t  )(kEz  , x    , y    , z    )));
+    // // Hy
+    // data_snapshot_        (t+1)(kHy  , x    , y    , z    ) =
+    //   data_snapshot_      (t  )(kChyh, x    , y    , z    )
+    //   * data_snapshot_    (t  )(kHy  , x    , y    , z    )
+    //   +
+    //   data_snapshot_      (t  )(kChye, x    , y    , z    )
+    //   * ((data_snapshot_  (t  )(kEz  , x + 1, y    , z    )
+    //       - data_snapshot_(t  )(kEz  , x    , y    , z    ))
+    //      -
+    //      (data_snapshot_  (t  )(kEx  , x    , y    , z + 1)
+    //       - data_snapshot_(t  )(kEx  , x    , y    , z    )));
+    // // Hz
+    // data_snapshot_        (t+1)(kHz  , x    , y    , z    ) =
+    //   data_snapshot_      (t  )(kChzh, x    , y    , z    )
+    //   * data_snapshot_    (t  )(kHz  , x    , y    , z    )
+    //   +
+    //   data_snapshot_      (t  )(kChze, x    , y    , z    )
+    //   * ((data_snapshot_  (t  )(kEx  , x    , y + 1, z    )
+    //       - data_snapshot_(t  )(kEx  , x    , y    , z    ))
+    //      -
+    //      (data_snapshot_  (t  )(kEy  , x + 1, y    , z    )
+    //       - data_snapshot_(t  )(kEy  , x    , y    , z    )));
+    // // Update E
+    // // Ex
+    // c = 1;
+    // data_snapshot_        (t+1)(kEx  , x    , y     + c, z     + c) =
+    //   data_snapshot_      (t  )(kCexe, x    , y     + c, z     + c)
+    //   * data_snapshot_    (t  )(kEx  , x    , y     + c, z     + c)
+    //   +
+    //   data_snapshot_      (t  )(kCexh, x    , y     + c, z     + c)
+    //   * ((data_snapshot_  (t+1)(kHz  , x    , y     + c, z     + c)
+    //       - data_snapshot_(t+1)(kHz  , x    , y - 1 + c, z     + c))
+    //      -
+    //      (data_snapshot_  (t+1)(kHy  , x    , y     + c, z     + c)
+    //       - data_snapshot_(t+1)(kHy  , x    , y     + c, z - 1 + c)));
+    // // Ey
+    // data_snapshot_        (t+1)(kEy  , x     + c, y    , z     + c) =
+    //   data_snapshot_      (t  )(kCeye, x     + c, y    , z     + c)
+    //   * data_snapshot_    (t  )(kEy  , x     + c, y    , z     + c)
+    //   +
+    //   data_snapshot_      (t  )(kCeyh, x     + c, y    , z     + c)
+    //   * ((data_snapshot_  (t+1)(kHx  , x     + c, y    , z     + c)
+    //       - data_snapshot_(t+1)(kHx  , x     + c, y    , z - 1 + c))
+    //      -
+    //      (data_snapshot_  (t+1)(kHz  , x     + c, y    , z     + c)
+    //       - data_snapshot_(t+1)(kHz  , x - 1 + c, y    , z     + c)));
+    // // Ez
+    // data_snapshot_        (t+1)(kEz   , x     + c, y     + c, z    ) =
+    //   data_snapshot_      (t  )(kCeze , x     + c, y     + c, z    )
+    //   * data_snapshot_    (t  )(kEz   , x     + c, y     + c, z    )
+    //   +
+    //   data_snapshot_      (t  )(kCezh , x     + c, y     + c, z    )
+    //   * ((data_snapshot_  (t+1)(kHy   , x     + c, y     + c, z    )
+    //       - data_snapshot_(t+1)(kHy   , x - 1 + c, y     + c, z    ))
+    //      -
+    //      (data_snapshot_  (t+1)(kHx   , x     + c, y     + c, z    )
+    //       - data_snapshot_(t+1)(kHx   , x     + c, y - 1 + c, z    )))
+    //   +
+    //   data_snapshot_      (t  )(kSrcEz, x     + c, y     + c, z    );
+    //debug Update H
+    //debug Hx
+    data_snapshot_        (t+1)(kHx  , x    , y    , z    ) =
+      data_snapshot_      (t  )(kChxh, x    , y    , z    )
+      * data_snapshot_    (t  )(kHx  , x    , y    , z    )
+      +
+      data_snapshot_      (t  )(kChxe, x    , y    , z    )
+      * ((data_snapshot_  (t  )(kEy  , x    , y    , z + 1)
+          - data_snapshot_(t  )(kEy  , x    , y    , z    ))
+         -
+         (data_snapshot_  (t  )(kEz  , x    , y + 1, z    )
+          - data_snapshot_(t  )(kEz  , x    , y    , z    )));
+    //debug Hy
+    data_snapshot_        (t+1)(kHy  , x    , y    , z    ) =
+      data_snapshot_      (t  )(kChyh, x    , y    , z    )
+      * data_snapshot_    (t  )(kHy  , x    , y    , z    )
+      +
+      data_snapshot_      (t  )(kChye, x    , y    , z    )
+      * ((data_snapshot_  (t  )(kEz  , x + 1, y    , z    )
+          - data_snapshot_(t  )(kEz  , x    , y    , z    ))
+         -
+         (data_snapshot_  (t  )(kEx  , x    , y    , z + 1)
+          - data_snapshot_(t  )(kEx  , x    , y    , z    )));
+    //debug Hz
+    data_snapshot_        (t+1)(kHz  , x    , y    , z    ) =
+      data_snapshot_      (t  )(kChzh, x    , y    , z    )
+      * data_snapshot_    (t  )(kHz  , x    , y    , z    )
+      +
+      data_snapshot_      (t  )(kChze, x    , y    , z    )
+      * ((data_snapshot_  (t  )(kEx  , x    , y + 1, z    )
+          - data_snapshot_(t  )(kEx  , x    , y    , z    ))
+         -
+         (data_snapshot_  (t  )(kEy  , x + 1, y    , z    )
+          - data_snapshot_(t  )(kEy  , x    , y    , z    )));
+    // Update E
+    //debug Ex
+    c = 1;
+    data_snapshot_        (t+1)(kEx  , x    , y     + c, z     + c) =
+      data_snapshot_      (t  )(kCexe, x    , y     + c, z     + c)
+      * data_snapshot_    (t  )(kEx  , x    , y     + c, z     + c)
+      +
+      data_snapshot_      (t  )(kCexh, x    , y     + c, z     + c)
+      * ((data_snapshot_  (t+1)(kHz  , x    , y     + c, z     + c)
+          - data_snapshot_(t+1)(kHz  , x    , y - 1 + c, z     + c))
+         -
+         (data_snapshot_  (t+1)(kHy  , x    , y     + c, z     + c)
+          - data_snapshot_(t+1)(kHy  , x    , y     + c, z - 1 + c)));
+    //debug Ey
+    data_snapshot_        (t+1)(kEy  , x     + c, y    , z     + c) =
+      data_snapshot_      (t  )(kCeye, x     + c, y    , z     + c)
+      * data_snapshot_    (t  )(kEy  , x     + c, y    , z     + c)
+      +
+      data_snapshot_      (t  )(kCeyh, x     + c, y    , z     + c)
+      * ((data_snapshot_  (t+1)(kHx  , x     + c, y    , z     + c)
+          - data_snapshot_(t+1)(kHx  , x     + c, y    , z - 1 + c))
+         -
+         (data_snapshot_  (t+1)(kHz  , x     + c, y    , z     + c)
+          - data_snapshot_(t+1)(kHz  , x - 1 + c, y    , z     + c)));
+    //debug Ez
+    data_snapshot_        (t+1)(kEz   , x     + c, y     + c, z    ) =
+      data_snapshot_      (t  )(kCeze , x     + c, y     + c, z    )
+      * data_snapshot_    (t  )(kEz   , x     + c, y     + c, z    )
+      +
+      data_snapshot_      (t  )(kCezh , x     + c, y     + c, z    )
+      * ((data_snapshot_  (t+1)(kHy   , x     + c, y     + c, z    )
+          - data_snapshot_(t+1)(kHy   , x - 1 + c, y     + c, z    ))
+         -
+         (data_snapshot_  (t+1)(kHx   , x     + c, y     + c, z    )
+          - data_snapshot_(t+1)(kHx   , x     + c, y - 1 + c, z    )))
+      +
+      data_snapshot_      (t  )(kSrcEz, x     + c, y     + c, z    );
+
+  }  // end of BasicSimulationCore::AlgorithmSimple3D()
+  // ********************************************************************** //
+  // ********************************************************************** //
+  // ********************************************************************** //
+  /// @brief FDTD algorithm for TMz 2D case.
+  ///
+  /// @warning  It is repeated MANY times!
+  /// @todo1 Check not doing data copying during algorithm call.
+  void BasicSimulationCore::AlgorithmSimpleTMz2D(blitz::Range x,
+                                                 blitz::Range y,
+                                                 blitz::Range z) {
+    // current time snapshot in snapshots array
+    int t = time_depth_ - 2;
+    // constant shift to normalize equation to space range.
+    int c = 0;
+    // Hy time = -1/2, x = +1/2, Ez time = 0, x = 0
+    // Update H
+    // Hx
+    data_snapshot_        (t+1)(kHx  , x    , y    , z    ) =
+      data_snapshot_      (t  )(kChxh, x    , y    , z    )
+      * data_snapshot_    (t  )(kHx  , x    , y    , z    )
+      -
+      data_snapshot_      (t  )(kChxe, x    , y    , z    )
+      * (data_snapshot_   (t  )(kEz  , x    , y + 1, z    )
+         - data_snapshot_ (t  )(kEz  , x    , y    , z    ));
+    // Hy
+    data_snapshot_        (t+1)(kHy  , x    , y    , z    ) =
+      data_snapshot_      (t  )(kChyh, x    , y    , z    )
+      * data_snapshot_    (t  )(kHy  , x    , y    , z    )
+      +
+      data_snapshot_      (t  )(kChye, x    , y    , z    )
+      * (data_snapshot_   (t  )(kEz  , x + 1, y    , z    )
+         - data_snapshot_ (t  )(kEz  , x    , y    , z    ));
+    // Update E
+    // Ez
+    c=1;
+    data_snapshot_        (t+1)(kEz   , x     + c, y     + c, z    ) =
+      data_snapshot_      (t  )(kCeze , x     + c, y     + c, z    )
+      * data_snapshot_    (t  )(kEz   , x     + c, y     + c, z    )
+      +
+      data_snapshot_      (t  )(kCezh , x     + c, y     + c, z    )
+      * ((data_snapshot_  (t+1)(kHy   , x     + c, y     + c, z    )
+          - data_snapshot_(t+1)(kHy   , x - 1 + c, y     + c, z    ))
+         -
+         (data_snapshot_  (t+1)(kHx   , x     + c, y     + c, z    )
+          - data_snapshot_(t+1)(kHx   , x     + c, y - 1 + c, z    )))
+      +
+      data_snapshot_      (t  )(kSrcEz, x     + c, y     + c, z    );
+  }  // end of BasicSimulationCore::AlgorithmSimpleTMz2D()
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
@@ -101,7 +366,6 @@ namespace onza {
   void BasicSimulationCore::AlgorithmSimpleX1D(blitz::Range x,
                                            blitz::Range y,
                                            blitz::Range z) {
-    // 1D test FDTD algorithm
     /// @todo1 Implement variable sized array for constants.
     // impedance of free space.    
     double imp0 = 377.0;
@@ -127,6 +391,76 @@ namespace onza {
         * imp0
       + data_snapshot_  (t  )(kSrcEz , x     + c, y, z);
   }  // end of BasicSimulationCore::AlgorithmSimpleX1D()
+  // ********************************************************************** //
+  // ********************************************************************** //
+  // ********************************************************************** //
+  /// @brief FDTD algorithm for 1D case (length in kAxisY dimenstion).
+  ///
+  /// @warning  It is repeated MANY times!
+  /// @todo1 Check not doing data copying during algorithm call.
+  void BasicSimulationCore::AlgorithmSimpleY1D(blitz::Range x,
+                                           blitz::Range y,
+                                           blitz::Range z) {
+    /// @todo1 Implement variable sized array for constants.
+    // impedance of free space.    
+    double imp0 = 377.0;
+    double inv_imp0 = 1.0/imp0;
+    // current time snapshot in snapshots array
+    int t = time_depth_ - 2;
+    // constant shift to normalize equation to space range.
+    int c = 0;
+    // Hy time = -1/2, x = +1/2, Ez time = 0, x = 0
+    data_snapshot_    (t+1)(kHy, x, y     + c, z) =
+      data_snapshot_  (t  )(kHy, x, y     + c, z)
+      + data_snapshot_(t  )(kEz, x, y + 1 + c, z) * inv_imp0
+      - data_snapshot_(t  )(kEz, x, y     + c, z) * inv_imp0;
+    // Ez
+    c = 1;
+    data_snapshot_      (t+1)(kEz    , x, y     + c, z) =
+        data_snapshot_  (t  )(kEz    , x, y     + c, z)
+      + data_snapshot_  (t+1)(kHy    , x, y     + c, z)
+        * data_snapshot_(t  )(kInvEps, x, y     + c, z)
+        * imp0
+      - data_snapshot_  (t+1)(kHy    , x, y - 1 + c, z)
+        * data_snapshot_(t  )(kInvEps, x, y     + c, z)
+        * imp0
+      + data_snapshot_  (t  )(kSrcEz , x, y     + c, z);
+  }  // end of BasicSimulationCore::AlgorithmSimpleY1D()
+  // ********************************************************************** //
+  // ********************************************************************** //
+  // ********************************************************************** //
+  /// @brief FDTD algorithm for 1D case (length in kAxisZ dimenstion).
+  ///
+  /// @warning  It is repeated MANY times!
+  /// @todo1 Check not doing data copying during algorithm call.
+  void BasicSimulationCore::AlgorithmSimpleZ1D(blitz::Range x,
+                                           blitz::Range y,
+                                           blitz::Range z) {
+    /// @todo1 Implement variable sized array for constants.
+    // impedance of free space.    
+    double imp0 = 377.0;
+    double inv_imp0 = 1.0/imp0;
+    // current time snapshot in snapshots array
+    int t = time_depth_ - 2;
+    // constant shift to normalize equation to space range.
+    int c = 0;
+    // Hy time = -1/2, x = +1/2, Ez time = 0, x = 0
+    data_snapshot_    (t+1)(kHy, x, y, z     + c) =
+      data_snapshot_  (t  )(kHy, x, y, z     + c)
+      + data_snapshot_(t  )(kEz, x, y, z + 1 + c) * inv_imp0
+      - data_snapshot_(t  )(kEz, x, y, z     + c) * inv_imp0;
+    // Ez
+    c = 1;
+    data_snapshot_      (t+1)(kEz    , x, y, z     + c) =
+        data_snapshot_  (t  )(kEz    , x, y, z     + c)
+      + data_snapshot_  (t+1)(kHy    , x, y, z     + c)
+        * data_snapshot_(t  )(kInvEps, x, y, z     + c)
+        * imp0
+      - data_snapshot_  (t+1)(kHy    , x, y, z - 1 + c)
+        * data_snapshot_(t  )(kInvEps, x, y, z     + c)
+        * imp0
+      + data_snapshot_  (t  )(kSrcEz , x, y, z     + c);
+  }  // end of BasicSimulationCore::AlgorithmSimpleZ1D()
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
@@ -173,18 +507,25 @@ namespace onza {
             = received_borders_(border)(component, all_x_, all_y_, all_z_);
       }  // end of for component
     }  // end of for border
+    //debug
+    // if (process_rank_ == kOutput) {
+    //   printf("Do border step..\n");
+    //   std::cout<<"all_x :"<<all_data_x_ <<" all_y_:"<<all_data_y_<<std::endl;
+    // }
     if (neighbours_ranks_[kBorderLeft] != MPI_PROC_NULL)
-      (this->*RunAlgorithm)(data_border_range_[kBorderLeft], all_y_, all_z_);
+      (this->*RunAlgorithm)(data_border_range_[kBorderLeft], inner_y_, inner_z_);
+    //debug
+    // if (process_rank_ == kOutput) printf("Do border step2..\n");
     if (neighbours_ranks_[kBorderRight] != MPI_PROC_NULL)
-      (this->*RunAlgorithm)(data_border_range_[kBorderRight], all_y_, all_z_);
+      (this->*RunAlgorithm)(data_border_range_[kBorderRight], inner_y_, inner_z_);
     if (neighbours_ranks_[kBorderBottom] != MPI_PROC_NULL)
-      (this->*RunAlgorithm)(all_x_, data_border_range_[kBorderBottom], all_z_);
+      (this->*RunAlgorithm)(inner_x_, data_border_range_[kBorderBottom], inner_z_);
     if (neighbours_ranks_[kBorderTop] != MPI_PROC_NULL)
-      (this->*RunAlgorithm)(all_x_, data_border_range_[kBorderTop], all_z_);
+      (this->*RunAlgorithm)(inner_x_, data_border_range_[kBorderTop], inner_z_);
     if (neighbours_ranks_[kBorderBack] != MPI_PROC_NULL)
-      (this->*RunAlgorithm)(all_x_, all_y_, data_border_range_[kBorderBack]);
+      (this->*RunAlgorithm)(inner_x_, inner_y_, data_border_range_[kBorderBack]);
     if (neighbours_ranks_[kBorderFront] != MPI_PROC_NULL)
-      (this->*RunAlgorithm)(all_x_, all_y_, data_border_range_[kBorderFront]);
+      (this->*RunAlgorithm)(inner_x_, inner_y_, data_border_range_[kBorderFront]);
   }  // end of BasicSimulationCore::DoStep()
   // ********************************************************************** //
   // ********************************************************************** //
@@ -202,9 +543,52 @@ namespace onza {
   int BasicSimulationCore::SetGridData() {
     // set all fields (Ex, Ey, Ez, Hx, Hy, Hz) to be zero. And everything else.
     data_ = 0;
-    //debug
-    data_(kInvEps, all_x_, all_y_, all_z_) = 1;// / (process_rank_ + 1);
-    // Prepare snapshots.
+    double epsilon = 1.0;
+    // double epsilon = 2.1;
+    /// @todo1 Implement variable sized array for constants.
+    // impedance of free space.    
+    double imp0 = 377.0;
+    double courant_3D = 1.0/sqrt(3.0);
+    double courant_2D = 1.0/sqrt(2.0);
+    switch (algorithm_) {
+    case kAlgorithmSimpleX1D:
+    case kAlgorithmSimpleY1D:
+    case kAlgorithmSimpleZ1D:
+      //debug
+      data_(kInvEps, all_x_, all_y_, all_z_) = 1.0/epsilon;// / (process_rank_ + 1);
+      break;
+    case kAlgorithmSimpleTMz2D:
+      //debug
+      data_(kInvEps, all_x_, all_y_, all_z_) = 1.0/epsilon;// / (process_rank_ + 1);
+      data_(kCeze, all_x_, all_y_, all_z_) = 1.0;
+      data_(kCezh, all_x_, all_y_, all_z_) = courant_2D * imp0;
+      data_(kChxh, all_x_, all_y_, all_z_) = 1.0;
+      data_(kChxe, all_x_, all_y_, all_z_) = courant_2D / imp0;
+      data_(kChyh, all_x_, all_y_, all_z_) = 1.0;
+      data_(kChye, all_x_, all_y_, all_z_) = courant_2D / imp0;
+      break;
+    case kAlgorithmSimple3D:
+      //debug
+      data_(kInvEps, all_x_, all_y_, all_z_) = 1.0/epsilon;// / (process_rank_ + 1);
+      data_(kCexe, all_x_, all_y_, all_z_) = 1.0;
+      data_(kCexh, all_x_, all_y_, all_z_) = courant_3D * imp0;
+      data_(kCeye, all_x_, all_y_, all_z_) = 1.0;
+      data_(kCeyh, all_x_, all_y_, all_z_) = courant_3D * imp0;
+      data_(kCeze, all_x_, all_y_, all_z_) = 1.0;
+      data_(kCezh, all_x_, all_y_, all_z_) = courant_3D * imp0;
+      data_(kChxh, all_x_, all_y_, all_z_) = 1.0;
+      data_(kChxe, all_x_, all_y_, all_z_) = courant_3D / imp0;
+      data_(kChyh, all_x_, all_y_, all_z_) = 1.0;
+      data_(kChye, all_x_, all_y_, all_z_) = courant_3D / imp0;
+      data_(kChzh, all_x_, all_y_, all_z_) = 1.0;
+      data_(kChze, all_x_, all_y_, all_z_) = courant_3D / imp0;      
+      break;
+    default:
+      printf("Error! Should use some FDTD algorithm!\n");
+      return kErrorWrongAlgorithm;
+    }
+    // Prepare snapshots. data_snapshot_(time_depth_ - 2) and data_
+    // references to the same memory area.      
     for (int i = 0; i < time_depth_; ++i) {
       if (i == time_depth_ - 2) continue;
       data_snapshot_(i) = data_snapshot_(time_depth_-2);
@@ -225,23 +609,40 @@ namespace onza {
   {
     if (simulation_input_config_.status() != kInputConfigAllDone)
       return kErrorUsingInputConfigTooEarly;    
-    for (int border = kBorderLeft; border < kDimensions*2; ++border)
-      neighbours_ranks_[border] = neighbours_ranks[border];
     status_ = kSimulationStatusUndefined;
-    // Init member in alphabetical order    
-    all_x_ = blitz::Range::all();
-    all_y_ = blitz::Range::all();
-    all_z_ = blitz::Range::all();
+    // Init member in alphabetical order
+    algorithm_ = simulation_input_config_.algorithm();
+    switch (algorithm_) {
+    case kAlgorithmSimpleX1D:
+      RunAlgorithm = &BasicSimulationCore::AlgorithmSimpleX1D;
+      break;
+    case kAlgorithmSimpleY1D:
+      RunAlgorithm = &BasicSimulationCore::AlgorithmSimpleY1D;
+      break;
+    case kAlgorithmSimpleZ1D:
+      RunAlgorithm = &BasicSimulationCore::AlgorithmSimpleZ1D;
+      break;
+    case kAlgorithmSimpleTMz2D:
+      RunAlgorithm = &BasicSimulationCore::AlgorithmSimpleTMz2D;
+      break;
+    case kAlgorithmSimple3D:
+      RunAlgorithm = &BasicSimulationCore::AlgorithmSimple3D;
+      break;
+    default:
+      printf("Error! Should use some FDTD algorithm!\n");
+      return kErrorWrongAlgorithm;
+    }  // end of switch algorithm
     halo_width_ = simulation_input_config_.halo_width();
     if (halo_width_ < 1) {
       printf("Error! FDTD algorithm`s should have some subdomain halo!\n");
       return kErrorWrongHaloWidth;
     }  // end of if error
     local_time_step_ = 0;
+    for (int border = kBorderLeft; border < kDimensions*2; ++border)
+      neighbours_ranks_[border] = neighbours_ranks[border];
     number_of_components_to_exchange_ = simulation_input_config_.
       number_of_components_to_exchange();
     components_to_exchange_.resize(number_of_components_to_exchange_);
-    RunAlgorithm = &BasicSimulationCore::AlgorithmSimpleX1D;
     components_to_exchange_ = simulation_input_config_.components_to_exchange();
     number_of_grid_data_components_ = simulation_input_config_.
       number_of_grid_data_components();
@@ -284,6 +685,19 @@ namespace onza {
       data_snapshot_(time).reindexSelf(blitz::shape(0, -halo_width_x,
                                  -halo_width_y, -halo_width_z));
     }  // end of for time of snapshot
+    data_.resize(blitz::shape(number_of_grid_data_components_,
+                              max_x + 1 + halo_width_x * 2,   max_y + 1 + halo_width_y * 2,
+                              max_z + 1 + halo_width_z * 2));
+    data_.reindexSelf(blitz::shape(0, -halo_width_x,
+                                   -halo_width_y, -halo_width_z));
+    // Ranges for all data spacial coords.
+    all_x_ = blitz::Range::all();
+    all_y_ = blitz::Range::all();
+    all_z_ = blitz::Range::all();
+    //debug
+    // all_data_x_ = blitz::Range(-halo_width_x, max_x + halo_width_x);
+    // all_data_y_ = blitz::Range(-halo_width_y, max_y + halo_width_y);
+    // all_data_z_ = blitz::Range(-halo_width_z, max_z + halo_width_z);
     // Special reference to current time step data.
     data_.reference(data_snapshot_(time_depth_-2));
     // Specify ranges in each dimension for FDTD time stepping. For
@@ -303,6 +717,15 @@ namespace onza {
     data_border_range_[kBorderRight] = blitz::Range(max_x - halo_width_x, max_x);
     data_border_range_[kBorderTop] = blitz::Range(max_y - halo_width_y, max_y);
     data_border_range_[kBorderFront] = blitz::Range(max_z - halo_width_z, max_z);
+    // //debug
+    // if (process_rank_ == 0) {
+    //   for (int border = 0; border < kDimensions*2; ++border)        
+    //     std::cout<<"border["<<border<<"]: "<<data_border_range_[border]<<std::endl;
+    //   std::cout<<"ds(t) shape: "<< data_snapshot_(0).shape()<<std::endl
+    //            <<"lb : "<<data_snapshot_(0).lbound()<<std::endl
+    //            <<"ub : "<<data_snapshot_(0).ubound()
+    //            <<std::endl<<std::flush;
+    // }  //end of debug
     // Specify borders ranges for halo exchange.
     // Used for quick selection in BasicSimulationCore::PrepareBordersToSend().
     borders_to_send_range_.resize(kDimensions*2, number_of_components_to_exchange_);
@@ -390,13 +813,17 @@ namespace onza {
     // 1 x 16 000 x 16 000 vertices x 8 components = 16 Gb on deb00
     // 630 x 630 x 630 vertices x 8 components = 16 Gb on deb00
     // int64_t length_x = 6000, length_y = 6000, length_z = 1;  
-    // int64_t length_x = 1000, length_y = 1000, length_z = 1;  
+    // int64_t length_x = 130, length_y = 130, length_z = 130;  
     // int64_t length_x = 113, length_y = 120, length_z = 179;  // !!
     // int64_t length_x = 101, length_y = 307, length_z = 908; // !!
     // int64_t length_x = 813, length_y = 1, length_z = 79; // !!
     // int64_t length_x = 5, length_y = 9, length_z = 2; // Best to go with MPIsize = 3 
     // int64_t length_x = 800, length_y = 1, length_z = 1;
-    int64_t length_x = 200, length_y = 1, length_z = 1;
+    // int64_t length_x = 200, length_y = 20, length_z = 20;  // check 3D algorithm !!!?small?!!!
+    int64_t length_x = 501, length_y = 281, length_z = 1; // check 2D algorithm TMz
+    // int64_t length_x = 200, length_y = 1, length_z = 1; // check 1D algorithm X
+    // int64_t length_x = 1, length_y = 200, length_z = 1; // check 1D algorithm Y
+    // int64_t length_x = 1, length_y = 1, length_z = 200; // check 1D algorithm Z
     // int64_t length_x = 4, length_y = 1, length_z = 1;
     grid_input_config_.set_total_grid_length(length_x, length_y, length_z);
     // ********************************************************************** //
@@ -409,10 +836,10 @@ namespace onza {
     boundary_condition_[kBorderBottom] = kBoudaryConditionPML;
     // boundary_condition_[kBorderTop] = kBoudaryConditionPeriodical;
     // boundary_condition_[kBorderBottom] = kBoudaryConditionPeriodical;
-    // boundary_condition_[kBorderFront] = kBoudaryConditionPML;
-    // boundary_condition_[kBorderBack] = kBoudaryConditionPML;
-    boundary_condition_[kBorderFront] = kBoudaryConditionPeriodical;
-    boundary_condition_[kBorderBack] = kBoudaryConditionPeriodical;
+    boundary_condition_[kBorderFront] = kBoudaryConditionPML;
+    boundary_condition_[kBorderBack] = kBoudaryConditionPML;
+    // boundary_condition_[kBorderFront] = kBoudaryConditionPeriodical;
+    // boundary_condition_[kBorderBack] = kBoudaryConditionPeriodical;
     // ********************************************************************** //
     // Auto set periodical boundary condition for reduced dimenstions.
     // See also BasicSimulationCore::Init() data_snapshot_ resizing.
@@ -429,7 +856,7 @@ namespace onza {
       boundary_condition_[kBorderBack] = kBoudaryConditionReduced;
     }  // end of if kAxisZ dimension is reduced.
     /// For CPML implementation see Taflove 3d ed. p.307 section 7.9.2
-    pml_width_ = 2;
+    pml_width_ = 1;
     pml_computational_ratio_ = 1.0;
     // pml_width_ = 7;
     // pml_computational_ratio_ = 1.27;
@@ -463,16 +890,32 @@ namespace onza {
     snapshot_interval_ = 5.0;
     halo_width_ = 1;
     time_depth_ = 2;
-    number_of_grid_data_components_ = 4;
-    int components_to_exchange[] = {kEz, kHy};
-    // int components_to_exchange[] = {kEx, kEy};
+    // ********************************************************************** //
+    // 1D section
+    // ********************************************************************** //
+    // algorithm_ = kAlgorithmSimpleZ1D;
+    // number_of_grid_data_components_ = 4;
+    // int components_to_exchange[] = {kEz, kHy};
+    // ********************************************************************** //
+    // 2D section
+    // ********************************************************************** //
+    algorithm_ = kAlgorithmSimpleTMz2D;
+    number_of_grid_data_components_ = 11;
+    int components_to_exchange[] = {kEz, kHy, kHx};
+    // ********************************************************************** //
+    // 3D section
+    // ********************************************************************** //
+    // algorithm_ = kAlgorithmSimple3D;
+    // number_of_grid_data_components_ = 20;
+    // int components_to_exchange[] = {kEx, kEy, kEz, kHx, kHy, kHz};
+    // ********************************************************************** //
     number_of_components_to_exchange_ = sizeof(components_to_exchange) / sizeof(int);
     components_to_exchange_.resize(number_of_components_to_exchange_);
     for (int i = 0; i < number_of_components_to_exchange_; ++i)
       components_to_exchange_(i) = components_to_exchange[i];
     // total_time_steps_ = 450000;
-    // total_time_steps_ = 450;
-    total_time_steps_ = 240; // check zero in 1D for Ez;
+    total_time_steps_ = 650;
+    //total_time_steps_ = 240; //check zero in 1D for Ez;
     // total_time_steps_ = 100;
     // total_time_steps_ = 60;
     // total_time_steps_ = 4;
