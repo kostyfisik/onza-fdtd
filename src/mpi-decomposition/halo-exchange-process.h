@@ -29,14 +29,15 @@ namespace onza {
    public:
     /// @brief Init exchange buffers parameters.
     int Init(
-        blitz::Array<blitz::Array<double, 1+kDimensions>,1> borders_to_send,
-        blitz::Array<blitz::Array<double, 1+kDimensions>,1> received_borders,
+        blitz::Array<blitz::Array<double, 1+kDimensions>, 1> borders_to_send,
+        blitz::Array<blitz::Array<double, 1+kDimensions>, 1> received_borders,
         int process_rank, int neighbours_ranks[],
         MPI_Comm &cartesian_grid_communicator);
     /// @brief Start non-blocking communications.
     void StartNonBlockingExchange();
     /// @brief Finish exchange initiated with StartNonBlockingExchange().
     void FinishNonBlockingExchange();
+
    private:
     /// @brief Pointers to the first element of halo array for each
     /// border to be send
@@ -149,7 +150,7 @@ namespace onza {
     int64_t subdomain_start_index_[kDimensions];
     /// @breif Index of global model pointing to the end of the
     /// subdomain.
-    /// 
+    ///
     /// @breif subdomain_size_-1 index of subdomain should refer to
     /// same part of model as subdomain_finish_index_
     int64_t subdomain_finish_index_[kDimensions];

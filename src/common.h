@@ -56,16 +56,14 @@ namespace onza {
                          kSimulationStatusUndefined
                          };
   /// @brief Algorithm selection
-  enum Algorithm { kAlgorithmSimpleX1D=0, kAlgorithmSimpleY1D,
+  enum Algorithm { kAlgorithmSimpleX1D = 0, kAlgorithmSimpleY1D,
                    kAlgorithmSimpleZ1D,
                    kAlgorithmSimpleTMz2D,
                    kAlgorithmSimple3D};
   /// @brief Simulation core and halo border predefined names for data
   /// components
-  ///
-  /// 
-  enum DataComponents {kEz=0, kHy, kInvEps, kSrcEz,// 1D axis x
-                       kCeze, kCezh, kChyh, kChye,
+  enum DataComponents {kEz = 0, kHy, kCezh, kSrcEz,  // 1D axis x
+                       kCeze, kChyh, kChye,
                        kHx, kChxh, kChxe,          // 2D TM axis z
                        kEx, kCexe, kCexh,
                        kEy, kCeye, kCeyh,
@@ -168,6 +166,6 @@ namespace onza {
       return product;
     }  // end of if dimensions
   }  // end of template SumUpComponents
-  template <class T> inline T pow2(const T value2pow) {return value2pow*value2pow;}
+  template<class T> inline T pow2(const T value) {return value*value;}
 }  // end of namespace onza
 #endif  // SRC_COMMON_H_

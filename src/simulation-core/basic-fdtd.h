@@ -211,8 +211,6 @@ namespace onza {
                             blitz::Range z);
     /// @brief Predefined ranges for all grid points in x, y and z dimensions.
     blitz::Range all_x_, all_y_, all_z_;
-    /// @brief Predefined ranges for all data grid points in x, y and z dimensions.
-    //debug blitz::Range all_data_x_, all_data_y_, all_data_z_;
     /// @brief Predefined ranges for data grid points inside border.
     blitz::Range data_border_range_[kDimensions*2];
     /// @brief Depth of FDTD in time.
@@ -268,35 +266,44 @@ namespace onza {
     int64_t subdomain_start_index_[kDimensions];
     /// @breif Index of global model pointing to the end of the
     /// subdomain.
-    /// 
+    ///
     /// @breif subdomain_size_-1 index of subdomain should refer to
     /// same part of model as subdomain_finish_index_
     int64_t subdomain_finish_index_[kDimensions];
     /// @brief Total time steps in simulation.
     int64_t total_time_steps_;
     /// @brief List of components to exchange in halo.
-    blitz::Array<int,1> components_to_exchange_;
+    blitz::Array<int, 1> components_to_exchange_;
     /// @brief Grid data components.
     ///
     /// First dimension enumerates data component. Each data component
     /// is a kDimensions array. #DataComponents enum can be used to
     /// access components values, e.g. data_(kEx, x, y, z) or
     /// data_(kEps, x, y, z);
+    ///
+    /// @todo1 Change from double to custom (for ease of switching
+    /// from double to single precision). This will affect cache usage
+    /// (during stepping algorithm) and network utilization (during
+    /// halo exchange process).
+    ///
+    /// @todo1 Change access pattern from data_(kEx, x, y, z) to
+    /// data_(x, y, z, kEx). This can icrease cache usage, especially
+    /// for 3D case
     blitz::Array<double, 1+kDimensions> data_;
     /// @brief Grid data components snapshots at different timesteps.
     ///
     /// data_snapshot_(time_depth_ - 2) is a reference to data_ and an only
     /// data_snapshot_ exchanging its borders.
-    /// data_snapshot_(time_depth_ - 1) is reserved for the results, calculated at
-    /// current step.
-    blitz::Array<blitz::Array<double, 1+kDimensions>,1> data_snapshot_;
+    /// data_snapshot_(time_depth_ - 1) is reserved for the results,
+    /// calculated at current step.
+    blitz::Array<blitz::Array<double, 1+kDimensions>, 1> data_snapshot_;
     /// @brief Borders ranges inside grid.
     /// First dim - border name (from kBorderLeft to kBorderFront)
     /// Second dim - grid data component.
     /// e.g borders_to_send_range_(kBorderLeft, 2) is range of indexes in
     /// data_ for border kBorderLeft and component
     /// components_to_exchange_(2).
-    blitz::Array<blitz::RectDomain<1+kDimensions>,2> borders_to_send_range_,
+    blitz::Array<blitz::RectDomain<1+kDimensions>, 2> borders_to_send_range_,
         received_borders_range_;
   };  // end of class BasicSimulationCore
 }  // end of namespace onza
