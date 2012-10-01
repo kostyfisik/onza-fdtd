@@ -68,22 +68,26 @@ namespace onza {
     /// @brief Accesor
     int time_depth() {return time_depth_;}
     /// @brief Accesor
-    int number_of_grid_data_components() {return number_of_grid_data_components_;}
+    int number_of_grid_data_components()
+      {return number_of_grid_data_components_;}
     /// @brief Accesor
-    int number_of_components_to_exchange() {return number_of_components_to_exchange_;}
+    int number_of_components_to_exchange()
+      {return number_of_components_to_exchange_;}
     /// @brief Accesor
-    blitz::Array<int,1> components_to_exchange() {return components_to_exchange_;}
+    blitz::Array<int, 1> components_to_exchange()
+      {return components_to_exchange_;}
     /// @brief Accesor
     double snapshot_interval() {return snapshot_interval_;}
     /// @brief Accesor
     int64_t total_time_steps() {return total_time_steps_;}
     /// @brief Accesor
-    int algorithm() {return algorithm_;};
+    int algorithm() {return algorithm_;}
+
    private:
     /// @brief Algorithm selection (from #Algorithm)
     int algorithm_;
     /// @brief List of components to exchange in halo.
-    blitz::Array<int,1> components_to_exchange_;
+    blitz::Array<int, 1> components_to_exchange_;
     /// @brief Array of boundary conditions
     ///
     /// Due to order in enum #BorderPosition using max(kDimensions)*2
@@ -146,10 +150,10 @@ namespace onza {
     /// onza::HaloToExchange by pointer arithmetics. Be sure to
     /// synchronize reads and writes with it. It is intended to be
     /// done with HaloExchangeProcess::RunSimulation().
-    blitz::Array<blitz::Array<double, 1+kDimensions>,1> borders_to_send_;
+    blitz::Array<blitz::Array<double, 1+kDimensions>, 1> borders_to_send_;
     /// @brief Received borders
     ///
-    /// Borders, received from neighbours. 
+    /// Borders, received from neighbours.
     /// First dim - border name (from kBorderLeft to kBorderFront)
     /// Second dim - grid data component
     /// Last three dims - kAxisX, kAxisY, kAxisZ.
@@ -157,7 +161,7 @@ namespace onza {
     /// onza::HaloToExchange by pointer arithmetics. Be sure to
     /// synchronize reads and writes with it. It is intended to be
     /// done with HaloExchangeProcess::RunSimulation().
-    blitz::Array<blitz::Array<double, 1+kDimensions>,1> received_borders_;
+    blitz::Array<blitz::Array<double, 1+kDimensions>, 1> received_borders_;
     // @}
     /// @brief Parsing all input parameters into one object.
     SimulationInputConfig simulation_input_config_;
@@ -181,11 +185,12 @@ namespace onza {
     void DoBorderStep();
     /// @brief Do FDTD stepping for internal part of grid data.
     void DoStep();
-    /// @brief 
+    /// @brief
     int StepTime();
     /// @brief Accesor.
     int status() {return status_;}
     int64_t total_time_steps() {return total_time_steps_;}
+
    private:
     /// @brief Algorithm selection (from #Algorithm)
     int algorithm_;
