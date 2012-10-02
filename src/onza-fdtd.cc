@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
   onza::HaloExchangeProcess halo_exchange_process;
   int done_status = onza::kDone;
   while (1) {  // use break to report error with done_status.
-    done_status = halo_exchange_process.Init();
+    done_status = halo_exchange_process.Init(argc, argv);
     if (done_status != onza::kDone) break;
     // Split total simualation domain into subdomains for parallel
     // execution. Each subdomain is simulated on its own MPI processes
@@ -176,7 +176,13 @@ int main(int argc, char *argv[]) {
 // ************************************************************************* //
 /// @page ChangeLog
 /// #ChangeLog
-/// @Section Version 0.0.1
+/// ## Version 0.0.2
+/// - Implemented 1D, 2D and 3D stepping algorithms.
+/// - Some simple input (hardcoded at compilation time).
+/// - Adding doxygen related pages.
+/// - Speedup at Infiniband cluster 2D checked - 24 times at 16 nodes!
+///
+/// ## Version 0.0.1
 /// - CMake files are configured for ease of use.
 // ************************************************************************* //
 /// @page "Coding Style"

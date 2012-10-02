@@ -87,7 +87,7 @@ namespace onza {
   /// done with halo_to_exchange_ member.
   class HaloExchangeProcess {
    public:
-    int Init();
+    int Init(int argc, char *argv[]);
     /// @brief Run decomposition of simulation domain.
     int RunDecomposition();
     /// @breif Prepare simulation_core_ to start simulation.

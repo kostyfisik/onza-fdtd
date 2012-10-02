@@ -509,9 +509,19 @@ namespace onza {
   /// @brief Initialize process variables
   ///
   /// @return 0 or error code.
-  int  HaloExchangeProcess::Init() {
+  int  HaloExchangeProcess::Init(int argc, char *argv[]) {
     MPI_Comm_size(MPI_COMM_WORLD, &processes_total_number_);
     MPI_Comm_rank(MPI_COMM_WORLD, &process_rank_);
+    if (argc < 2) {
+      printf("Proc[%i]: Error! Config file name was not defined!\n",
+               process_rank_);
+      return kErrorConfigFileNameWasNotDefined;
+    }
+    if (argc > 2) {
+      printf("Proc[%i]: Error! Too many input parameters!\n",
+               process_rank_);
+      return kErrorConfigFileNameWasNotDefined;
+    }
     if (simulation_core_.simulation_input_config_.ReadConfig() != kDone)
       return kErrorTooWidePml;
     return kDone;

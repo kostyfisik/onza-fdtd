@@ -53,7 +53,7 @@ namespace onza {
   /// @warning  It is repeated MANY times!
   int BasicSimulationCore::StepTime() {
     // Step with data_ is done. Stepping  time...
-    local_time_step_++;
+    ++local_time_step_;
     if (total_time_steps_ < local_time_step_) return  kSimulationStatusFinished;
     return kSimulationStatusRunning;
   }
@@ -65,7 +65,7 @@ namespace onza {
   /// @warning  It is repeated MANY times!
   void BasicSimulationCore::Snapshot() {
     if (snapshot_interval_ * snapshot_frame_ < local_time_step_) {
-      snapshot_frame_++;
+      ++snapshot_frame_;
       char filename[100];
       snprintf(filename, sizeof(filename),
                "Ez(x)[%i]-time%.7li-domain(x%.3dy%.3dz%.3d).onza",

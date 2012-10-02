@@ -19,35 +19,39 @@ namespace onza {
   enum Errors {
     /// no error
     kDone = 0,
-    /// After splitting model to Cartesian grid current procces was
-    /// not found in it.
-    kErrorProcessNotInGrid,
-    /// onza::SimulationInputConfig forced to set total pml width in
-    /// some dimension bigger than size of this dimension.
-    kErrorTooWidePml,
-    /// wrong index while checking with
-    /// HaloExchangeProcess::CheckSubdomainIndexes()
-    kErrorWrongIndexDifference,
-    /// found uninitiated simulation core when
-    /// HaloExchangeProcess::RunSimulation()
-    kErrorUninitiatedSimulationCore,
-    /// case of too many processes during decomposition
-    kErrorSubdomainSizeLessThanHaloWidth,
+    /// After passing from main() start parameters to
+    /// HaloExchangeProcess::Init(int argc, char *argv[])
+    /// config file name was not found
+    kErrorConfigFileNameWasNotDefined,
     /// exchange buffer was initiated to be not contiguous with
     /// BasicSimulationCore::Init() or was detected to be not
     /// contiguous with HaloToExchange::Init().
     kErrorExchangeBufferIsNotContiguous,
+    /// After splitting model to Cartesian grid current procces was
+    /// not found in it.
+    kErrorProcessNotInGrid,
     /// Buffers to send and recieve  halo has different sizes.
     /// Checked with HaloToExchange::Init().
     kErrorSendAndReceiveBuffersHasDifferentSizes,
+    /// case of too many processes during decomposition
+    kErrorSubdomainSizeLessThanHaloWidth,
+    /// onza::SimulationInputConfig forced to set total pml width in
+    /// some dimension bigger than size of this dimension.
+    kErrorTooWidePml,
+    /// found uninitiated simulation core when
+    /// HaloExchangeProcess::RunSimulation()
+    kErrorUninitiatedSimulationCore,
+    /// Using InputConfig too early
+    kErrorUsingInputConfigTooEarly,
     /// Should use some FDTD algorithm.
     kErrorWrongAlgorithm,
     /// FDTD algorithm`s should have some subdomain halo.
     kErrorWrongHaloWidth,
+    /// wrong index while checking with
+    /// HaloExchangeProcess::CheckSubdomainIndexes()
+    kErrorWrongIndexDifference,
     /// FDTD algorithm`s time depth should be >= 1!
-    kErrorWrongTimeDepth,
-    /// Using InputConfig too early
-    kErrorUsingInputConfigTooEarly
+    kErrorWrongTimeDepth
   };
   /// @brief Simulation status
   enum SimulationStatus {kSimulationStatusFinished = 0,

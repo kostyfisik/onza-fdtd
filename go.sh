@@ -46,67 +46,67 @@ then
     echo "Executing clang version"
     echo
     cd $corepath/bin/clang
-    # salloc $MPInodes -n $MPIsize -p max1hour mpirun $MPIoptions ./run-onza-fdtd
+    # salloc $MPInodes -n $MPIsize -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
     # echo
     # echo "(2) Nodes 16   procs 128"
-    # salloc -N 16 -n 128 -p max1hour mpirun $MPIoptions ./run-onza-fdtd
+    # salloc -N 16 -n 128 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
     # echo
     # echo "(2) Nodes 16   procs 64"
-    # salloc -N 16 -n 64 -p max1hour mpirun $MPIoptions ./run-onza-fdtd
+    # salloc -N 16 -n 64 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
     # echo
     # echo "(2) Nodes 16   procs 32"
-    # salloc -N 16 -n 32 -p max1hour mpirun $MPIoptions ./run-onza-fdtd
+    # salloc -N 16 -n 32 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
     # echo
     # echo "(1) Nodes 16   procs 16"
-    # salloc -N 16 -n 16 -p max1hour mpirun $MPIoptions ./run-onza-fdtd
+    # salloc -N 16 -n 16 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
     # echo
     # # echo "(2) Nodes 8   procs 16"
-    # # salloc -N 8 -n 16 -p max1hour mpirun $MPIoptions ./run-onza-fdtd
+    # # salloc -N 8 -n 16 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
     # # echo
     # echo "(1) Nodes 8   procs 8"
-    # salloc -N 8 -n 8 -p max1hour mpirun $MPIoptions ./run-onza-fdtd
+    # salloc -N 8 -n 8 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
     # echo
     # # echo "(2) Nodes 4   procs 8"
-    # # salloc -N 4 -n 8 -p max1hour mpirun $MPIoptions ./run-onza-fdtd
+    # # salloc -N 4 -n 8 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
     # # echo
     # echo "(1) Nodes 4   procs 4"
-    # salloc -N 4 -n 4 -p max1hour mpirun $MPIoptions ./run-onza-fdtd
+    # salloc -N 4 -n 4 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
     # echo
     # # echo "(2) Nodes 2   procs 4"
-    # # salloc -N 2 -n 4 -p max1hour mpirun $MPIoptions ./run-onza-fdtd
+    # # salloc -N 2 -n 4 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
     # # echo
     # echo "(1) Nodes 2   procs 2"
-    # salloc -N 2 -n 2 -p max1hour mpirun $MPIoptions ./run-onza-fdtd
+    # salloc -N 2 -n 2 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
     # echo
     # # echo "(8) Nodes 1   procs 8"
-    # # salloc -N 1 -n 8 -p max1hour mpirun $MPIoptions ./run-onza-fdtd
+    # # salloc -N 1 -n 8 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
     # # echo
     # # echo "(4) Nodes 1   procs 4"
-    # # salloc -N 1 -n 4 -p max1hour mpirun $MPIoptions ./run-onza-fdtd
+    # # salloc -N 1 -n 4 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
     # # echo
     # # echo "(2) Nodes 1   procs 2"
-    # # salloc -N 1 -n 2 -p max1hour mpirun $MPIoptions ./run-onza-fdtd
+    # # salloc -N 1 -n 2 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
     # # echo
     echo "(1) Nodes 1   procs 1"
-    salloc -N 1 -n 1 -p max1hour mpirun $MPIoptions ./run-onza-fdtd
-    # mpirun -H n05 -n 1  $MPIoptions ./run-onza-fdtd
+    salloc -N 1 -n 1 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
+    # mpirun -H n05 -n 1  $MPIoptions ./run-onza-fdtd onza.config
     # echo
     # echo "Executing gcc version"
     # echo
     # cd $corepath/bin/gcc
-    # time salloc $MPInodes -n $MPIsize -p max1hour mpirun $MPIoptions ./run-onza-fdtd
+    # time salloc $MPInodes -n $MPIsize -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
     echo
 else
     echo
     echo "Executing clang version"
     echo
     cd $corepath/bin/clang
-    mpirun -np $MPIsize $MPIoptions ./run-onza-fdtd
+    mpirun -np $MPIsize $MPIoptions ./run-onza-fdtd onza.config
     echo
     # echo "Executing gcc version"
     # echo
     # cd $corepath/bin/gcc
-    # time mpirun -np $MPIsize $MPIoptions ./run-onza-fdtd
+    # time mpirun -np $MPIsize $MPIoptions ./run-onza-fdtd onza.config
     # echo
 fi
 echo "Prepare *.png from gnuplot for clang ..."
