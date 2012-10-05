@@ -92,6 +92,8 @@ namespace onza {
     int set_config_file_name(std::string config_file_name) {
       config_file_name_ = config_file_name; return kDone;};
    private:
+    /// @brief Auto set boundary conditions for reduced dimensions
+    int AutoSetReducedBoundaryConditions();
     /// @brief Configuration file name;
     std::string config_file_name_;
     /// @brief Algorithm selection (from #Algorithm)

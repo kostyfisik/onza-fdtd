@@ -754,6 +754,28 @@ namespace onza {
     status_ = kSimulationStatusInitiated;
     return kDone;
   }  // end of BasicSimulationCore::Init()
+
+  // ********************************************************************** //
+  // ********************************************************************** //
+  // ********************************************************************** //
+  /// @brief Auto set boundary conditions for reduced dimenstions
+  ///
+  /// @see BasicSimulationCore::Init() data_snapshot_ resizing.
+  int SimulationInputConfig::AutoSetReducedBoundaryConditions() {
+    if (grid_input_config_.get_total_grid_length(kAxisX) == 1) {
+      boundary_condition_[kBorderRight] = kBoundaryConditionReduced;
+      boundary_condition_[kBorderLeft] = kBoundaryConditionReduced;
+    }  // end of if kAxisX dimension is reduced.
+    if (grid_input_config_.get_total_grid_length(kAxisY) == 1) {
+      boundary_condition_[kBorderTop] = kBoundaryConditionReduced;
+      boundary_condition_[kBorderBottom] = kBoundaryConditionReduced;
+    }  // end of if kAxisY dimension is reduced.
+    if (grid_input_config_.get_total_grid_length(kAxisZ) == 1) {
+      boundary_condition_[kBorderFront] = kBoundaryConditionReduced;
+      boundary_condition_[kBorderBack] = kBoundaryConditionReduced;
+    }  // end of if kAxisZ dimension is reduced.
+    return kDone;
+  }
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
@@ -819,21 +841,7 @@ namespace onza {
     // boundary_condition_[kBorderFront] = kBoundaryConditionPeriodical;
     // boundary_condition_[kBorderBack] = kBoundaryConditionPeriodical;
     // ********************************************************************** //
-    // Auto set periodical boundary condition for reduced dimenstions.
-    // See also BasicSimulationCore::Init() data_snapshot_ resizing.
-    // 
-    if (length_x == 1) {
-      boundary_condition_[kBorderRight] = kBoundaryConditionReduced;
-      boundary_condition_[kBorderLeft] = kBoundaryConditionReduced;
-    }  // end of if kAxisX dimension is reduced.
-    if (length_y == 1) {
-      boundary_condition_[kBorderTop] = kBoundaryConditionReduced;
-      boundary_condition_[kBorderBottom] = kBoundaryConditionReduced;
-    }  // end of if kAxisY dimension is reduced.
-    if (length_z == 1) {
-      boundary_condition_[kBorderFront] = kBoundaryConditionReduced;
-      boundary_condition_[kBorderBack] = kBoundaryConditionReduced;
-    }  // end of if kAxisZ dimension is reduced.
+    AutoSetReducedBoundaryConditions();
     /// For CPML implementation see Taflove 3d ed. p.307 section 7.9.2
     pml_width_ = 1;
     pml_computational_ratio_ = 1.0;
