@@ -9,6 +9,7 @@
 #include <blitz/array.h>
 #include <cstdio>
 #include <cmath>
+#include <string>
 #include "./halo-exchange-process.h"
 #include "../common.h"
 #include "../simulation-core/basic-fdtd.h"
@@ -198,9 +199,9 @@ namespace onza {
       double total_computational_size = total_size;
       // For axis with PML the computational size is bigger.
       // PML vertices are part of total grid.
-      if (boundary_condition[axis] == kBoudaryConditionPML)
+      if (boundary_condition[axis] == kBoundaryConditionPML)
         total_computational_size += pml_width*(pml_computational_ratio - 1.0);
-      if (boundary_condition[axis+kDimensions] == kBoudaryConditionPML)
+      if (boundary_condition[axis+kDimensions] == kBoundaryConditionPML)
         total_computational_size += pml_width*(pml_computational_ratio - 1.0);
       // @todo3 check if subdomain_computational_size is not too small (< 1).
       // Optimal number of equivalent vertices per subdomain dimension.
@@ -219,14 +220,14 @@ namespace onza {
       double transient_subdomain_pml_vertices_from_left = 0;
       double transient_subdomain_pml_vertices_from_right = 0;
       // Starting from first (left, bottom, back) side of domain.
-      if (boundary_condition[axis] == kBoudaryConditionPML) {
+      if (boundary_condition[axis] == kBoundaryConditionPML) {
         pml_subdomains_number_from_left
           = floor(pml_width/pml_subdomain_size);
         transient_subdomain_pml_vertices_from_left = pml_width -
           pml_subdomain_size * pml_subdomains_number_from_left;
       }  // end of if first boundary is PML
       // Second (right, top, front) side of domain.
-      if (boundary_condition[axis+kDimensions] == kBoudaryConditionPML) {
+      if (boundary_condition[axis+kDimensions] == kBoundaryConditionPML) {
         pml_subdomains_number_from_right
           = floor(pml_width/pml_subdomain_size);
         transient_subdomain_pml_vertices_from_right  = pml_width -
@@ -374,9 +375,9 @@ namespace onza {
         boundary_condition(static_cast<BorderPosition>(border));
     // Length of simulation domain with computational ajustment.
     for (int axis = kAxisX; axis < kDimensions; ++axis) {
-      if (boundary_condition[axis] == kBoudaryConditionPML)
+      if (boundary_condition[axis] == kBoundaryConditionPML)
         length[axis] += ceil(pml_width*(pml_computational_ratio - 1.0));
-      if (boundary_condition[axis+kDimensions] == kBoudaryConditionPML)
+      if (boundary_condition[axis+kDimensions] == kBoundaryConditionPML)
         length[axis] += ceil(pml_width*(pml_computational_ratio - 1.0));
     }  // end of for dimensions
     const int64_t all_processes = processes_total_number_;
@@ -435,7 +436,7 @@ namespace onza {
       boundary_condition[border] = simulation_core_.simulation_input_config_.
         boundary_condition(static_cast<BorderPosition>(border));
     for (int border = kBorderLeft; border < kDimensions*2; ++border) {
-      if (boundary_condition[border] != kBoudaryConditionPeriodical) continue;
+      if (boundary_condition[border] != kBoundaryConditionPeriodical) continue;
       int axis = border % kDimensions;
       int direction_to_border = border < kDimensions ? -1 : 1;
       int max_shift = (subdomains_[axis] - 1);
@@ -522,6 +523,9 @@ namespace onza {
                process_rank_);
       return kErrorConfigFileNameWasNotDefined;
     }
+    std::string config_file_name(argv[1]);
+    simulation_core_.simulation_input_config_.
+      set_config_file_name(config_file_name);
     if (simulation_core_.simulation_input_config_.ReadConfig() != kDone)
       return kErrorTooWidePml;
     return kDone;

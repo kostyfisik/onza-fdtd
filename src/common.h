@@ -83,13 +83,13 @@ namespace onza {
   /// Currently only PML condition is valid
   enum BoundaryCondition {
     /// Uninitialized boundary condition.
-    kBoudaryConditionUndefined = 0,
+    kBoundaryConditionUndefined = 0,
     /// Boundary is periodical.
-    kBoudaryConditionPeriodical,
+    kBoundaryConditionPeriodical,
     /// Boundary is reduced.
-    kBoudaryConditionReduced,
+    kBoundaryConditionReduced,
     /// There is PML region near this boundary inside current domain.
-    kBoudaryConditionPML
+    kBoundaryConditionPML
   };  // end of enum BoundaryCondition
   /// @brief Total number of Cartesian axes.
   ///

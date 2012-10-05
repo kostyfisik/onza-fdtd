@@ -631,7 +631,7 @@ namespace onza {
     for (int time = 0; time < time_depth_; ++time) {
       // Reduced dimensions are excluded from halo exchange to allow
       // pure 1D and 2D simulations with minimal overhead. While
-      // reading config boundary conditions kBoudaryConditionReduced
+      // reading config boundary conditions kBoundaryConditionReduced
       // should be set in this dimension.
       data_snapshot_(time).resize(blitz::shape(number_of_grid_data_components_,
                max_x + 1 + halo_width_x * 2,   max_y + 1 + halo_width_y * 2,
@@ -805,32 +805,32 @@ namespace onza {
     grid_input_config_.set_total_grid_length(length_x, length_y, length_z);
     // ********************************************************************** //
     // Setting boundary_condition_.
-    boundary_condition_[kBorderRight] = kBoudaryConditionPML;
-    boundary_condition_[kBorderLeft] = kBoudaryConditionPML;
-    // boundary_condition_[kBorderRight] = kBoudaryConditionPeriodical;
-    // boundary_condition_[kBorderLeft] = kBoudaryConditionPeriodical;
-    boundary_condition_[kBorderTop] = kBoudaryConditionPML;
-    boundary_condition_[kBorderBottom] = kBoudaryConditionPML;
-    // boundary_condition_[kBorderTop] = kBoudaryConditionPeriodical;
-    // boundary_condition_[kBorderBottom] = kBoudaryConditionPeriodical;
-    boundary_condition_[kBorderFront] = kBoudaryConditionPML;
-    boundary_condition_[kBorderBack] = kBoudaryConditionPML;
-    // boundary_condition_[kBorderFront] = kBoudaryConditionPeriodical;
-    // boundary_condition_[kBorderBack] = kBoudaryConditionPeriodical;
+    boundary_condition_[kBorderRight] = kBoundaryConditionPML;
+    boundary_condition_[kBorderLeft] = kBoundaryConditionPML;
+    // boundary_condition_[kBorderRight] = kBoundaryConditionPeriodical;
+    // boundary_condition_[kBorderLeft] = kBoundaryConditionPeriodical;
+    boundary_condition_[kBorderTop] = kBoundaryConditionPML;
+    boundary_condition_[kBorderBottom] = kBoundaryConditionPML;
+    // boundary_condition_[kBorderTop] = kBoundaryConditionPeriodical;
+    // boundary_condition_[kBorderBottom] = kBoundaryConditionPeriodical;
+    boundary_condition_[kBorderFront] = kBoundaryConditionPML;
+    boundary_condition_[kBorderBack] = kBoundaryConditionPML;
+    // boundary_condition_[kBorderFront] = kBoundaryConditionPeriodical;
+    // boundary_condition_[kBorderBack] = kBoundaryConditionPeriodical;
     // ********************************************************************** //
     // Auto set periodical boundary condition for reduced dimenstions.
     // See also BasicSimulationCore::Init() data_snapshot_ resizing.
     if (length_x == 1) {
-      boundary_condition_[kBorderRight] = kBoudaryConditionReduced;
-      boundary_condition_[kBorderLeft] = kBoudaryConditionReduced;
+      boundary_condition_[kBorderRight] = kBoundaryConditionReduced;
+      boundary_condition_[kBorderLeft] = kBoundaryConditionReduced;
     }  // end of if kAxisX dimension is reduced.
     if (length_y == 1) {
-      boundary_condition_[kBorderTop] = kBoudaryConditionReduced;
-      boundary_condition_[kBorderBottom] = kBoudaryConditionReduced;
+      boundary_condition_[kBorderTop] = kBoundaryConditionReduced;
+      boundary_condition_[kBorderBottom] = kBoundaryConditionReduced;
     }  // end of if kAxisY dimension is reduced.
     if (length_z == 1) {
-      boundary_condition_[kBorderFront] = kBoudaryConditionReduced;
-      boundary_condition_[kBorderBack] = kBoudaryConditionReduced;
+      boundary_condition_[kBorderFront] = kBoundaryConditionReduced;
+      boundary_condition_[kBorderBack] = kBoundaryConditionReduced;
     }  // end of if kAxisZ dimension is reduced.
     /// For CPML implementation see Taflove 3d ed. p.307 section 7.9.2
     pml_width_ = 1;
@@ -839,9 +839,9 @@ namespace onza {
     // pml_computational_ratio_ = 1.27;
     for (int axis = kAxisX; axis < kDimensions; ++axis) {
       int total_pml_width = 0;
-      if (boundary_condition_[axis] == kBoudaryConditionPML)
+      if (boundary_condition_[axis] == kBoundaryConditionPML)
         total_pml_width += pml_width_;
-      if (boundary_condition_[axis+kDimensions] == kBoudaryConditionPML)
+      if (boundary_condition_[axis+kDimensions] == kBoundaryConditionPML)
         total_pml_width += pml_width_;
       if (total_pml_width >= grid_input_config_.
           get_total_grid_length(static_cast<Axis>(axis))) {

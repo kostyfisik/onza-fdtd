@@ -8,6 +8,7 @@
 ///
 /// @brief  Simulation data and stepping algorithm
 #include <blitz/array.h>
+#include <string>
 #include "../common.h"
 namespace onza {
   // *********************************************************************** //
@@ -82,8 +83,11 @@ namespace onza {
     int64_t total_time_steps() {return total_time_steps_;}
     /// @brief Accesor
     int algorithm() {return algorithm_;}
-
+    int set_config_file_name(std::string config_file_name) {
+      config_file_name_ = config_file_name; return kDone;};
    private:
+    /// @brief Configuration file name;
+    std::string config_file_name_;
     /// @brief Algorithm selection (from #Algorithm)
     int algorithm_;
     /// @brief List of components to exchange in halo.
