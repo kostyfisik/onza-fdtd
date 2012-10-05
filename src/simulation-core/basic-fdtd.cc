@@ -802,7 +802,8 @@ namespace onza {
     // int64_t length_x = 1, length_y = 200, length_z = 1;
     // int64_t length_x = 1, length_y = 1, length_z = 200;
     // int64_t length_x = 4, length_y = 1, length_z = 1;
-    grid_input_config_.set_total_grid_length(length_x, length_y, length_z);
+    if (grid_input_config_.set_total_grid_length(length_x, length_y, length_z)
+        != kDone) return kErrorSettingWrongGridSize;      
     // ********************************************************************** //
     // Setting boundary_condition_.
     boundary_condition_[kBorderRight] = kBoundaryConditionPML;
@@ -820,6 +821,7 @@ namespace onza {
     // ********************************************************************** //
     // Auto set periodical boundary condition for reduced dimenstions.
     // See also BasicSimulationCore::Init() data_snapshot_ resizing.
+    // 
     if (length_x == 1) {
       boundary_condition_[kBorderRight] = kBoundaryConditionReduced;
       boundary_condition_[kBorderLeft] = kBoundaryConditionReduced;

@@ -17,8 +17,8 @@ namespace onza {
    public:
     /// @brief Default constructor.
     ///
-    /// Define zero grid with no elements.
-    GridInputConfig() {set_total_grid_length(0);}
+    /// Define minimal grid with single element.
+    GridInputConfig() {set_total_grid_length(1,1,1);}
     /// @brief Accesor.
     /// @param[in] axis_name Input axis.
     /// @return Size of grid along input axis.
@@ -30,18 +30,24 @@ namespace onza {
     /// @param[in] length_x, length_y, length_z Length of grid in
     /// corresponding direction.
     /// @return 0 is OK.
-    int set_total_grid_length(int64_t length_x, int64_t length_y = 0,
-                              int64_t length_z = 0) {
-      if (kDimensions > 0) total_grid_length_[kAxisX] = length_x;
-      if (kDimensions > 1) total_grid_length_[kAxisY] = length_y;
-      if (kDimensions > 2) total_grid_length_[kAxisZ] = length_z;
-      return 0;
+    int set_total_grid_length(int64_t length_x, int64_t length_y,
+                              int64_t length_z) {
+      if (length_x < 1) return kErrorSettingWrongGridSize;
+        total_grid_length_[kAxisX] = length_x;
+      if (length_y < 1) return kErrorSettingWrongGridSize;
+      total_grid_length_[kAxisY] = length_y;
+      if (length_z < 1) return kErrorSettingWrongGridSize;
+      total_grid_length_[kAxisZ] = length_z;
+      return kDone;
     };  // end of set_total_grid_length
 
    private:
     /// @brief Grid length in each direction.
     ///
     /// Each value is number of grid vertices in corresponding direction.
+    /// Should allways be positive (>=1), as far as it is used both
+    /// to evaluate size of simualtion domain and describe virtual
+    /// topology of MPI processe for halo exchange.
     int64_t total_grid_length_[kDimensions];
   };  // end of class GridInputConfig
   // *********************************************************************** //

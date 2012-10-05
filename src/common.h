@@ -33,6 +33,9 @@ namespace onza {
     /// Buffers to send and recieve  halo has different sizes.
     /// Checked with HaloToExchange::Init().
     kErrorSendAndReceiveBuffersHasDifferentSizes,
+    /// Grid size in any dimension should be more or equal to 1.
+    /// @see GridInputConfig::set_total_grid_length()
+    kErrorSettingWrongGridSize,
     /// case of too many processes during decomposition
     kErrorSubdomainSizeLessThanHaloWidth,
     /// onza::SimulationInputConfig forced to set total pml width in
