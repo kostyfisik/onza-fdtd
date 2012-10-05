@@ -825,7 +825,7 @@ namespace onza {
     // int64_t length_x = 1, length_y = 1, length_z = 200;
     // int64_t length_x = 4, length_y = 1, length_z = 1;
     if (grid_input_config_.set_total_grid_length(length_x, length_y, length_z)
-        != kDone) return kErrorSettingWrongGridSize;      
+        != kDone) return kErrorSettingWrongGridSize;
     // ********************************************************************** //
     // Setting boundary_condition_.
     boundary_condition_[kBorderRight] = kBoundaryConditionPML;

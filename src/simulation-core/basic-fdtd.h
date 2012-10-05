@@ -18,7 +18,7 @@ namespace onza {
     /// @brief Default constructor.
     ///
     /// Define minimal grid with single element.
-    GridInputConfig() {set_total_grid_length(1,1,1);}
+    GridInputConfig() {set_total_grid_length(1, 1, 1);}
     /// @brief Accesor.
     /// @param[in] axis_name Input axis.
     /// @return Size of grid along input axis.
@@ -90,7 +90,10 @@ namespace onza {
     /// @brief Accesor
     int algorithm() {return algorithm_;}
     int set_config_file_name(std::string config_file_name) {
-      config_file_name_ = config_file_name; return kDone;};
+      config_file_name_ = config_file_name;
+      return kDone;
+    };
+
    private:
     /// @brief Auto set boundary conditions for reduced dimensions
     int AutoSetReducedBoundaryConditions();
