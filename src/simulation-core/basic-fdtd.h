@@ -95,6 +95,8 @@ namespace onza {
     };
 
    private:
+    /// @brief Check total PML width to be less than domain width
+    int CheckTotalPMLWidth();
     /// @brief Auto set boundary conditions for reduced dimensions
     int AutoSetReducedBoundaryConditions();
     /// @brief Configuration file name;

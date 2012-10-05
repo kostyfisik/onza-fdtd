@@ -779,6 +779,31 @@ namespace onza {
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
+  /// @brief Check total PML width to be less than domain width
+  ///
+  ///
+  int SimulationInputConfig::CheckTotalPMLWidth() {
+    for (int axis = kAxisX; axis < kDimensions; ++axis) {
+      int total_pml_width = 0;
+      if (boundary_condition_[axis] == kBoundaryConditionPML)
+        total_pml_width += pml_width_;
+      if (boundary_condition_[axis+kDimensions] == kBoundaryConditionPML)
+        total_pml_width += pml_width_;
+      if (total_pml_width >= grid_input_config_.
+          get_total_grid_length(static_cast<Axis>(axis))) {
+        status_ = kInputConfigErrorWidePml;
+        int process_rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
+        if (process_rank == 0)
+          printf("Error! Too wide PML in axis = %i!\n", axis);
+        return kErrorTooWidePml;
+      }  // end of if pml is too wide
+    }  // end of for axis check pml width
+    return kDone;
+  }
+  // ********************************************************************** //
+  // ********************************************************************** //
+  // ********************************************************************** //
   /// @brief Read top level config file
   ///
   /// @todo3 Currently values to read from config file are hard coded
@@ -847,22 +872,7 @@ namespace onza {
     pml_computational_ratio_ = 1.0;
     // pml_width_ = 7;
     // pml_computational_ratio_ = 1.27;
-    for (int axis = kAxisX; axis < kDimensions; ++axis) {
-      int total_pml_width = 0;
-      if (boundary_condition_[axis] == kBoundaryConditionPML)
-        total_pml_width += pml_width_;
-      if (boundary_condition_[axis+kDimensions] == kBoundaryConditionPML)
-        total_pml_width += pml_width_;
-      if (total_pml_width >= grid_input_config_.
-          get_total_grid_length(static_cast<Axis>(axis))) {
-        status_ = kInputConfigErrorWidePml;
-        int process_rank;
-        MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
-        if (process_rank == 0)
-          printf("Error! Too wide PML in axis = %i!\n", axis);
-        return kErrorTooWidePml;
-      }  // end of if pml is too wide
-    }  // end of for axis check pml width
+    if (CheckTotalPMLWidth() != kDone) return kErrorTooWidePml;
     // onza 128 proc timestep 100 size 6000x6000x1 time 11s.
     // meep 32 processes 15 x 15 mkm res400
     // on time step 235169 (time=293.961), 0.0897154 s/step
