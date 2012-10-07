@@ -10,6 +10,7 @@
 //debug for blitz::Array output
 // #include <iostream>
 #include <string>
+#include <map>
 #include <cstdio>
 #include "./basic-fdtd.h"
 #include "../common.h"
@@ -780,6 +781,50 @@ namespace onza {
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
+  /// @brief Parse config file keys.
+  ///
+  /// Read from config files keys (pair of name and value) and write them to
+  /// config_file_map_ private member.
+  int SimulationInputConfig::SetConfigFileMap() {
+    FILE *config_file_pointer = fopen(config_file_name_.c_str(), "r");
+    if (config_file_pointer == NULL) {
+      printf("Error! Was not able to open config file!\n");
+      return kErrorConfigFileWasNotAbleToOpen;
+    }
+    std::string key_name, key_value;
+    int reading_key_name = 1;
+    config_file_map_.clear();
+    while (!feof(config_file_pointer)) {
+      int input_char = fgetc(config_file_pointer);
+      if (input_char == '#') {  // Ignore comments till end of the line.
+        while (input_char != '\n' && input_char != EOF)
+          input_char = fgetc(config_file_pointer);
+      }  // end of if comment needs to be ignored
+      if (input_char == ' ') continue;  // Ignore spaces in config file.
+      if (input_char == '=') {
+        reading_key_name = 0;  // Stop reading key name.
+        continue;
+      }  // end of if start reading key value
+      if (input_char == EOF || input_char == '\n') {
+        reading_key_name = 1;
+        if (key_name.size() != 0 && key_value.size() != 0) {
+          config_file_map_[key_name] = key_value;
+        }  // end of if input is valid
+        key_name = "";
+        key_value = "";
+        continue;
+      }  // end of if end of line or end of file
+      if (reading_key_name)
+        key_name.push_back(input_char);
+      else
+        key_value.push_back(input_char);
+    }  // end of while not end of config file
+    fclose(config_file_pointer);
+    return kDone;
+  }
+  // ********************************************************************** //
+  // ********************************************************************** //
+  // ********************************************************************** //
   /// @brief Check total PML width to be less than domain width
   ///
   ///
@@ -811,7 +856,8 @@ namespace onza {
   /// in ReadConfig(). Read them from real config file. Return some error
   /// for case if config file couldn be read.
   ///
-  /// @todo1 Compare single core with meep. Current (rev40) state is not very good
+  /// @todo1 Compare single core with meep. Current (rev40) state is
+  /// not very good
   /// onza 128 proc timestep 100 size 6000x6000x1 time 11s.
   /// meep 32 processes 15 x 15 mkm res400
   /// on time step 235169 (time=293.961), 0.0897154 s/step
@@ -823,41 +869,19 @@ namespace onza {
   /// Fourier transforming: 0.128974 s
   ///    everything else: 60.4937 s
   int SimulationInputConfig::ReadConfig() {
-    FILE *config_file_pointer = fopen(config_file_name_.c_str(),"r");
-    if (config_file_pointer == NULL) {
-      printf("Error! Was not able to open config file!\n");
-      return kErrorConfigFileWasNotAbleToOpen;
-    }
-    std::string key_name, key_value;
-    int reading_key_name = 1;
-    while(!feof(config_file_pointer)) {
-      int input_char = fgetc(config_file_pointer);
-      if (input_char == '#') {  // Ignore comments till end of the line.
-        while (input_char != '\n' && input_char != EOF)
-          input_char = fgetc(config_file_pointer);
-      }  // end of if comment needs to be ignored
-      if (input_char == ' ') continue;  // Ignore spaces in config file.
-      if (input_char == '=') {
-        reading_key_name = 0;  // Stop reading key name.
-        continue;
-      }  // end of if start reading key value
-      if (input_char == EOF || input_char == '\n') {
-        reading_key_name = 1;
-        if (key_name.size() != 0 && key_value.size() != 0) {
-          printf("Name: %s, value: %s\n",
-                 key_name.c_str(), key_value.c_str());
-        }  // end of if input is valid
-        key_name = "";
-        key_value = "";
-        continue;
-      }  // end of if end of line or end of file
-      if (reading_key_name) key_name.push_back(input_char);
-      else key_value.push_back(input_char);
-    }  // end of while not end of config file
-    fclose(config_file_pointer);
+    if (SetConfigFileMap() != kDone) return kErrorConfigFileWasNotAbleToOpen;
+    if (config_file_map_.count("test_case")) {
+      //debug
+      printf("Simulating test case %s\n", config_file_map_["test_case"].c_str());
+    }  // end of if simulating testcase
+    //  if config_file_map_[testcase]
+    //  Number of hard coded tests. Currently supported 1Dzero and 2Dspeedup.
+    //debug  Output maped values.
+    // std::map<std::string, std::string>::iterator key;
+    // for (key = config_file_map_.begin(); key != config_file_map_.end(); ++key) {
+    //   printf("%s = %s\n", key->first.c_str(), key->second.c_str());
+    // }
     /// @todo1 Insert common initialization with default params.
-
-    
     // ********************************************************************** //
     // Length of whole model
     // 1 x 16 000 x 16 000 vertices x 8 components = 16 Gb on deb00
@@ -900,7 +924,7 @@ namespace onza {
     if (grid_input_config_.set_total_grid_length(length_x, length_y, length_z)
         != kDone) return kErrorSettingWrongGridSize;
     // ********************************************************************** //
-    // Setting boundary_condition_ 
+    // Setting boundary_condition_
     //            kBoundaryConditionPML or kBoundaryConditionPeriodical.
     boundary_condition_[kBorderRight] = kBoundaryConditionPML;
     boundary_condition_[kBorderLeft] = kBoundaryConditionPML;
@@ -944,7 +968,7 @@ namespace onza {
     // total_time_steps_ = 4;
     number_of_components_to_exchange_ = sizeof(components_to_exchange)
                                         /sizeof(components_to_exchange[0]);
-    //number_of_components_to_exchange_ = components_to_exchange_.size();
+    // number_of_components_to_exchange_ = components_to_exchange_.size();
     components_to_exchange_.resize(number_of_components_to_exchange_);
     for (int i = 0; i < number_of_components_to_exchange_; ++i)
       components_to_exchange_(i) = components_to_exchange[i];

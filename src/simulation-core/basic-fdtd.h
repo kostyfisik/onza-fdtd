@@ -8,6 +8,7 @@
 ///
 /// @brief  Simulation data and stepping algorithm
 #include <blitz/array.h>
+#include <map>
 #include <string>
 #include "../common.h"
 namespace onza {
@@ -95,22 +96,26 @@ namespace onza {
     };
 
    private:
-    /// @brief Check total PML width to be less than domain width
-    int CheckTotalPMLWidth();
     /// @brief Auto set boundary conditions for reduced dimensions
     int AutoSetReducedBoundaryConditions();
-    /// @brief Configuration file name;
-    std::string config_file_name_;
+    /// @brief Check total PML width to be less than domain width
+    int CheckTotalPMLWidth();
+    /// @brief Parse config file keys.
+    int SetConfigFileMap();
     /// @brief Algorithm selection (from #Algorithm)
     int algorithm_;
-    /// @brief List of components to exchange in halo.
-    blitz::Array<int, 1> components_to_exchange_;
     /// @brief Array of boundary conditions
     ///
     /// Due to order in enum #BorderPosition using max(kDimensions)*2
     /// size of array for all kDimensions. Values are from
     /// #BoundaryCondition
     int boundary_condition_[6];
+    /// @brief List of components to exchange in halo.
+    blitz::Array<int, 1> components_to_exchange_;
+    /// @brief Configuration file name.
+    std::string config_file_name_;
+    /// @brief Maped values from configuration file.
+    std::map<std::string, std::string> config_file_map_;
     /// @brief Number of simulation core data components to exchange
     /// in halo
     int number_of_components_to_exchange_;
