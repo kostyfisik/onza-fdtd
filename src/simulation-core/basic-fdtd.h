@@ -105,11 +105,13 @@ namespace onza {
     /// @brief Preset config 2Dspeedup.
     int Preset2Dspeedup();
     /// @brief Preset config 3Dsimple.
-    int Preset3Dsimple(); 
+    int Preset3Dsimple();
     /// @brief Set boundary conditions in all directions to be PML.
     int SetBoundaryConditionsAllPML();
     /// @brief Parse config file keys.
     int SetConfigFileMap();
+    /// @brief Set simulation parameters defined in config file.
+    int SetConfigFromFileMap();
     /// @brief Algorithm selection (from #Algorithm)
     int algorithm_;
     /// @brief Array of boundary conditions

@@ -777,7 +777,7 @@ namespace onza {
       boundary_condition_[kBorderBack] = kBoundaryConditionReduced;
     }  // end of if kAxisZ dimension is reduced.
     return kDone;
-  }
+  }  // end of SimulationInputConfig::AutoSetReducedBoundaryConditions()
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
@@ -825,7 +825,7 @@ namespace onza {
     }  // end of while not end of config file
     fclose(config_file_pointer);
     return kDone;
-  }
+  }  // end of SimulationInputConfig::SetConfigFileMap()
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
@@ -850,7 +850,7 @@ namespace onza {
       }  // end of if pml is too wide
     }  // end of for axis check pml width
     return kDone;
-  }
+  }  // end of SimulationInputConfig::CheckTotalPMLWidth()
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
@@ -858,10 +858,10 @@ namespace onza {
   ///
   ///
   int SimulationInputConfig::SetBoundaryConditionsAllPML() {
-    for (int border = kBorderLeft; border < kDimensions*2; ++border) 
+    for (int border = kBorderLeft; border < kDimensions*2; ++border)
       boundary_condition_[border] = kBoundaryConditionPML;
     return kDone;
-  }
+  }  // end of SimulationInputConfig::SetBoundaryConditionsAllPML()
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
@@ -870,28 +870,76 @@ namespace onza {
   /// At time step 231 field Ez is very close to zero.
   int SimulationInputConfig::Preset1Dzero() {
     printf("Preset 1Dzero\n");
+    int64_t length_x = 200, length_y = 1, length_z = 1;
+    if (grid_input_config_.set_total_grid_length(length_x, length_y, length_z)
+        != kDone) return kErrorSettingWrongGridSize;
+    SetBoundaryConditionsAllPML();
+    pml_width_ = 1;
+    pml_computational_ratio_ = 1.0;
+    snapshot_interval_ = 5;
+    halo_width_ = 1;
+    time_depth_ = 2;
+    algorithm_ = kAlgorithmSimpleX1D;
+    // For most simple case of 1D  we will need Ez, Hy, epsilon, srcEz.
+    number_of_grid_data_components_ = 4;
+    number_of_components_to_exchange_ = 2;
+    components_to_exchange_.resize(number_of_components_to_exchange_);
+    components_to_exchange_ = kEz, kHy;
+    total_time_steps_ = 240;
     return kDone;
-  }
+  }  // end of SimulationInputConfig::Preset1Dzero()
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
   /// @brief Preset config 2Dspeedup.
   ///
   /// Check speedup in cluster enviroment. Should be very nice for 16 nodes.
+  /// @todo2(tig) Check preset
   int SimulationInputConfig::Preset2Dspeedup() {
     printf("Preset 2Dspeedup\n");
+    int64_t length_x = 200, length_y = 200, length_z = 1;
+    if (grid_input_config_.set_total_grid_length(length_x, length_y, length_z)
+        != kDone) return kErrorSettingWrongGridSize;
+    SetBoundaryConditionsAllPML();
+    pml_width_ = 1;
+    pml_computational_ratio_ = 1.0;
+    snapshot_interval_ = 5;
+    halo_width_ = 1;
+    time_depth_ = 2;
+    algorithm_ = kAlgorithmSimpleTMz2D;
+    number_of_grid_data_components_ = 10;
+    number_of_components_to_exchange_ = 3;
+    components_to_exchange_.resize(number_of_components_to_exchange_);
+    components_to_exchange_ = kEz, kHy, kHx;
+    total_time_steps_ = 240;
     return kDone;
-  }
+  }  // end of SimulationInputConfig::Preset2Dspeedup()
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
   /// @brief Preset config 3Dsimple.
   ///
   /// Simply check 3D is runing.
+  /// @todo2(tig) Check preset
   int SimulationInputConfig::Preset3Dsimple() {
     printf("Preset 3Dsimple\n");
+    int64_t length_x = 128, length_y = 128, length_z = 128;
+    if (grid_input_config_.set_total_grid_length(length_x, length_y, length_z)
+        != kDone) return kErrorSettingWrongGridSize;
+    SetBoundaryConditionsAllPML();
+    pml_width_ = 1;
+    pml_computational_ratio_ = 1.0;
+    snapshot_interval_ = 5;
+    halo_width_ = 1;
+    time_depth_ = 2;
+    algorithm_ = kAlgorithmSimple3D;
+    number_of_grid_data_components_ = 20;
+    number_of_components_to_exchange_ = 6;
+    components_to_exchange_.resize(number_of_components_to_exchange_);
+    components_to_exchange_ = kEx, kEy, kEz, kHx, kHy, kHz;
+    total_time_steps_ = 240;
     return kDone;
-  }
+  }  // end of SimulationInputConfig::Preset3Dsimple()
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
@@ -918,68 +966,64 @@ namespace onza {
   /// Length of whole model
   /// 1 x 16 000 x 16 000 vertices x 8 components = 16 Gb on deb00
   /// 630 x 630 x 630 vertices x 8 components = 16 Gb on deb00
-
   int SimulationInputConfig::ReadConfig() {
-    int done_status = SetConfigFileMap();    
+    int done_status = SetConfigFileMap();
     if (done_status != kDone) return done_status;
+    // Select from some of hard coded tests.
     if (config_file_map_.count("test_case")) {
       if (config_file_map_["test_case"] == "1Dzero") {
-        Preset1Dzero();
+        done_status = Preset1Dzero();
+        if (done_status != kDone) return done_status;
       } else if (config_file_map_["test_case"] == "2Dspeedup") {
-        Preset2Dspeedup();
+        done_status = Preset2Dspeedup();
+        if (done_status != kDone) return done_status;
       } else if (config_file_map_["test_case"] == "3Dsimple") {
-        Preset3Dsimple();
+        done_status = Preset3Dsimple();
+        if (done_status != kDone) return done_status;
       }
-    }  // end of if simulating testcase
-    // Select from some of hard coded tests. Currently supported 1Dzero,
-    // 2Dspeedup, 3Dsimple.
-
-    /// @todo1 Insert common initialization with default params.
-    // ********************************************************************** //
-    int64_t length_x = 200, length_y = 1, length_z = 1;
-    if (grid_input_config_.set_total_grid_length(length_x, length_y, length_z)
-        != kDone) return kErrorSettingWrongGridSize;
-    // Setting boundary_condition_
-    //            kBoundaryConditionPML or kBoundaryConditionPeriodical.
-    SetBoundaryConditionsAllPML();
-    // ********************************************************************** //
+    } else {  // end of if simulating test case
+      done_status = SetConfigFromFileMap();
+      if (done_status != kDone) return done_status;
+    }
     /// @todo1 For CPML implementation see Taflove 3d ed. p.307 section 7.9.2
-    pml_width_ = 1;
-    pml_computational_ratio_ = 1.0;
-    snapshot_interval_ = 5;
-    halo_width_ = 1;
-    time_depth_ = 2;
-    // ********************************************************************** //
-    // 1D section
-    // For most simple case of 1D  we will need Ez, Hy, epsilon, srcEz.
-    algorithm_ = kAlgorithmSimpleX1D;
-    number_of_grid_data_components_ = 4;
-    //    components_to_exchange_ = kEz, kHy;
-    int components_to_exchange[] = {kEz, kHy};
-    // ********************************************************************** //
-    // 2D section
-    // ********************************************************************** //
-    // algorithm_ = kAlgorithmSimpleTMz2D;
-    // number_of_grid_data_components_ = 10;
-    // int components_to_exchange[] = {kEz, kHy, kHx};
-    // ********************************************************************** //
-    // 3D section
-    // ********************************************************************** //
-    // algorithm_ = kAlgorithmSimple3D;
-    // number_of_grid_data_components_ = 20;
-    // int components_to_exchange[] = {kEx, kEy, kEz, kHx, kHy, kHz};
-    // ********************************************************************** //
-    total_time_steps_ = 240;  // check zero in 1D for Ez;
-    number_of_components_to_exchange_ = sizeof(components_to_exchange)
-                                        /sizeof(components_to_exchange[0]);
-    components_to_exchange_.resize(number_of_components_to_exchange_);
-    for (int i = 0; i < number_of_components_to_exchange_; ++i)
-      components_to_exchange_(i) = components_to_exchange[i];
-
     // Config auto check.
     AutoSetReducedBoundaryConditions();
     if (CheckTotalPMLWidth() != kDone) return kErrorTooWidePml;
     status_ = kInputConfigAllDone;
     return kDone;
   };  // end of SimulationInputConfig::ReadConfig
+  // ********************************************************************** //
+  // ********************************************************************** //
+  // ********************************************************************** //
+  /// @brief Set simulation parameters defined in config file.
+  ///
+  /// If presets are not used - parse parameters, validate their
+  /// correctness, set values to SimulationInputConfig members.
+  int SimulationInputConfig::SetConfigFromFileMap() {
+    // todo2(tig) Do function realization.
+    //debug
+    printf("Using custom config\n");
+    int64_t length_x = 200, length_y = 1, length_z = 1;
+    if (grid_input_config_.set_total_grid_length(length_x, length_y, length_z)
+        != kDone) return kErrorSettingWrongGridSize;
+    // Setting boundary_condition_
+    //            kBoundaryConditionPML or kBoundaryConditionPeriodical.
+    SetBoundaryConditionsAllPML();
+    pml_width_ = 1;
+    pml_computational_ratio_ = 1.0;
+    snapshot_interval_ = 5;
+    halo_width_ = 1;
+    time_depth_ = 2;
+    algorithm_ = kAlgorithmSimpleX1D;
+    number_of_grid_data_components_ = 4;
+    int components_to_exchange[] = {kEz, kHy};
+    total_time_steps_ = 240;  // check zero in 1D for Ez;
+    number_of_components_to_exchange_ = sizeof(components_to_exchange)
+                                        /sizeof(components_to_exchange[0]);
+    components_to_exchange_.resize(number_of_components_to_exchange_);
+    for (int i = 0; i < number_of_components_to_exchange_; ++i)
+      components_to_exchange_(i) = components_to_exchange[i];
+    //end of debug
+    return kDone;
+  }  // end of SimulationInputConfig::SetConfigFromFileMap()
 }  // end of namespace onza

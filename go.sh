@@ -59,9 +59,9 @@ then
     # echo "(2) Nodes 16   procs 32"
     # salloc -N 16 -n 32 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
     # echo
-    # echo "(1) Nodes 16   procs 16"
-    # salloc -N 16 -n 16 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
-    # echo
+    echo "(1) Nodes 16   procs 16"
+    salloc -N 16 -n 16 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
+    echo
     # # echo "(2) Nodes 8   procs 16"
     # # salloc -N 8 -n 16 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
     # # echo
