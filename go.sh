@@ -1,7 +1,7 @@
 #!/bin/bash
 isNEW=$1
 corepath=$PWD
-MPIsize=2
+MPIsize=1
 MPInodes="-N 2"
 #MPInodes="-N 1 --ntasks-per-socket=2"
 MPIoptions=--bind-to-core
@@ -38,14 +38,16 @@ make install
 # fi
 # make -j4 
 # make install
-sleep 7
 HOST=`cat /etc/hostname`
+echo
+echo "Executing clang version"
+echo
+cd $corepath/bin/clang
+cp $corepath/data/default-onza.config $corepath/bin/clang/onza.config
 if [ $HOST == "head.phoif.ifmo.ru" ]
 then
-    echo
-    echo "Executing clang version"
-    echo
-    cd $corepath/bin/clang
+    echo "Waiting for shared file system to distibute files"
+    sleep 7
     # salloc $MPInodes -n $MPIsize -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
     # echo
     # echo "(2) Nodes 16   procs 128"
@@ -97,10 +99,6 @@ then
     # time salloc $MPInodes -n $MPIsize -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
     echo
 else
-    echo
-    echo "Executing clang version"
-    echo
-    cd $corepath/bin/clang
     mpirun -np $MPIsize $MPIoptions ./run-onza-fdtd onza.config
     echo
     # echo "Executing gcc version"

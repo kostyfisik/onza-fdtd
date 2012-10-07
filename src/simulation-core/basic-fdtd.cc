@@ -9,6 +9,7 @@
 #include <blitz/array.h>
 //debug for blitz::Array output
 // #include <iostream>
+#include <string>
 #include <cstdio>
 #include "./basic-fdtd.h"
 #include "../common.h"
@@ -809,7 +810,54 @@ namespace onza {
   /// @todo3 Currently values to read from config file are hard coded
   /// in ReadConfig(). Read them from real config file. Return some error
   /// for case if config file couldn be read.
+  ///
+  /// @todo1 Compare single core with meep. Current (rev40) state is not very good
+  /// onza 128 proc timestep 100 size 6000x6000x1 time 11s.
+  /// meep 32 processes 15 x 15 mkm res400
+  /// on time step 235169 (time=293.961), 0.0897154 s/step
+  /// Field time usage:
+  /// connnecting chunks: 2.5294 s
+  ///      time stepping: 20802.1 s
+  ///      communicating: 439.32 s
+  ///  outputting fields: 1.53428 s
+  /// Fourier transforming: 0.128974 s
+  ///    everything else: 60.4937 s
   int SimulationInputConfig::ReadConfig() {
+    FILE *config_file_pointer = fopen(config_file_name_.c_str(),"r");
+    if (config_file_pointer == NULL) {
+      printf("Error! Was not able to open config file!\n");
+      return kErrorConfigFileWasNotAbleToOpen;
+    }
+    std::string key_name, key_value;
+    int reading_key_name = 1;
+    while(!feof(config_file_pointer)) {
+      int input_char = fgetc(config_file_pointer);
+      if (input_char == '#') {  // Ignore comments till end of the line.
+        while (input_char != '\n' && input_char != EOF)
+          input_char = fgetc(config_file_pointer);
+      }  // end of if comment needs to be ignored
+      if (input_char == ' ') continue;  // Ignore spaces in config file.
+      if (input_char == '=') {
+        reading_key_name = 0;  // Stop reading key name.
+        continue;
+      }  // end of if start reading key value
+      if (input_char == EOF || input_char == '\n') {
+        reading_key_name = 1;
+        if (key_name.size() != 0 && key_value.size() != 0) {
+          printf("Name: %s, value: %s\n",
+                 key_name.c_str(), key_value.c_str());
+        }  // end of if input is valid
+        key_name = "";
+        key_value = "";
+        continue;
+      }  // end of if end of line or end of file
+      if (reading_key_name) key_name.push_back(input_char);
+      else key_value.push_back(input_char);
+    }  // end of while not end of config file
+    fclose(config_file_pointer);
+    /// @todo1 Insert common initialization with default params.
+
+    
     // ********************************************************************** //
     // Length of whole model
     // 1 x 16 000 x 16 000 vertices x 8 components = 16 Gb on deb00
@@ -852,46 +900,28 @@ namespace onza {
     if (grid_input_config_.set_total_grid_length(length_x, length_y, length_z)
         != kDone) return kErrorSettingWrongGridSize;
     // ********************************************************************** //
-    // Setting boundary_condition_.
+    // Setting boundary_condition_ 
+    //            kBoundaryConditionPML or kBoundaryConditionPeriodical.
     boundary_condition_[kBorderRight] = kBoundaryConditionPML;
     boundary_condition_[kBorderLeft] = kBoundaryConditionPML;
-    // boundary_condition_[kBorderRight] = kBoundaryConditionPeriodical;
-    // boundary_condition_[kBorderLeft] = kBoundaryConditionPeriodical;
     boundary_condition_[kBorderTop] = kBoundaryConditionPML;
     boundary_condition_[kBorderBottom] = kBoundaryConditionPML;
-    // boundary_condition_[kBorderTop] = kBoundaryConditionPeriodical;
-    // boundary_condition_[kBorderBottom] = kBoundaryConditionPeriodical;
     boundary_condition_[kBorderFront] = kBoundaryConditionPML;
     boundary_condition_[kBorderBack] = kBoundaryConditionPML;
-    // boundary_condition_[kBorderFront] = kBoundaryConditionPeriodical;
-    // boundary_condition_[kBorderBack] = kBoundaryConditionPeriodical;
     // ********************************************************************** //
-    AutoSetReducedBoundaryConditions();
     /// For CPML implementation see Taflove 3d ed. p.307 section 7.9.2
     pml_width_ = 1;
     pml_computational_ratio_ = 1.0;
-    // pml_width_ = 7;
-    // pml_computational_ratio_ = 1.27;
-    if (CheckTotalPMLWidth() != kDone) return kErrorTooWidePml;
-    // onza 128 proc timestep 100 size 6000x6000x1 time 11s.
-    // meep 32 processes 15 x 15 mkm res400
-    // on time step 235169 (time=293.961), 0.0897154 s/step
-    // Field time usage:
-    // connnecting chunks: 2.5294 s
-    //      time stepping: 20802.1 s
-    //      communicating: 439.32 s
-    //  outputting fields: 1.53428 s
-    // Fourier transforming: 0.128974 s
-    //    everything else: 60.4937 s
-    // For most simple case of 1D  we will need Ez, Hy, epsilon, srcEz.
     snapshot_interval_ = 5;
     halo_width_ = 1;
     time_depth_ = 2;
     // ********************************************************************** //
     // 1D section
     // ********************************************************************** //
+    /// For most simple case of 1D  we will need Ez, Hy, epsilon, srcEz.
     algorithm_ = kAlgorithmSimpleX1D;
     number_of_grid_data_components_ = 4;
+    //    components_to_exchange_ = kEz, kHy;
     int components_to_exchange[] = {kEz, kHy};
     // ********************************************************************** //
     // 2D section
@@ -906,17 +936,21 @@ namespace onza {
     // number_of_grid_data_components_ = 20;
     // int components_to_exchange[] = {kEx, kEy, kEz, kHx, kHy, kHz};
     // ********************************************************************** //
-    number_of_components_to_exchange_ = sizeof(components_to_exchange)
-                                        /sizeof(components_to_exchange[0]);
-    components_to_exchange_.resize(number_of_components_to_exchange_);
-    for (int i = 0; i < number_of_components_to_exchange_; ++i)
-      components_to_exchange_(i) = components_to_exchange[i];
     // total_time_steps_ = 450000;
     // total_time_steps_ = 100;
     total_time_steps_ = 240;  // check zero in 1D for Ez;
     // total_time_steps_ = 100;
     // total_time_steps_ = 60;
     // total_time_steps_ = 4;
+    number_of_components_to_exchange_ = sizeof(components_to_exchange)
+                                        /sizeof(components_to_exchange[0]);
+    //number_of_components_to_exchange_ = components_to_exchange_.size();
+    components_to_exchange_.resize(number_of_components_to_exchange_);
+    for (int i = 0; i < number_of_components_to_exchange_; ++i)
+      components_to_exchange_(i) = components_to_exchange[i];
+    // set grid length before auto setting reduced boundary conditions
+    AutoSetReducedBoundaryConditions();
+    if (CheckTotalPMLWidth() != kDone) return kErrorTooWidePml;
     status_ = kInputConfigAllDone;
     return kDone;
   };  // end of SimulationInputConfig::ReadConfig

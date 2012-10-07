@@ -19,6 +19,9 @@ namespace onza {
   enum Errors {
     /// no error
     kDone = 0,
+    /// Was not able to open config file during init of
+    /// HaloExchangeProcess
+    kErrorConfigFileWasNotAbleToOpen,
     /// After passing from main() start parameters to
     /// HaloExchangeProcess::Init(int argc, char *argv[])
     /// config file name was not found
