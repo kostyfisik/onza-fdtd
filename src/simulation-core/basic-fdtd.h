@@ -100,6 +100,8 @@ namespace onza {
     int AutoSetReducedBoundaryConditions();
     /// @brief Check total PML width to be less than domain width
     int CheckTotalPMLWidth();
+    /// @brief Set boundary conditions in all directions to be PML.
+    int SetBoundaryConditionsAllPML();
     /// @brief Parse config file keys.
     int SetConfigFileMap();
     /// @brief Algorithm selection (from #Algorithm)

@@ -760,7 +760,7 @@ namespace onza {
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
-  /// @brief Auto set boundary conditions for reduced dimenstions
+  /// @brief Auto set boundary conditions for reduced dimenstions.
   ///
   /// @see BasicSimulationCore::Init() data_snapshot_ resizing.
   int SimulationInputConfig::AutoSetReducedBoundaryConditions() {
@@ -825,7 +825,7 @@ namespace onza {
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
-  /// @brief Check total PML width to be less than domain width
+  /// @brief Check total PML width to be less than domain width.
   ///
   ///
   int SimulationInputConfig::CheckTotalPMLWidth() {
@@ -845,6 +845,17 @@ namespace onza {
         return kErrorTooWidePml;
       }  // end of if pml is too wide
     }  // end of for axis check pml width
+    return kDone;
+  }
+  // ********************************************************************** //
+  // ********************************************************************** //
+  // ********************************************************************** //
+  /// @brief Set boundary conditions in all directions to be PML.
+  ///
+  ///
+  int SimulationInputConfig::SetBoundaryConditionsAllPML() {
+    for (int border = kBorderLeft; border < kDimensions*2; ++border) 
+      boundary_condition_[border] = kBoundaryConditionPML;
     return kDone;
   }
   // ********************************************************************** //
@@ -874,6 +885,7 @@ namespace onza {
       //debug
       printf("Simulating test case %s\n", config_file_map_["test_case"].c_str());
     }  // end of if simulating testcase
+    
     //  if config_file_map_[testcase]
     //  Number of hard coded tests. Currently supported 1Dzero and 2Dspeedup.
     //debug  Output maped values.
@@ -926,14 +938,9 @@ namespace onza {
     // ********************************************************************** //
     // Setting boundary_condition_
     //            kBoundaryConditionPML or kBoundaryConditionPeriodical.
-    boundary_condition_[kBorderRight] = kBoundaryConditionPML;
-    boundary_condition_[kBorderLeft] = kBoundaryConditionPML;
-    boundary_condition_[kBorderTop] = kBoundaryConditionPML;
-    boundary_condition_[kBorderBottom] = kBoundaryConditionPML;
-    boundary_condition_[kBorderFront] = kBoundaryConditionPML;
-    boundary_condition_[kBorderBack] = kBoundaryConditionPML;
+    SetBoundaryConditionsAllPML();
     // ********************************************************************** //
-    /// For CPML implementation see Taflove 3d ed. p.307 section 7.9.2
+    /// @todo1 For CPML implementation see Taflove 3d ed. p.307 section 7.9.2
     pml_width_ = 1;
     pml_computational_ratio_ = 1.0;
     snapshot_interval_ = 5;
