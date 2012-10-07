@@ -808,6 +808,10 @@ namespace onza {
       if (input_char == EOF || input_char == '\n') {
         reading_key_name = 1;
         if (key_name.size() != 0 && key_value.size() != 0) {
+          if (config_file_map_.count(key_name)) {
+            printf("Error! Redefining key in config file is not allowed!\n");
+            return kErrorConfigFileDublicatedKey;
+          }  // end of if key is dublicated
           config_file_map_[key_name] = key_value;
         }  // end of if input is valid
         key_name = "";
@@ -916,7 +920,8 @@ namespace onza {
   /// 630 x 630 x 630 vertices x 8 components = 16 Gb on deb00
 
   int SimulationInputConfig::ReadConfig() {
-    if (SetConfigFileMap() != kDone) return kErrorConfigFileWasNotAbleToOpen;
+    int done_status = SetConfigFileMap();    
+    if (done_status != kDone) return done_status;
     if (config_file_map_.count("test_case")) {
       if (config_file_map_["test_case"] == "1Dzero") {
         Preset1Dzero();

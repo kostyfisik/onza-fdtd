@@ -19,6 +19,8 @@ namespace onza {
   enum Errors {
     /// no error
     kDone = 0,
+    /// Dublicated key during reading config file.
+    kErrorConfigFileDublicatedKey,
     /// Was not able to open config file during init of
     /// HaloExchangeProcess
     kErrorConfigFileWasNotAbleToOpen,
