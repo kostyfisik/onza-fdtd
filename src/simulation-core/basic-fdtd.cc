@@ -861,6 +861,36 @@ namespace onza {
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
+  /// @brief Preset config 1Dzero.
+  ///
+  /// At time step 231 field Ez is very close to zero.
+  int SimulationInputConfig::Preset1Dzero() {
+    printf("Preset 1Dzero\n");
+    return kDone;
+  }
+  // ********************************************************************** //
+  // ********************************************************************** //
+  // ********************************************************************** //
+  /// @brief Preset config 2Dspeedup.
+  ///
+  /// Check speedup in cluster enviroment. Should be very nice for 16 nodes.
+  int SimulationInputConfig::Preset2Dspeedup() {
+    printf("Preset 2Dspeedup\n");
+    return kDone;
+  }
+  // ********************************************************************** //
+  // ********************************************************************** //
+  // ********************************************************************** //
+  /// @brief Preset config 3Dsimple.
+  ///
+  /// Simply check 3D is runing.
+  int SimulationInputConfig::Preset3Dsimple() {
+    printf("Preset 3Dsimple\n");
+    return kDone;
+  }
+  // ********************************************************************** //
+  // ********************************************************************** //
+  // ********************************************************************** //
   /// @brief Read top level config file
   ///
   /// @todo3 Currently values to read from config file are hard coded
@@ -869,6 +899,7 @@ namespace onza {
   ///
   /// @todo1 Compare single core with meep. Current (rev40) state is
   /// not very good
+  ///
   /// onza 128 proc timestep 100 size 6000x6000x1 time 11s.
   /// meep 32 processes 15 x 15 mkm res400
   /// on time step 235169 (time=293.961), 0.0897154 s/step
@@ -879,63 +910,30 @@ namespace onza {
   ///  outputting fields: 1.53428 s
   /// Fourier transforming: 0.128974 s
   ///    everything else: 60.4937 s
+  ///
+  /// Length of whole model
+  /// 1 x 16 000 x 16 000 vertices x 8 components = 16 Gb on deb00
+  /// 630 x 630 x 630 vertices x 8 components = 16 Gb on deb00
+
   int SimulationInputConfig::ReadConfig() {
     if (SetConfigFileMap() != kDone) return kErrorConfigFileWasNotAbleToOpen;
     if (config_file_map_.count("test_case")) {
-      //debug
-      printf("Simulating test case %s\n", config_file_map_["test_case"].c_str());
+      if (config_file_map_["test_case"] == "1Dzero") {
+        Preset1Dzero();
+      } else if (config_file_map_["test_case"] == "2Dspeedup") {
+        Preset2Dspeedup();
+      } else if (config_file_map_["test_case"] == "3Dsimple") {
+        Preset3Dsimple();
+      }
     }  // end of if simulating testcase
-    
-    //  if config_file_map_[testcase]
-    //  Number of hard coded tests. Currently supported 1Dzero and 2Dspeedup.
-    //debug  Output maped values.
-    // std::map<std::string, std::string>::iterator key;
-    // for (key = config_file_map_.begin(); key != config_file_map_.end(); ++key) {
-    //   printf("%s = %s\n", key->first.c_str(), key->second.c_str());
-    // }
+    // Select from some of hard coded tests. Currently supported 1Dzero,
+    // 2Dspeedup, 3Dsimple.
+
     /// @todo1 Insert common initialization with default params.
     // ********************************************************************** //
-    // Length of whole model
-    // 1 x 16 000 x 16 000 vertices x 8 components = 16 Gb on deb00
-    // 630 x 630 x 630 vertices x 8 components = 16 Gb on deb00
-    // int64_t length_x = 6000, length_y = 6000, length_z = 1;
-    // int64_t length_x = 130, length_y = 130, length_z = 130;
-    // int64_t length_x = 113, length_y = 120, length_z = 179;  // !!
-    // int64_t length_x = 101, length_y = 307, length_z = 908; // !!
-    // int64_t length_x = 813, length_y = 1, length_z = 79; // !!
-    // !!!! Best to go with MPIsize = 3 !!!!
-    // int64_t length_x = 5, length_y = 9, length_z = 2;
-    // int64_t length_x = 800, length_y = 1, length_z = 1;
-    // ********************************************************************** //
-    // check 3D algorithm point source
-    // ********************************************************************** //
-    // int64_t length_x = 200, length_y = 180, length_z = 180;
-    // int64_t length_x = 320, length_y = 400, length_z = 40 ;
-    // int64_t length_x = 512, length_y = 512, length_z = 512;
-    // int64_t length_x = 128, length_y = 128, length_z = 128;
-    // int64_t length_x = 32, length_y = 32, length_z = 32;
-    // ********************************************************************** //
-    // check 2D algorithm TMz
-    // ********************************************************************** //
-    // int64_t length_x = 4096, length_y = 4096, length_z = 1;
-    // int64_t length_x = 2048, length_y = 2048, length_z = 1;
-    // int64_t length_x = 1024, length_y = 1024, length_z = 1;
-    // int64_t length_x = 512, length_y = 512, length_z = 1;
-    // int64_t length_x = 256, length_y = 256, length_z = 1;
-    // int64_t length_x = 128, length_y = 128, length_z = 1;
-    // int64_t length_x = 64, length_y = 64, length_z = 1;
-    // int64_t length_x = 600, length_y = 600, length_z = 1;
-    // int64_t length_x = 32, length_y = 3000, length_z = 1;
-    // ********************************************************************** //
-    // check 1D algorithm
-    // ********************************************************************** //
     int64_t length_x = 200, length_y = 1, length_z = 1;
-    // int64_t length_x = 1, length_y = 200, length_z = 1;
-    // int64_t length_x = 1, length_y = 1, length_z = 200;
-    // int64_t length_x = 4, length_y = 1, length_z = 1;
     if (grid_input_config_.set_total_grid_length(length_x, length_y, length_z)
         != kDone) return kErrorSettingWrongGridSize;
-    // ********************************************************************** //
     // Setting boundary_condition_
     //            kBoundaryConditionPML or kBoundaryConditionPeriodical.
     SetBoundaryConditionsAllPML();
@@ -948,8 +946,7 @@ namespace onza {
     time_depth_ = 2;
     // ********************************************************************** //
     // 1D section
-    // ********************************************************************** //
-    /// For most simple case of 1D  we will need Ez, Hy, epsilon, srcEz.
+    // For most simple case of 1D  we will need Ez, Hy, epsilon, srcEz.
     algorithm_ = kAlgorithmSimpleX1D;
     number_of_grid_data_components_ = 4;
     //    components_to_exchange_ = kEz, kHy;
@@ -967,19 +964,14 @@ namespace onza {
     // number_of_grid_data_components_ = 20;
     // int components_to_exchange[] = {kEx, kEy, kEz, kHx, kHy, kHz};
     // ********************************************************************** //
-    // total_time_steps_ = 450000;
-    // total_time_steps_ = 100;
     total_time_steps_ = 240;  // check zero in 1D for Ez;
-    // total_time_steps_ = 100;
-    // total_time_steps_ = 60;
-    // total_time_steps_ = 4;
     number_of_components_to_exchange_ = sizeof(components_to_exchange)
                                         /sizeof(components_to_exchange[0]);
-    // number_of_components_to_exchange_ = components_to_exchange_.size();
     components_to_exchange_.resize(number_of_components_to_exchange_);
     for (int i = 0; i < number_of_components_to_exchange_; ++i)
       components_to_exchange_(i) = components_to_exchange[i];
-    // set grid length before auto setting reduced boundary conditions
+
+    // Config auto check.
     AutoSetReducedBoundaryConditions();
     if (CheckTotalPMLWidth() != kDone) return kErrorTooWidePml;
     status_ = kInputConfigAllDone;
