@@ -3,6 +3,21 @@
 /// @file   onza-fdtd.cc
 /// @author Ladutenko Konstantin <kostyfisik at gmail (.) com>
 /// @copyright 2012 Ladutenko Konstantin
+/// @section LICENSE 
+/// This file is part of Onza FDTD.
+///
+/// Onza FDTD is free software: you can redistribute it and/or modify
+/// it under the terms of the GNU General Public License as published by
+/// the Free Software Foundation, either version 3 of the License, or
+/// (at your option) any later version.
+///
+/// Onza FDTD is distributed in the hope that it will be useful,
+/// but WITHOUT ANY WARRANTY; without even the implied warranty of
+/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+/// GNU General Public License for more details.
+///
+/// You should have received a copy of the GNU General Public License
+/// along with Onza FDTD.  If not, see <http://www.gnu.org/licenses/>.
 /// @date   Wed Apr 25 15:01:02 2012
 ///
 /// @brief  Top level calls for FDTD simulation, Doxygen mainpage description.
@@ -237,7 +252,7 @@ int main(int argc, char *argv[]) {
 ///
 /// #Parallel generic electromagnetic simulation software
 ///
-/// Onza FDTD is a high performance electromagnetic simulation
+/// Onza FDTD is a free (GPLv3+) high performance electromagnetic simulation
 /// software using [finite-difference time-domain (FDTD)
 /// method][FDTD]. FDTD method generates very high computational
 /// load. To get simulation results in reasonable time your should use
