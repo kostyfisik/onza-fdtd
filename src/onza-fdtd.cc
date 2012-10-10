@@ -242,6 +242,7 @@ int main(int argc, char *argv[]) {
 ///
 /// [FDTD]: http://en.wikipedia.org/wiki/Finite-difference_time-domain_method
 ///         "Go to Wikipedia"
+/// [Onza source]: http://onzafdtd.org/onza-daily.tar.gz "source"
 /// [OpenMPI]: http://www.open-mpi.org
 /// [Metamaterials Laboratory]: http://phoi.ifmo.ru/metamaterials
 /// [NRU ITMO]: http://en.ifmo.ru "National Research University ITMO"
@@ -252,15 +253,14 @@ int main(int argc, char *argv[]) {
 ///
 /// #Parallel generic electromagnetic simulation software
 ///
-/// Onza FDTD is a free (GPLv3+) high performance electromagnetic simulation
-/// software using [finite-difference time-domain (FDTD)
-/// method][FDTD]. FDTD method generates very high computational
-/// load. To get simulation results in reasonable time your should use
-/// a powerful computer or a supercomputer cluster. Onza FDTD was designed
-/// to run efficiently with:
-/// - multi-core processors
-/// - multiprocessor systems
-/// - clusters and supercomputers
+/// Onza FDTD is a free (GPLv3+, [Onza source]) high performance
+/// electromagnetic simulation software using [finite-difference
+/// time-domain (FDTD) method][FDTD]. FDTD method generates very high
+/// computational load. To get simulation results in reasonable time
+/// your should use a powerful computer or a supercomputer
+/// cluster. Onza FDTD was designed to run efficiently with: -
+/// multi-core processors - multiprocessor systems - clusters and
+/// supercomputers
 ///
 /// Onza FDTD software is developed by [Metamaterials Laboratory] of
 /// Photonics and Optical Informatics Department of [NRU ITMO]. It is

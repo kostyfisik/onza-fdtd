@@ -4,5 +4,10 @@ multiprocessor systems, clusters and supercomputers.
 
 Onza FDTD needs MPI installed to compile and run. 
 
-Before use install Blitz++ library. For Debian/Ubuntu systems install with
-# apt-get install libblitz0-dev
+Before use install Blitz++ library, MPI and Cmake. 
+
+For Debian/Ubuntu systems single line install with
+# apt-get install libblitz0-dev openmpi-bin openmpi-doc libopenmpi-dev cmake
+
+./go.sh normaly should compile Onza and run FDTD simulation, edit it
+to run Onza on your number of processes.
