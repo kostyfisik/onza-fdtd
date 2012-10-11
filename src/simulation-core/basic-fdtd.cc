@@ -915,7 +915,7 @@ namespace onza {
                                              int64_t length_x,
                                              int64_t length_y,
                                              int64_t length_z) {
-    printf("Preset TMz2Dspeedup\n");
+    //debug printf("Preset TMz2Dspeedup\n");
     if (grid_input_config_.set_total_grid_length(length_x, length_y, length_z)
         != kDone) return kErrorSettingWrongGridSize;
     SetBoundaryConditionsAllPML();
