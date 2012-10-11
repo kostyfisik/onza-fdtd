@@ -116,12 +116,14 @@ namespace onza {
     /// @brief Check total PML width to be less than domain width
     int CheckTotalPMLWidth();
     /// @brief Preset config 1Dzero.
-    int Preset1Dzero(int16_t total_time_steps,
+    int PresetX1Dzero(int64_t total_time_steps,
                      int64_t length_x, int64_t length_y, int64_t length_z);
-    /// @brief Preset config 2Dspeedup.
-    int Preset2Dspeedup();
+    /// @brief Preset config TMz2Dspeedup.
+    int PresetTMz2Dspeedup(int64_t total_time_steps,
+                        int64_t length_x, int64_t length_y, int64_t length_z);
     /// @brief Preset config 3Dsimple.
-    int Preset3Dsimple();
+    int Preset3Dsimple(int64_t total_time_steps,
+                       int64_t length_x, int64_t length_y, int64_t length_z);
     /// @brief Set boundary conditions in all directions to be PML.
     int SetBoundaryConditionsAllPML();
     /// @brief Parse config file keys.

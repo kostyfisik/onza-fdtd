@@ -155,7 +155,7 @@ namespace onza {
         return;
     }  // end if special benchmarck source in each MPI process
     //debug
-    int16_t source_global_x = 50, source_global_y = 0, source_global_z = 0;
+    int64_t source_global_x = 50, source_global_y = 0, source_global_z = 0;
     if (subdomain_start_index_[kAxisX] <= source_global_x
         && subdomain_finish_index_[kAxisX] >= source_global_x
         && subdomain_start_index_[kAxisY] <= source_global_y
@@ -882,11 +882,11 @@ namespace onza {
   /// @brief Preset config 1Dzero.
   ///
   /// At time step 231 field Ez is very close to zero.
-  int SimulationInputConfig::Preset1Dzero(int16_t total_time_steps,
+  int SimulationInputConfig::PresetX1Dzero(int64_t total_time_steps,
                                           int64_t length_x,
                                           int64_t length_y,
                                           int64_t length_z) {
-    printf("Preset 1Dzero\n");
+    printf("Preset X1Dzero\n");
     if (grid_input_config_.set_total_grid_length(length_x, length_y, length_z)
         != kDone) return kErrorSettingWrongGridSize;
     SetBoundaryConditionsAllPML();
@@ -903,7 +903,7 @@ namespace onza {
     components_to_exchange_ = kEz, kHy;
     total_time_steps_ = total_time_steps;
     return kDone;
-  }  // end of SimulationInputConfig::Preset1Dzero()
+  }  // end of SimulationInputConfig::PresetX1Dzero()
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
@@ -911,9 +911,11 @@ namespace onza {
   ///
   /// Check speedup in cluster enviroment. Should be very nice for 16 nodes.
   /// @todo2(tig) Check preset
-  int SimulationInputConfig::Preset2Dspeedup() {
-    printf("Preset 2Dspeedup\n");
-    int64_t length_x = 200, length_y = 200, length_z = 1;
+  int SimulationInputConfig::PresetTMz2Dspeedup(int64_t total_time_steps,
+                                             int64_t length_x,
+                                             int64_t length_y,
+                                             int64_t length_z) {
+    printf("Preset TMz2Dspeedup\n");
     if (grid_input_config_.set_total_grid_length(length_x, length_y, length_z)
         != kDone) return kErrorSettingWrongGridSize;
     SetBoundaryConditionsAllPML();
@@ -927,9 +929,9 @@ namespace onza {
     number_of_components_to_exchange_ = 3;
     components_to_exchange_.resize(number_of_components_to_exchange_);
     components_to_exchange_ = kEz, kHy, kHx;
-    total_time_steps_ = 240;
+    total_time_steps_ = total_time_steps;
     return kDone;
-  }  // end of SimulationInputConfig::Preset2Dspeedup()
+  }  // end of SimulationInputConfig::PresetTMz2Dspeedup()
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
@@ -937,9 +939,11 @@ namespace onza {
   ///
   /// Simply check 3D is runing.
   /// @todo2(tig) Check preset
-  int SimulationInputConfig::Preset3Dsimple() {
+  int SimulationInputConfig::Preset3Dsimple(int64_t total_time_steps,
+                                            int64_t length_x,
+                                            int64_t length_y,
+                                            int64_t length_z) {
     printf("Preset 3Dsimple\n");
-    int64_t length_x = 128, length_y = 128, length_z = 128;
     if (grid_input_config_.set_total_grid_length(length_x, length_y, length_z)
         != kDone) return kErrorSettingWrongGridSize;
     SetBoundaryConditionsAllPML();
@@ -953,7 +957,7 @@ namespace onza {
     number_of_components_to_exchange_ = 6;
     components_to_exchange_.resize(number_of_components_to_exchange_);
     components_to_exchange_ = kEx, kEy, kEz, kHx, kHy, kHz;
-    total_time_steps_ = 240;
+    total_time_steps_ = total_time_steps;
     return kDone;
   }  // end of SimulationInputConfig::Preset3Dsimple()
   // ********************************************************************** //
@@ -1016,15 +1020,17 @@ namespace onza {
     // convert_to_positive(config_file_map_["total_time_steps"]);
     // Select from some of hard coded tests.
     if (config_file_map_.count("test_case")) {
-      if (config_file_map_["test_case"] == "1Dzero") {
-        done_status = Preset1Dzero(total_time_steps,
+      if (config_file_map_["test_case"] == "X1Dzero") {
+        done_status = PresetX1Dzero(total_time_steps,
                                    length_x, length_y, length_z);
         if (done_status != kDone) return done_status;
-      } else if (config_file_map_["test_case"] == "2Dspeedup") {
-        done_status = Preset2Dspeedup();
+      } else if (config_file_map_["test_case"] == "TMz2Dspeedup") {
+        done_status = PresetTMz2Dspeedup(total_time_steps,
+                                   length_x, length_y, length_z);
         if (done_status != kDone) return done_status;
       } else if (config_file_map_["test_case"] == "3Dsimple") {
-        done_status = Preset3Dsimple();
+        done_status = Preset3Dsimple(total_time_steps,
+                                   length_x, length_y, length_z);
         if (done_status != kDone) return done_status;
       }
     } else {  // end of if simulating test case
