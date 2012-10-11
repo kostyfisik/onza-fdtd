@@ -4,7 +4,7 @@
 /// @file   common.h
 /// @author Ladutenko Konstantin <kostyfisik at gmail (.) com>
 /// @copyright 2012 Ladutenko Konstantin
-/// @section LICENSE 
+/// @section LICENSE
 /// This file is part of Onza FDTD.
 ///
 /// Onza FDTD is free software: you can redistribute it and/or modify
@@ -23,6 +23,7 @@
 ///
 /// @brief  Global variables, enumerations, macros, types, etc..
 #include <stdint.h>  // Including stdint.h to use int64_t.
+#include <string>
 namespace onza {
   // ********************************************************************** //
   // **********************     Constants           *********************** //
@@ -43,6 +44,8 @@ namespace onza {
     /// HaloExchangeProcess::Init(int argc, char *argv[])
     /// config file name was not found
     kErrorConfigFileNameWasNotDefined,
+    /// Error while converting string to positive decimal.
+    kErrorConfgiFileWrongDecimalInput,
     /// exchange buffer was initiated to be not contiguous with
     /// BasicSimulationCore::Init() or was detected to be not
     /// contiguous with HaloToExchange::Init().
@@ -132,7 +135,7 @@ namespace onza {
   /// @brief Some values for tags for MPI messages.
   enum MpiTag {kMpiTagCheckIndex = 1};
   // ********************************************************************** //
-  // **********************     Global inline functions    **************** //
+  // **********************         Global functions       **************** //
   // ********************************************************************** //
   /// @brief Returns border opposite to input border
   ///
@@ -142,7 +145,7 @@ namespace onza {
   inline BorderPosition GetOppositeBorder(BorderPosition input_border) {
     return static_cast<BorderPosition>((input_border+3)%6);
   }
-  /// @breif Mutiply components of vector
+  /// @brief Mutiply components of vector
   ///
   /// Used to get product of any vector type, e.g.
   /// @code
@@ -171,7 +174,7 @@ namespace onza {
       return product;
     }  // end of if dimensions
   }  // end of template MultiplyComponents
-  /// @breif Sum up components of vector
+  /// @brief Sum up components of vector
   ///
   /// Used to get sum of any vector type components.
   /// @see MultiplyComponents()
@@ -193,6 +196,27 @@ namespace onza {
       return product;
     }  // end of if dimensions
   }  // end of template SumUpComponents
+  /// @brief Square some value
   template<class T> inline T pow2(const T value) {return value*value;}
+  /// @brief Convert string to positive integer.
+  ///
+  /// Return zero for any error.
+  /// Modified anser of Nawaz from
+  /// http://stackoverflow.com/questions/7370887/convert-an-ascii-string-to-long-long
+  template<class DecimalType> DecimalType
+      convert_to_positive(const std::string &s, DecimalType &output) {
+    DecimalType Error = 0;
+    if (s.size() == 0) return Error;
+    DecimalType v = 0;
+    size_t i = 0;
+    char sign = (s[0] == '-' || s[0] == '+') ? (++i, s[0]) : '+';
+    for (; i < s.size(); ++i) {
+      if (s[i] < '0' || s[i] > '9') return Error;
+      v = v * 10 + s[i] - '0';
+    }
+    if (sign == '-') return Error;
+    output = v;
+    return output;
+  }  // end of DecimalType convert(const std::string &s);
 }  // end of namespace onza
 #endif  // SRC_COMMON_H_

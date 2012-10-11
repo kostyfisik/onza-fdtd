@@ -4,7 +4,7 @@
 /// @file   basic-fdtd.h
 /// @author Ladutenko Konstantin <kostyfisik at gmail (.) com>
 /// @copyright 2012 Ladutenko Konstantin
-/// @section LICENSE 
+/// @section LICENSE
 /// This file is part of Onza FDTD.
 ///
 /// Onza FDTD is free software: you can redistribute it and/or modify
@@ -116,7 +116,8 @@ namespace onza {
     /// @brief Check total PML width to be less than domain width
     int CheckTotalPMLWidth();
     /// @brief Preset config 1Dzero.
-    int Preset1Dzero();
+    int Preset1Dzero(int16_t total_time_steps,
+                     int64_t length_x, int64_t length_y, int64_t length_z);
     /// @brief Preset config 2Dspeedup.
     int Preset2Dspeedup();
     /// @brief Preset config 3Dsimple.

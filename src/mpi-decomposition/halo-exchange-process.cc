@@ -2,7 +2,7 @@
 /// @file   halo-exchange-process.cc
 /// @author Ladutenko Konstantin <kostyfisik at gmail (.) com>
 /// @copyright 2012 Ladutenko Konstantin
-/// @section LICENSE 
+/// @section LICENSE
 /// This file is part of Onza FDTD.
 ///
 /// Onza FDTD is free software: you can redistribute it and/or modify

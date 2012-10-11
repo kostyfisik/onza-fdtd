@@ -2,7 +2,7 @@
 /// @file   basic-fdtd.cc
 /// @author Ladutenko Konstantin <kostyfisik at gmail (.) com>
 /// @copyright 2012 Ladutenko Konstantin
-/// @section LICENSE 
+/// @section LICENSE
 /// This file is part of Onza FDTD.
 ///
 /// Onza FDTD is free software: you can redistribute it and/or modify
@@ -24,7 +24,6 @@
 #include <blitz/array.h>
 //debug for blitz::Array output
 // #include <iostream>
-#include <string>
 #include <map>
 #include <cstdio>
 #include "./basic-fdtd.h"
@@ -883,9 +882,11 @@ namespace onza {
   /// @brief Preset config 1Dzero.
   ///
   /// At time step 231 field Ez is very close to zero.
-  int SimulationInputConfig::Preset1Dzero() {
+  int SimulationInputConfig::Preset1Dzero(int16_t total_time_steps,
+                                          int64_t length_x,
+                                          int64_t length_y,
+                                          int64_t length_z) {
     printf("Preset 1Dzero\n");
-    int64_t length_x = 200, length_y = 1, length_z = 1;
     if (grid_input_config_.set_total_grid_length(length_x, length_y, length_z)
         != kDone) return kErrorSettingWrongGridSize;
     SetBoundaryConditionsAllPML();
@@ -900,7 +901,7 @@ namespace onza {
     number_of_components_to_exchange_ = 2;
     components_to_exchange_.resize(number_of_components_to_exchange_);
     components_to_exchange_ = kEz, kHy;
-    total_time_steps_ = 240;
+    total_time_steps_ = total_time_steps;
     return kDone;
   }  // end of SimulationInputConfig::Preset1Dzero()
   // ********************************************************************** //
@@ -982,12 +983,42 @@ namespace onza {
   /// 1 x 16 000 x 16 000 vertices x 8 components = 16 Gb on deb00
   /// 630 x 630 x 630 vertices x 8 components = 16 Gb on deb00
   int SimulationInputConfig::ReadConfig() {
+    // Read config from file to private member.
     int done_status = SetConfigFileMap();
     if (done_status != kDone) return done_status;
+    int64_t length_x = 1, length_y = 1, length_z = 1;
+    int64_t total_time_steps = 1;
+    if (config_file_map_.count("length_x"))
+      if (!convert_to_positive(config_file_map_["length_x"], length_x)) {
+        printf("Error! Non positive or non decimal input '%s'!\n",
+               config_file_map_["length_x"].c_str());
+        return kErrorConfgiFileWrongDecimalInput;
+      };
+    if (config_file_map_.count("length_y"))
+      if (!convert_to_positive(config_file_map_["length_y"], length_y)) {
+        printf("Error! Non positive or non decimal input '%s'!\n",
+               config_file_map_["length_y"].c_str());
+        return kErrorConfgiFileWrongDecimalInput;
+      };
+    if (config_file_map_.count("length_z"))
+      if (!convert_to_positive(config_file_map_["length_z"], length_z)) {
+        printf("Error! Non positive or non decimal input '%s'!\n",
+               config_file_map_["length_z"].c_str());
+        return kErrorConfgiFileWrongDecimalInput;
+      };
+    if (config_file_map_.count("total_time_steps"))
+      if (!convert_to_positive(config_file_map_["total_time_steps"],
+                               total_time_steps)) {
+        printf("Error! Non positive or non decimal input '%s'!\n",
+               config_file_map_["total_time_steps"].c_str());
+        return kErrorConfgiFileWrongDecimalInput;
+      };
+    // convert_to_positive(config_file_map_["total_time_steps"]);
     // Select from some of hard coded tests.
     if (config_file_map_.count("test_case")) {
       if (config_file_map_["test_case"] == "1Dzero") {
-        done_status = Preset1Dzero();
+        done_status = Preset1Dzero(total_time_steps,
+                                   length_x, length_y, length_z);
         if (done_status != kDone) return done_status;
       } else if (config_file_map_["test_case"] == "2Dspeedup") {
         done_status = Preset2Dspeedup();
@@ -999,7 +1030,7 @@ namespace onza {
     } else {  // end of if simulating test case
       done_status = SetConfigFromFileMap();
       if (done_status != kDone) return done_status;
-    }
+    }  // end of else using castom settings.
     /// @todo1 For CPML implementation see Taflove 3d ed. p.307 section 7.9.2
     // Config auto check.
     AutoSetReducedBoundaryConditions();
