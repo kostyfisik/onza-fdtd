@@ -86,15 +86,18 @@ if [ $isTest = "no" ]; then
     then
         echo "Waiting for shared file system to distibute files"
         sleep 7
-        echo "(1) Nodes 16   procs 128"
-        salloc -N 16 -n 16 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
-        echo
         echo "(1) Nodes 16   procs 16"
         salloc -N 16 -n 16 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
         echo
+        sleep 3
+        echo "(1) Nodes 8   procs 64"
+        salloc -N 8 -n 64 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
+        echo
+        sleep 3
         echo "(1) Nodes 1   procs 8"
         salloc -N 1 -n 8 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
         echo
+        sleep 3
         echo "(1) Nodes 1   procs 1"
         salloc -N 1 -n 1 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
         echo
