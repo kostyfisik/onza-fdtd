@@ -35,13 +35,13 @@ namespace onza {
   /// @brief Prepare borders to send
   ///
   /// Copy grid data_ slices to borders_to_send_
-  void BasicSimulationCore::PrepareBordersToSend() { // comment here
+  void BasicSimulationCore::PrepareBordersToSend() {
     for (int border = kBorderLeft; border < kDimensions*2; ++border) {
       for (int component = 0;
            component < number_of_components_to_exchange_;
            ++component) {
         // Get slice of data_ for current border and current
-        // component.  In first (component) dimension it will have the
+        // component.  In fist (component) dimension it will have the
         // only element (current component). Copy slice (reduced to 3D
         // array by component index) from data_ to corresponding slice of
         // borders_to_send_.
@@ -49,14 +49,14 @@ namespace onza {
         int opposite_border = (border + kDimensions) % (kDimensions*2);
         if (neighbours_ranks_[border] != MPI_PROC_NULL) {
           if (neighbours_ranks_[border] != process_rank_)
-            borders_to_send_(border)(all_x_, all_y_, all_z_, component)
+            borders_to_send_(border)(component, all_x_, all_y_, all_z_)
               = data_(borders_to_send_range_(border, component))
-              (all_x_, all_y_, all_z_, the_only_component_index);
+              (the_only_component_index, all_x_, all_y_, all_z_);
           else
             received_borders_(opposite_border)
-              (all_x_, all_y_, all_z_, component)
+              (component, all_x_, all_y_, all_z_)
               = data_(borders_to_send_range_(border, component))
-              (all_x_, all_y_, all_z_, the_only_component_index);
+              (the_only_component_index, all_x_, all_y_, all_z_);
         }  // end of if neighbour receiver if valid
       }  // end of for component
     }  // end of for border
@@ -97,29 +97,31 @@ namespace onza {
       case kAlgorithmSimpleX1D:
         for (int i = 0; i < subdomain_size_[kAxisX]; ++i)
           fprintf(snapshot, "%li\t%g\n", i+subdomain_start_index_[kAxisX],
-                  data_(i, 0, 0, static_cast<int>(kEz)));
+                  data_(static_cast<int>(kEz), i, 0, 0));
         break;
       case kAlgorithmSimpleY1D:
         for (int i = 0; i < subdomain_size_[kAxisY]; ++i)
           fprintf(snapshot, "%li\t%g\n", i+subdomain_start_index_[kAxisY],
-                  data_(0, i, 0, static_cast<int>(kEz)));
+                  data_(static_cast<int>(kEz), 0, i, 0));
         break;
       case kAlgorithmSimpleZ1D:
         for (int i = 0; i < subdomain_size_[kAxisZ]; ++i)
           fprintf(snapshot, "%li\t%g\n", i+subdomain_start_index_[kAxisZ],
-                  data_(0, 0, i, static_cast<int>(kEz)));
+                  data_(static_cast<int>(kEz), 0, 0, i));
         break;
       case kAlgorithmSimpleTMz2D:
         for (int i = 0; i < subdomain_size_[kAxisX]; ++i)
-         fprintf(snapshot, "%li\t%g\n", i+subdomain_start_index_[kAxisX],
-         data_(i, static_cast<int>(subdomain_size_[kAxisY]/2),
-              static_cast<int>(subdomain_size_[kAxisZ]/2), static_cast<int>(kEz)));
+          fprintf(snapshot, "%li\t%g\n", i+subdomain_start_index_[kAxisX],
+                  data_(static_cast<int>(kEz), i,
+                        static_cast<int>(subdomain_size_[kAxisY]/2),
+                        static_cast<int>(subdomain_size_[kAxisZ]/2)));
         break;
       case kAlgorithmSimple3D:
         for (int i = 0; i < subdomain_size_[kAxisX]; ++i)
-         fprintf(snapshot, "%li\t%g\n", i+subdomain_start_index_[kAxisX],
-         data_(i, static_cast<int>(subdomain_size_[kAxisY]/2),
-	      static_cast<int>(subdomain_size_[kAxisZ]/2), static_cast<int>(kEz)));
+          fprintf(snapshot, "%li\t%g\n", i+subdomain_start_index_[kAxisX],
+                  data_(static_cast<int>(kEz), i,
+                        static_cast<int>(subdomain_size_[kAxisY]/2),
+                        static_cast<int>(subdomain_size_[kAxisZ]/2)));
         break;
         // default:  // @todo3 After moving snapshot call to warper
                      // we can handle error there
@@ -142,13 +144,13 @@ namespace onza {
     /// assigned at init time)
     //debug
     if (algorithm_ == kAlgorithmSimple3D) {
-      data_(all_x_, all_y_, all_z_, static_cast<int>(kSrcEz)) =
+      data_(static_cast<int>(kSrcEz), all_x_, all_y_, all_z_) =
         exp(-pow2(local_time_step_ - 50.) / 200.);
         return;
     }  // end if special benchmarck source in each MPI process
     //debug
     if (algorithm_ == kAlgorithmSimpleTMz2D) {
-      data_(all_x_, all_y_, all_z_, static_cast<int>(kSrcEz)) =
+      data_(static_cast<int>(kSrcEz), all_x_, all_y_, all_z_) =
         exp(-pow2(local_time_step_ - 50.) / 200.);
         return;
     }  // end if special benchmarck source in each MPI process
@@ -166,22 +168,22 @@ namespace onza {
       int source_local_z = source_global_z - subdomain_start_index_[kAxisZ];
       switch (algorithm_) {
       case kAlgorithmSimpleX1D:
-        data_(source_local_x, all_y_, all_z_, kSrcEz) =  // Why not st.cast<int>?
+        data_(kSrcEz, source_local_x, all_y_, all_z_) =
           exp(-pow2(local_time_step_ - 30.) / 100.);
         break;
       case kAlgorithmSimpleY1D:
-        data_(all_x_, source_local_y, all_z_, kSrcEz) =  // Why not st.cast<int>?
+        data_(kSrcEz, all_x_, source_local_y, all_z_) =
           exp(-pow2(local_time_step_ - 30.) / 100.);
         break;
       case kAlgorithmSimpleZ1D:
-        data_(all_x_, all_y_, source_local_z, kSrcEz) =  // Why not st.cast<int>?
+        data_(kSrcEz, all_x_, all_y_, source_local_z) =
           exp(-pow2(local_time_step_ - 30.) / 100.);
         break;
       case kAlgorithmSimpleTMz2D:
         //debug
         // data_(static_cast<int>(kSrcEz), 110, 140, all_z_) =
         //   exp(-pow2(local_time_step_ - 50.) / 200.);
-        data_(source_local_x, all_y_, all_z_, static_cast<int>(kSrcEz)) =
+        data_(static_cast<int>(kSrcEz), source_local_x, all_y_, all_z_) =
           exp(-pow2(local_time_step_ - 50.) / 200.);
         break;
       case kAlgorithmSimple3D:
@@ -193,8 +195,8 @@ namespace onza {
         //       source_local_x, source_local_y, all_z_) =
         //   exp(-pow2(local_time_step_ - 100.) / 400.);
         // plane
-        data_(static_cast<int>(source_local_x), all_y_, all_z_, 
-              static_cast<int>(kSrcEz)) =
+        data_(static_cast<int>(kSrcEz),
+              static_cast<int>(source_local_x), all_y_, all_z_) =
           exp(-pow2(local_time_step_ - 100.) / 400.);
         break;
       // default:
@@ -220,75 +222,75 @@ namespace onza {
     // Hy time = -1/2, x = +1/2, Ez time = 0, x = 0
     // Update H
     // Hx
-    data_snapshot_        (1+t)(x    , y    , z    , kHx) =
-      data_snapshot_        (t)(x    , y    , z    , kChxh)
-      * data_snapshot_      (t)(x    , y    , z    , kHx)
+    data_snapshot_        (1+t)(kHx  , x    , y    , z) =
+      data_snapshot_        (t)(kChxh, x    , y    , z)
+      * data_snapshot_      (t)(kHx  , x    , y    , z)
       +
-      data_snapshot_        (t)(x    , y    , z    , kChxe)
-      * ((data_snapshot_    (t)(x    , y    , z + 1, kEy)
-          - data_snapshot_  (t)(x    , y    , z    , kEy))
+      data_snapshot_        (t)(kChxe, x    , y    , z)
+      * ((data_snapshot_    (t)(kEy  , x    , y    , z + 1)
+          - data_snapshot_  (t)(kEy  , x    , y    , z))
          -
-         (data_snapshot_    (t)(x    , y + 1, z    , kEz)
-          - data_snapshot_  (t)(x    , y    , z    , kEz)));
+         (data_snapshot_    (t)(kEz  , x    , y + 1, z)
+          - data_snapshot_  (t)(kEz  , x    , y    , z)));
     // Hy
-    data_snapshot_        (1+t)(x    , y    , z    , kHy) =
-      data_snapshot_        (t)(x    , y    , z    , kChyh)
-      * data_snapshot_      (t)(x    , y    , z    , kHy)
+    data_snapshot_        (1+t)(kHy  , x    , y    , z) =
+      data_snapshot_        (t)(kChyh, x    , y    , z)
+      * data_snapshot_      (t)(kHy  , x    , y    , z)
       +
-      data_snapshot_        (t)(x    , y    , z    , kChye)
-      * ((data_snapshot_    (t)(x + 1, y    , z    , kEz)
-          - data_snapshot_  (t)(x    , y    , z    , kEz))
+      data_snapshot_        (t)(kChye, x    , y    , z)
+      * ((data_snapshot_    (t)(kEz  , x + 1, y    , z)
+          - data_snapshot_  (t)(kEz  , x    , y    , z))
          -
-         (data_snapshot_    (t)(x    , y    , z + 1, kEx)
-          - data_snapshot_  (t)(x    , y    , z    , kEx)));
+         (data_snapshot_    (t)(kEx  , x    , y    , z + 1)
+          - data_snapshot_  (t)(kEx  , x    , y    , z)));
     // Hz
-    data_snapshot_        (1+t)(x    , y    , z    , kHz) =
-      data_snapshot_        (t)(x    , y    , z    , kChzh)
-      * data_snapshot_      (t)(x    , y    , z    , kHz)
+    data_snapshot_        (1+t)(kHz  , x    , y    , z) =
+      data_snapshot_        (t)(kChzh, x    , y    , z)
+      * data_snapshot_      (t)(kHz  , x    , y    , z)
       +
-      data_snapshot_        (t)(x    , y    , z    , kChze)
-      * ((data_snapshot_    (t)(x    , y + 1, z    , kEx)
-          - data_snapshot_  (t)(x    , y    , z    , kEx))
+      data_snapshot_        (t)(kChze, x    , y    , z)
+      * ((data_snapshot_    (t)(kEx  , x    , y + 1, z)
+          - data_snapshot_  (t)(kEx  , x    , y    , z))
          -
-         (data_snapshot_    (t)(x + 1, y    , z    , kEy)
-          - data_snapshot_  (t)(x    , y    , z    , kEy)));
+         (data_snapshot_    (t)(kEy  , x + 1, y    , z)
+          - data_snapshot_  (t)(kEy  , x    , y    , z)));
     // Update E
     // Ex
     c = 1;
-    data_snapshot_        (1+t)(x    , y     + c, z     + c, kEx) =
-      data_snapshot_        (t)(x    , y     + c, z     + c, kCexe)
-      * data_snapshot_      (t)(x    , y     + c, z     + c, kEx)
+    data_snapshot_        (1+t)(kEx  , x    , y     + c, z     + c) =
+      data_snapshot_        (t)(kCexe, x    , y     + c, z     + c)
+      * data_snapshot_      (t)(kEx  , x    , y     + c, z     + c)
       +
-      data_snapshot_        (t)(x    , y     + c, z     + c, kCexh)
-      * ((data_snapshot_  (1+t)(x    , y     + c, z     + c, kHz)
-          - data_snapshot_(1+t)(x    , y - 1 + c, z     + c, kHz))
+      data_snapshot_        (t)(kCexh, x    , y     + c, z     + c)
+      * ((data_snapshot_  (1+t)(kHz  , x    , y     + c, z     + c)
+          - data_snapshot_(1+t)(kHz  , x    , y - 1 + c, z     + c))
          -
-         (data_snapshot_  (1+t)(x    , y     + c, z     + c, kHy)
-          - data_snapshot_(1+t)(x    , y     + c, z - 1 + c, kHy)));
+         (data_snapshot_  (1+t)(kHy  , x    , y     + c, z     + c)
+          - data_snapshot_(1+t)(kHy  , x    , y     + c, z - 1 + c)));
     // Ey
-    data_snapshot_        (1+t)(x     + c, y    , z     + c, kEy) =
-      data_snapshot_        (t)(x     + c, y    , z     + c, kCeye)
-      * data_snapshot_      (t)(x     + c, y    , z     + c, kEy)
+    data_snapshot_        (1+t)(kEy  , x     + c, y    , z     + c) =
+      data_snapshot_        (t)(kCeye, x     + c, y    , z     + c)
+      * data_snapshot_      (t)(kEy  , x     + c, y    , z     + c)
       +
-      data_snapshot_        (t)(x     + c, y    , z     + c, kCeyh)
-      * ((data_snapshot_  (1+t)(x     + c, y    , z     + c, kHx)
-          - data_snapshot_(1+t)(x     + c, y    , z - 1 + c, kHx))
+      data_snapshot_        (t)(kCeyh, x     + c, y    , z     + c)
+      * ((data_snapshot_  (1+t)(kHx  , x     + c, y    , z     + c)
+          - data_snapshot_(1+t)(kHx  , x     + c, y    , z - 1 + c))
          -
-         (data_snapshot_  (1+t)(x     + c, y    , z     + c, kHz)
-          - data_snapshot_(1+t)(x - 1 + c, y    , z     + c, kHz)));
+         (data_snapshot_  (1+t)(kHz  , x     + c, y    , z     + c)
+          - data_snapshot_(1+t)(kHz  , x - 1 + c, y    , z     + c)));
     // Ez
-    data_snapshot_        (1+t)(x     + c, y     + c, z, kEz) =
-      data_snapshot_        (t)(x     + c, y     + c, z, kCeze)
-      * data_snapshot_      (t)(x     + c, y     + c, z, kEz)
+    data_snapshot_        (1+t)(kEz   , x     + c, y     + c, z) =
+      data_snapshot_        (t)(kCeze , x     + c, y     + c, z)
+      * data_snapshot_      (t)(kEz   , x     + c, y     + c, z)
       +
-      data_snapshot_        (t)(x     + c, y     + c, z, kCezh)
-      * ((data_snapshot_  (1+t)(x     + c, y     + c, z, kHy)
-          - data_snapshot_(1+t)(x - 1 + c, y     + c, z, kHy))
+      data_snapshot_        (t)(kCezh , x     + c, y     + c, z)
+      * ((data_snapshot_  (1+t)(kHy   , x     + c, y     + c, z)
+          - data_snapshot_(1+t)(kHy   , x - 1 + c, y     + c, z))
          -
-         (data_snapshot_  (1+t)(x     + c, y     + c, z, kHx)
-          - data_snapshot_(1+t)(x     + c, y - 1 + c, z, kHx)))
+         (data_snapshot_  (1+t)(kHx   , x     + c, y     + c, z)
+          - data_snapshot_(1+t)(kHx   , x     + c, y - 1 + c, z)))
       +
-      data_snapshot_        (t)(x     + c, y     + c, z, kSrcEz);
+      data_snapshot_        (t)(kSrcEz, x     + c, y     + c, z);
   }  // end of BasicSimulationCore::AlgorithmSimple3D()
   // ********************************************************************** //
   // ********************************************************************** //
@@ -307,36 +309,36 @@ namespace onza {
     // Hy time = -1/2, x = +1/2, Ez time = 0, x = 0
     // Update H
     // Hx
-    data_snapshot_        (1+t)(x    , y    , z, kHx) =
-      data_snapshot_        (t)(x    , y    , z, kChxh)
-      * data_snapshot_      (t)(x    , y    , z, kHx)
+    data_snapshot_        (1+t)(kHx  , x    , y    , z) =
+      data_snapshot_        (t)(kChxh, x    , y    , z)
+      * data_snapshot_      (t)(kHx  , x    , y    , z)
       -
-      data_snapshot_        (t)(x    , y    , z, kChxe)
-      * (data_snapshot_     (t)(x    , y + 1, z, kEz)
-         - data_snapshot_   (t)(x    , y    , z, kEz));
+      data_snapshot_        (t)(kChxe, x    , y    , z)
+      * (data_snapshot_     (t)(kEz  , x    , y + 1, z)
+         - data_snapshot_   (t)(kEz  , x    , y    , z));
     // Hy
-    data_snapshot_        (1+t)(x    , y    , z, kHy) =
-      data_snapshot_        (t)(x    , y    , z, kChyh)
-      * data_snapshot_      (t)(x    , y    , z, kHy)
+    data_snapshot_        (1+t)(kHy  , x    , y    , z) =
+      data_snapshot_        (t)(kChyh, x    , y    , z)
+      * data_snapshot_      (t)(kHy  , x    , y    , z)
       +
-      data_snapshot_        (t)(x    , y    , z, kChye)
-      * (data_snapshot_     (t)(x + 1, y    , z, kEz)
-         - data_snapshot_   (t)(x    , y    , z, kEz));
+      data_snapshot_        (t)(kChye, x    , y    , z)
+      * (data_snapshot_     (t)(kEz  , x + 1, y    , z)
+         - data_snapshot_   (t)(kEz  , x    , y    , z));
     // Update E
     // Ez
     c = 1;
-    data_snapshot_        (1+t)(x     + c, y     + c, z, kEz) =
-      data_snapshot_        (t)(x     + c, y     + c, z, kCeze)
-      * data_snapshot_      (t)(x     + c, y     + c, z, kEz)
+    data_snapshot_        (1+t)(kEz   , x     + c, y     + c, z) =
+      data_snapshot_        (t)(kCeze , x     + c, y     + c, z)
+      * data_snapshot_      (t)(kEz   , x     + c, y     + c, z)
       +
-      data_snapshot_        (t)(x     + c, y     + c, z, kCezh)
-      * ((data_snapshot_  (1+t)(x     + c, y     + c, z, kHy)
-          - data_snapshot_(1+t)(x - 1 + c, y     + c, z, kHy))
+      data_snapshot_        (t)(kCezh , x     + c, y     + c, z)
+      * ((data_snapshot_  (1+t)(kHy   , x     + c, y     + c, z)
+          - data_snapshot_(1+t)(kHy   , x - 1 + c, y     + c, z))
          -
-         (data_snapshot_  (1+t)(x     + c, y     + c, z, kHx)
-          - data_snapshot_(1+t)(x     + c, y - 1 + c, z, kHx)))
+         (data_snapshot_  (1+t)(kHx   , x     + c, y     + c, z)
+          - data_snapshot_(1+t)(kHx   , x     + c, y - 1 + c, z)))
       +
-      data_snapshot_        (t)(x     + c, y     + c, z, kSrcEz);
+      data_snapshot_        (t)(kSrcEz, x     + c, y     + c, z);
   }  // end of BasicSimulationCore::AlgorithmSimpleTMz2D()
   // ********************************************************************** //
   // ********************************************************************** //
@@ -357,21 +359,21 @@ namespace onza {
     // constant shift to normalize equation to space range.
     int c = 0;   /// @todo1 use const int c0, c1, cm1 , c2 and so on.
     // Hy time = -1/2, x = +1/2, Ez time = 0, x = 0
-    data_snapshot_    (1+t)(x     + c, y, z, kHy) =
-      data_snapshot_    (t)(x     + c, y, z, kHy)
-      + data_snapshot_  (t)(x + 1 + c, y, z, kEz) * inv_imp0
-      - data_snapshot_  (t)(x     + c, y, z, kEz) * inv_imp0;
+    data_snapshot_    (1+t)(kHy, x     + c, y, z) =
+      data_snapshot_    (t)(kHy, x     + c, y, z)
+      + data_snapshot_  (t)(kEz, x + 1 + c, y, z) * inv_imp0
+      - data_snapshot_  (t)(kEz, x     + c, y, z) * inv_imp0;
     // Ez
     c = 1;
-    data_snapshot_      (1+t)(x     + c, y, z, kEz) =
-      data_snapshot_      (t)(x     + c, y, z, kEz)
-      + data_snapshot_  (1+t)(x     + c, y, z, kHy)
-      * data_snapshot_    (t)(x     + c, y, z, kCezh)
+    data_snapshot_      (1+t)(kEz    , x     + c, y, z) =
+        data_snapshot_    (t)(kEz    , x     + c, y, z)
+      + data_snapshot_  (1+t)(kHy    , x     + c, y, z)
+        * data_snapshot_  (t)(kCezh, x     + c, y, z)
         * imp0
-      - data_snapshot_  (1+t)(x - 1 + c, y, z, kHy)
-      * data_snapshot_    (t)(x     + c, y, z, kCezh)
+      - data_snapshot_  (1+t)(kHy    , x - 1 + c, y, z)
+        * data_snapshot_  (t)(kCezh, x     + c, y, z)
         * imp0
-      + data_snapshot_    (t)(x     + c, y, z, kSrcEz);
+      + data_snapshot_    (t)(kSrcEz , x     + c, y, z);
   }  // end of BasicSimulationCore::AlgorithmSimpleX1D()
   // ********************************************************************** //
   // ********************************************************************** //
@@ -392,21 +394,21 @@ namespace onza {
     // constant shift to normalize equation to space range.
     int c = 0;  /// @todo1 use const int c0, c1, cm1 , c2 and so on.
     // Hy time = -1/2, x = +1/2, Ez time = 0, x = 0
-    data_snapshot_    (1+t)(x, y     + c, z, kHy) =
-      data_snapshot_    (t)(x, y     + c, z, kHy)
-      + data_snapshot_  (t)(x, y + 1 + c, z, kEz) * inv_imp0
-      - data_snapshot_  (t)(x, y     + c, z, kEz) * inv_imp0;
+    data_snapshot_    (1+t)(kHy, x, y     + c, z) =
+      data_snapshot_    (t)(kHy, x, y     + c, z)
+      + data_snapshot_  (t)(kEz, x, y + 1 + c, z) * inv_imp0
+      - data_snapshot_  (t)(kEz, x, y     + c, z) * inv_imp0;
     // Ez
     c = 1;
-    data_snapshot_      (1+t)(x, y     + c, z, kEz) =
-      data_snapshot_      (t)(x, y     + c, z, kEz)
-      + data_snapshot_  (1+t)(x, y     + c, z, kHy)
-      * data_snapshot_    (t)(x, y     + c, z, kCezh)
+    data_snapshot_      (1+t)(kEz    , x, y     + c, z) =
+        data_snapshot_    (t)(kEz    , x, y     + c, z)
+      + data_snapshot_  (1+t)(kHy    , x, y     + c, z)
+        * data_snapshot_  (t)(kCezh, x, y     + c, z)
         * imp0
-      - data_snapshot_  (1+t)(x, y - 1 + c, z, kHy)
-      * data_snapshot_    (t)(x, y     + c, z, kCezh)
+      - data_snapshot_  (1+t)(kHy    , x, y - 1 + c, z)
+        * data_snapshot_  (t)(kCezh, x, y     + c, z)
         * imp0
-      + data_snapshot_    (t)(x, y     + c, z, kSrcEz);
+      + data_snapshot_    (t)(kSrcEz , x, y     + c, z);
   }  // end of BasicSimulationCore::AlgorithmSimpleY1D()
   // ********************************************************************** //
   // ********************************************************************** //
@@ -427,21 +429,21 @@ namespace onza {
     // constant shift to normalize equation to space range.
     int c = 0;  /// @todo1 use const int c0, c1, cm1 , c2 and so on.
     // Hy time = -1/2, x = +1/2, Ez time = 0, x = 0
-    data_snapshot_    (1+t)(x, y, z     + c, kHy) =
-      data_snapshot_    (t)(x, y, z     + c, kHy)
-      + data_snapshot_  (t)(x, y, z + 1 + c, kEz) * inv_imp0
-      - data_snapshot_  (t)(x, y, z     + c, kEz) * inv_imp0;
+    data_snapshot_    (1+t)(kHy, x, y, z     + c) =
+      data_snapshot_    (t)(kHy, x, y, z     + c)
+      + data_snapshot_  (t)(kEz, x, y, z + 1 + c) * inv_imp0
+      - data_snapshot_  (t)(kEz, x, y, z     + c) * inv_imp0;
     // Ez
     c = 1;
-    data_snapshot_      (1+t)(x, y, z     + c, kEz) =
-      data_snapshot_      (t)(x, y, z     + c, kEz)
-      + data_snapshot_  (1+t)(x, y, z     + c, kHy)
-      * data_snapshot_    (t)(x, y, z     + c, kCezh)
+    data_snapshot_      (1+t)(kEz    , x, y, z     + c) =
+        data_snapshot_    (t)(kEz    , x, y, z     + c)
+      + data_snapshot_  (1+t)(kHy    , x, y, z     + c)
+        * data_snapshot_  (t)(kCezh, x, y, z     + c)
         * imp0
-      - data_snapshot_  (1+t)(x, y, z - 1 + c, kHy)
-      * data_snapshot_    (t)(x, y, z     + c, kCezh)
+      - data_snapshot_  (1+t)(kHy    , x, y, z - 1 + c)
+        * data_snapshot_  (t)(kCezh, x, y, z     + c)
         * imp0
-      + data_snapshot_    (t)(x, y, z     + c, kSrcEz);
+      + data_snapshot_    (t)(kSrcEz , x, y, z     + c);
   }  // end of BasicSimulationCore::AlgorithmSimpleZ1D()
   // ********************************************************************** //
   // ********************************************************************** //
@@ -475,8 +477,8 @@ namespace onza {
         int opposite_border = (border + kDimensions) % (kDimensions*2);
         if (neighbours_ranks_[border] != MPI_PROC_NULL)
           data_(received_borders_range_(border, component))
-	    (all_x_, all_y_, all_z_, the_only_component_index)
-            = received_borders_(border)(all_x_, all_y_, all_z_, component);
+                  (the_only_component_index, all_x_, all_y_, all_z_)
+            = received_borders_(border)(component, all_x_, all_y_, all_z_);
       }  // end of for component
     }  // end of for border
     if (neighbours_ranks_[kBorderLeft] != MPI_PROC_NULL)
@@ -526,31 +528,31 @@ namespace onza {
     case kAlgorithmSimpleY1D:
     case kAlgorithmSimpleZ1D:
       //debug
-      data_(all_x_, all_y_, all_z_, kCezh) = 1.0/epsilon;
+      data_(kCezh, all_x_, all_y_, all_z_) = 1.0/epsilon;
       break;
     case kAlgorithmSimpleTMz2D:
       //debug
-      data_(all_x_, all_y_, all_z_, kCeze) = 1.0;
-      data_(all_x_, all_y_, all_z_, kCezh) = courant_2D * imp0;
-      data_(all_x_, all_y_, all_z_, kChxh) = 1.0;
-      data_(all_x_, all_y_, all_z_, kChxe) = courant_2D / imp0;
-      data_(all_x_, all_y_, all_z_, kChyh) = 1.0;
-      data_(all_x_, all_y_, all_z_, kChye) = courant_2D / imp0;
+      data_(kCeze, all_x_, all_y_, all_z_) = 1.0;
+      data_(kCezh, all_x_, all_y_, all_z_) = courant_2D * imp0;
+      data_(kChxh, all_x_, all_y_, all_z_) = 1.0;
+      data_(kChxe, all_x_, all_y_, all_z_) = courant_2D / imp0;
+      data_(kChyh, all_x_, all_y_, all_z_) = 1.0;
+      data_(kChye, all_x_, all_y_, all_z_) = courant_2D / imp0;
       break;
     case kAlgorithmSimple3D:
       //debug
-      data_(all_x_, all_y_, all_z_, kCexe) = 1.0;
-      data_(all_x_, all_y_, all_z_, kCexh) = courant_3D * imp0;
-      data_(all_x_, all_y_, all_z_, kCeye) = 1.0;
-      data_(all_x_, all_y_, all_z_, kCeyh) = courant_3D * imp0;
-      data_(all_x_, all_y_, all_z_, kCeze) = 1.0;
-      data_(all_x_, all_y_, all_z_, kCezh) = courant_3D * imp0;
-      data_(all_x_, all_y_, all_z_, kChxh) = 1.0;
-      data_(all_x_, all_y_, all_z_, kChxe) = courant_3D / imp0;
-      data_(all_x_, all_y_, all_z_, kChyh) = 1.0;
-      data_(all_x_, all_y_, all_z_, kChye) = courant_3D / imp0;
-      data_(all_x_, all_y_, all_z_, kChzh) = 1.0;
-      data_(all_x_, all_y_, all_z_, kChze) = courant_3D / imp0;
+      data_(kCexe, all_x_, all_y_, all_z_) = 1.0;
+      data_(kCexh, all_x_, all_y_, all_z_) = courant_3D * imp0;
+      data_(kCeye, all_x_, all_y_, all_z_) = 1.0;
+      data_(kCeyh, all_x_, all_y_, all_z_) = courant_3D * imp0;
+      data_(kCeze, all_x_, all_y_, all_z_) = 1.0;
+      data_(kCezh, all_x_, all_y_, all_z_) = courant_3D * imp0;
+      data_(kChxh, all_x_, all_y_, all_z_) = 1.0;
+      data_(kChxe, all_x_, all_y_, all_z_) = courant_3D / imp0;
+      data_(kChyh, all_x_, all_y_, all_z_) = 1.0;
+      data_(kChye, all_x_, all_y_, all_z_) = courant_3D / imp0;
+      data_(kChzh, all_x_, all_y_, all_z_) = 1.0;
+      data_(kChze, all_x_, all_y_, all_z_) = courant_3D / imp0;
       break;
     default:
       printf("Error! Should use some FDTD algorithm!\n");
@@ -647,18 +649,18 @@ namespace onza {
       // pure 1D and 2D simulations with minimal overhead. While
       // reading config boundary conditions kBoundaryConditionReduced
       // should be set in this dimension.
-      data_snapshot_(time).resize(blitz::shape(max_x + 1 + halo_width_x * 2,
-                 max_y + 1 + halo_width_y * 2, max_z + 1 + halo_width_z * 2,
-					       number_of_grid_data_components_));
-      data_snapshot_(time).reindexSelf(blitz::shape(-halo_width_x,
-					       -halo_width_y, -halo_width_z, 0));
+      data_snapshot_(time).resize(blitz::shape(number_of_grid_data_components_,
+               max_x + 1 + halo_width_x * 2,   max_y + 1 + halo_width_y * 2,
+               max_z + 1 + halo_width_z * 2));
+      data_snapshot_(time).reindexSelf(blitz::shape(0, -halo_width_x,
+                                 -halo_width_y, -halo_width_z));
     }  // end of for time of snapshot
-    data_.resize(blitz::shape(max_x + 1 + halo_width_x * 2,
+    data_.resize(blitz::shape(number_of_grid_data_components_,
+                              max_x + 1 + halo_width_x * 2,
                               max_y + 1 + halo_width_y * 2,
-                              max_z + 1 + halo_width_z * 2,
-                              number_of_grid_data_components_));
-    data_.reindexSelf(blitz::shape(-halo_width_x,
-                                   -halo_width_y, -halo_width_z, 0));
+                              max_z + 1 + halo_width_z * 2));
+    data_.reindexSelf(blitz::shape(0, -halo_width_x,
+                                   -halo_width_y, -halo_width_z));
     // Ranges for all data spacial coords.
     all_x_ = blitz::Range::all();
     all_y_ = blitz::Range::all();
@@ -702,55 +704,55 @@ namespace onza {
       int c = components_to_exchange_(component);
       // Ranges for border to be send.
       borders_to_send_range_(static_cast<int>(kBorderLeft), component)
-        = rd(vec(0            , 0    , 0, c),
-             vec(halo_width_-1, max_y, max_z, c));
+        = rd(vec(c, 0            , 0    , 0),
+             vec(c, halo_width_-1, max_y, max_z));
       borders_to_send_range_(static_cast<int>(kBorderRight), component)
-        = rd(vec(max_x - (halo_width_-1), 0    , 0, c),
-             vec(max_x                  , max_y, max_z, c));
+        = rd(vec(c, max_x - (halo_width_-1), 0    , 0),
+             vec(c, max_x                  , max_y, max_z));
       borders_to_send_range_(static_cast<int>(kBorderBottom), component)
-        = rd(vec(0    , 0            , 0, c),
-             vec(max_x, halo_width_-1, max_z, c));
+        = rd(vec(c, 0    , 0            , 0),
+             vec(c, max_x, halo_width_-1, max_z));
       borders_to_send_range_(static_cast<int>(kBorderTop), component)
-        = rd(vec(0    , max_y - (halo_width_-1), 0, c),
-             vec(max_x, max_y                  , max_z, c));
+        = rd(vec(c, 0    , max_y - (halo_width_-1), 0),
+             vec(c, max_x, max_y                  , max_z));
       borders_to_send_range_(static_cast<int>(kBorderBack), component)
-        = rd(vec(0    , 0    , 0, c),
-             vec(max_x, max_y, halo_width_-1, c));
+        = rd(vec(c, 0    , 0    , 0),
+             vec(c, max_x, max_y, halo_width_-1));
       borders_to_send_range_(static_cast<int>(kBorderFront), component)
-        = rd(vec(0    , 0    , max_z - (halo_width_-1), c),
-             vec(max_x, max_y, max_z, c));
+        = rd(vec(c, 0    , 0    , max_z - (halo_width_-1)),
+             vec(c, max_x, max_y, max_z));
       // Ranges for border to be received.
       received_borders_range_(static_cast<int>(kBorderLeft), component)
-        = rd(vec(-halo_width_, 0    , 0, c),
-             vec(-1          , max_y, max_z, c));
+        = rd(vec(c, -halo_width_, 0    , 0),
+             vec(c, -1          , max_y, max_z));
       received_borders_range_(static_cast<int>(kBorderRight), component)
-        = rd(vec(max_x + 1           , 0    , 0, c),
-             vec(max_x + halo_width_ , max_y, max_z, c));
+        = rd(vec(c, max_x + 1           , 0    , 0),
+             vec(c, max_x + halo_width_ , max_y, max_z));
       received_borders_range_(static_cast<int>(kBorderBottom), component)
-        = rd(vec(0    , -halo_width_, 0, c),
-             vec(max_x, -1          , max_z, c));
+        = rd(vec(c, 0    , -halo_width_, 0),
+             vec(c, max_x, -1          , max_z));
       received_borders_range_(static_cast<int>(kBorderTop), component)
-        = rd(vec(0    , max_y +1           , 0, c),
-             vec(max_x, max_y + halo_width_, max_z, c));
+        = rd(vec(c, 0    , max_y +1           , 0),
+             vec(c, max_x, max_y + halo_width_, max_z));
       received_borders_range_(static_cast<int>(kBorderBack), component)
-        = rd(vec(0    , 0    , -halo_width_, c),
-             vec(max_x, max_y, -1, c));
+        = rd(vec(c, 0    , 0    , -halo_width_),
+             vec(c, max_x, max_y, -1));
       received_borders_range_(static_cast<int>(kBorderFront), component)
-        = rd(vec(0    , 0    , max_z + 1, c),
-             vec(max_x, max_y, max_z + halo_width_, c));
+        = rd(vec(c, 0    , 0    , max_z + 1),
+             vec(c, max_x, max_y, max_z + halo_width_));
     }  // end of typedef block
     // Resize buffer for border exchange.
     borders_to_send_.resize(kDimensions*2);
-    borders_to_send_(kBorderLeft).resize(halo_width_, max_y + 1, max_z + 1,
-                                         number_of_components_to_exchange_);
+    borders_to_send_(kBorderLeft).resize(number_of_components_to_exchange_,
+                                         halo_width_, max_y + 1, max_z + 1);
     borders_to_send_(kBorderRight).resize(borders_to_send_(kBorderLeft)
                                           .shape());
-    borders_to_send_(kBorderBottom).resize(max_x + 1, halo_width_, max_z + 1,
-                                           number_of_components_to_exchange_);
+    borders_to_send_(kBorderBottom).resize(number_of_components_to_exchange_,
+                                           max_x + 1, halo_width_, max_z + 1);
     borders_to_send_(kBorderTop).resize(borders_to_send_(kBorderBottom)
                                         .shape());
-    borders_to_send_(kBorderBack).resize(max_x + 1, max_y + 1, halo_width_,
-                                         number_of_components_to_exchange_);
+    borders_to_send_(kBorderBack).resize(number_of_components_to_exchange_,
+                                         max_x + 1, max_y + 1, halo_width_);
     borders_to_send_(kBorderFront).resize(borders_to_send_(kBorderBack)
                                           .shape());
     received_borders_.resize(kDimensions*2);
