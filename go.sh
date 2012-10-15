@@ -102,14 +102,15 @@ if [ $isTest = "no" ]; then
         # salloc -N 8 -n 64 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
         # echo
         # sleep 3
-        # echo "(1) Nodes 1   procs 8"
-        # salloc -N 1 -n 8 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
-        # echo
+        echo "(1) Nodes 1   procs 8"
+        salloc -N 1 -n 8 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
+        gprof --no-flat-profile run-onza-fdtd > gprof.out-n8
+        echo
         # sleep 3
         echo "(1) Nodes 1   procs 1"
         salloc -N 1 -n 1 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
         echo
-        gprof --no-flat-profile run-onza-fdtd > gprof.out
+        gprof --no-flat-profile run-onza-fdtd > gprof.out-n1
         echo
     else
         mpirun -np $MPIsize $MPIoptions ./run-onza-fdtd onza.config
