@@ -42,9 +42,10 @@ if [ $isNew = "test" ]; then
 fi
 #export OMPI_CXXFLAGS="-ftemplate-depth-30 -DBZ_DEBUG" # Debug mode
 #export OMPI_CXXFLAGS="" # Debug mode
-#export OMPI_CXXFLAGS="-O2 -ftemplate-depth-30" # Benchmark mode
-export OMPI_CXXFLAGS="-O3 -ftemplate-depth-30" # Benchmark mode
+export OMPI_CXXFLAGS="-O2 -ftemplate-depth-30" # Benchmark mode
+#export OMPI_CXXFLAGS="-O3 -ftemplate-depth-30" # Benchmark mode
 #export OMPI_CXXFLAGS="-O3 -ffast-math -ftemplate-depth-30 -march=native -mtune=native -mfpmath=both -malign-double -mstackrealign -ftree-vectorize -msse2 -ftree-vectorizer-verbose=5" # Benchmark mode. May bring no speed up, only errors.
+#export OMPI_LDFLAG="-pg"
 cd $corepath/build/clang
 export OMPI_CC=clang
 export OMPI_CXX=clang++
@@ -66,7 +67,14 @@ export OMPI_CC=gcc
 export OMPI_CXX=g++
 if [ $isNew = "new2" ]; then
     rm -r $corepath/build/gcc/*
-    CC=mpicc CXX=mpic++ VERBOSE=1 cmake $corepath -DCMAKE_INSTALL_PREFIX="$corepath/bin/gcc"
+    # export CXXFLAGS='-pg'
+    # export CXXLDFLAGS='-pg'
+    #CC=mpicc CXX=mpic++ VERBOSE=1 cmake $corepath -DCMAKE_INSTALL_PREFIX="$corepath/bin/gcc"
+    echo "Compile with gprof"
+    ## TODO See
+    ## http://www.open-mpi.org/community/lists/users/2009/04/9039.php
+    ## to use gprof with mpi
+    CC=mpicc CXX=mpic++ VERBOSE=1 cmake $corepath -DCMAKE_INSTALL_PREFIX="$corepath/bin/gcc" -DCMAKE_CXX_FLAGS=-pg -DCMAKE_EXE_LINKER_FLAGS=-pg
     make -j4 
     make install
     bin_path=$corepath/bin/gcc
@@ -86,20 +94,22 @@ if [ $isTest = "no" ]; then
     then
         echo "Waiting for shared file system to distibute files"
         sleep 7
-        echo "(1) Nodes 16   procs 16"
-        salloc -N 16 -n 16 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
-        echo
-        sleep 3
-        echo "(1) Nodes 8   procs 64"
-        salloc -N 8 -n 64 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
-        echo
-        sleep 3
-        echo "(1) Nodes 1   procs 8"
-        salloc -N 1 -n 8 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
-        echo
-        sleep 3
+        # echo "(1) Nodes 16   procs 16"
+        # salloc -N 16 -n 16 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
+        # echo
+        # sleep 3
+        # echo "(1) Nodes 8   procs 64"
+        # salloc -N 8 -n 64 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
+        # echo
+        # sleep 3
+        # echo "(1) Nodes 1   procs 8"
+        # salloc -N 1 -n 8 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
+        # echo
+        # sleep 3
         echo "(1) Nodes 1   procs 1"
         salloc -N 1 -n 1 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
+        echo
+        gprof --no-flat-profile run-onza-fdtd > gprof.out
         echo
     else
         mpirun -np $MPIsize $MPIoptions ./run-onza-fdtd onza.config
