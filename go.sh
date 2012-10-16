@@ -74,6 +74,7 @@ if [ $isNew = "new2" ]; then
     ## TODO See
     ## http://www.open-mpi.org/community/lists/users/2009/04/9039.php
     ## to use gprof with mpi
+    ## setenv GMON_OUT_PREFIX gout
     CC=mpicc CXX=mpic++ VERBOSE=1 cmake $corepath -DCMAKE_INSTALL_PREFIX="$corepath/bin/gcc" -DCMAKE_CXX_FLAGS=-pg -DCMAKE_EXE_LINKER_FLAGS=-pg
     make -j4 
     make install
@@ -93,24 +94,22 @@ if [ $isTest = "no" ]; then
     if [ $HOST == "head.phoif.ifmo.ru" ]
     then
         echo "Waiting for shared file system to distibute files"
-        sleep 7
-        # echo "(1) Nodes 16   procs 16"
-        # salloc -N 16 -n 16 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
-        # echo
-        # sleep 3
-        # echo "(1) Nodes 8   procs 64"
-        # salloc -N 8 -n 64 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
-        # echo
-        # sleep 3
-        echo "(1) Nodes 1   procs 8"
-        salloc -N 1 -n 8 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
-        gprof --no-flat-profile run-onza-fdtd > gprof.out-n8
-        echo
-        # sleep 3
-        echo "(1) Nodes 1   procs 1"
-        salloc -N 1 -n 1 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
-        echo
-        gprof --no-flat-profile run-onza-fdtd > gprof.out-n1
+        sleep 2
+        # Grpof output for each process in separate file
+        export GMON_OUT_PREFIX='gmon.out'
+        echo "(1) Nodes XX  procs XX"
+        salloc -N 8 -n 16 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
+        gprof --no-flat-profile run-onza-fdtd gmon.out* | grep '^index'
+        for file in gmon.out*;
+        do
+            echo $file
+            gprof --no-flat-profile run-onza-fdtd $file | grep 'DoBorderStep' | grep '^\['
+            gprof --no-flat-profile run-onza-fdtd $file | grep 'DoStep' | grep '^\['
+        done
+        echo Average
+        gprof --no-flat-profile run-onza-fdtd gmon.out* | grep 'DoBorderStep' | grep '^\['
+        gprof --no-flat-profile run-onza-fdtd gmon.out* | grep 'DoStep' | grep '^\['
+        rm gmon.out*
         echo
     else
         mpirun -np $MPIsize $MPIoptions ./run-onza-fdtd onza.config
