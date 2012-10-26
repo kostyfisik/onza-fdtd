@@ -128,6 +128,7 @@ if [[ $mode = $mode_test ]]; then
         exit 1
     fi
 fi
+# Should be tested after checking $test_mode 
 if [ ! $configFile ]; then
     echo Setting default config file $path_default_config
     configFile=$path_default_config
@@ -226,6 +227,7 @@ make install
 #   Run
 #############################################################################
 HOST=`cat /etc/hostname`
+if [[ $mode = $mode_test ]]; then isTest=$yes; fi
 if [[ $isProfile = $yes ]]; then 
     # Grpof output for each process in separate file
     export GMON_OUT_PREFIX='gmon.out'
@@ -253,22 +255,28 @@ if [[ $isTest = $no ]]; then
 fi  # end of if [[ $isTest = $no ]]
 
 if [[ $isProfile = $yes ]]; then 
-    gprof --no-flat-profile run-onza-fdtd gmon.out* | grep '^index'
+    gprof  run-onza-fdtd gmon.out* | grep '^index'
     for file in gmon.out*;
     do
         echo $file
-        gprof --no-flat-profile run-onza-fdtd $file | grep 'DoBorderStep' | grep '^\['
-        gprof --no-flat-profile run-onza-fdtd $file | grep 'DoStep' | grep '^\['
+        gprof  run-onza-fdtd $file | grep 'DoBorderStep' | grep '^\['
+        gprof  run-onza-fdtd $file | grep 'DoStep' | grep '^\['
     done
     echo Average
-    gprof --no-flat-profile run-onza-fdtd gmon.out* | grep 'DoBorderStep' | grep '^\['
-    gprof --no-flat-profile run-onza-fdtd gmon.out* | grep 'DoStep' | grep '^\['
+    gprof  run-onza-fdtd gmon.out* | grep 'DoBorderStep' | grep '^\['
+    gprof  run-onza-fdtd gmon.out* | grep 'DoStep' | grep '^\['
     gprof --no-flat-profile run-onza-fdtd gmon.out* > average-profile
+    gprof run-onza-fdtd gmon.out* > flat-average-profile
     rm gmon.out*
 fi  # end of if isProfile
-rm *.onza
-# echo "Prepare *.png from gnuplot ..."
-# cd $path_bin
-# cp $path_onza/data/gnuplot/* ./
-# ./gnuplot-all.sh >/dev/null  2>&1
+if [[ $isTest = $yes ]]; then
+    echo TEST
+fi
+if [[ $mode != $mode_test && $configFile = $path_testX1Dzero ]]; then
+    echo "Prepare *.png from gnuplot ..."
+    cd $path_bin
+    cp $path_onza/data/gnuplot/* ./
+    ./gnuplot-all.sh >/dev/null  2>&1
+fi
+rm *.onza  >/dev/null  2>&1
     
