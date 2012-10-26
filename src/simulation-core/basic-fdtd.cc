@@ -292,6 +292,21 @@ namespace onza {
       +
       data_snapshot_        (t)(kSrcEz, x     + c, y     + c, z);
   }  // end of BasicSimulationCore::AlgorithmSimple3D()
+  //debug 
+  void BasicSimulationCore::AlgorithmSimple3DLeft(blitz::Range x, blitz::Range y,
+           blitz::Range z) { AlgorithmSimple3D(x,y,z); }
+  void BasicSimulationCore::AlgorithmSimple3DRight(blitz::Range x, blitz::Range y,
+           blitz::Range z) { AlgorithmSimple3D(x,y,z); }
+  void BasicSimulationCore::AlgorithmSimple3DTop(blitz::Range x, blitz::Range y,
+           blitz::Range z) { AlgorithmSimple3D(x,y,z); }
+  void BasicSimulationCore::AlgorithmSimple3DBottom(blitz::Range x, blitz::Range y,
+           blitz::Range z) { AlgorithmSimple3D(x,y,z); }
+  void BasicSimulationCore::AlgorithmSimple3DBack(blitz::Range x, blitz::Range y,
+           blitz::Range z) { AlgorithmSimple3D(x,y,z); }
+  void BasicSimulationCore::AlgorithmSimple3DFront(blitz::Range x, blitz::Range y,
+           blitz::Range z) { AlgorithmSimple3D(x,y,z); }
+  void BasicSimulationCore::AlgorithmSimple3DMain(blitz::Range x, blitz::Range y,
+           blitz::Range z) { AlgorithmSimple3D(x,y,z); }
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
@@ -481,24 +496,37 @@ namespace onza {
             = received_borders_(border)(component, all_x_, all_y_, all_z_);
       }  // end of for component
     }  // end of for border
+    //debug
     if (neighbours_ranks_[kBorderLeft] != MPI_PROC_NULL)
-      (this->*RunAlgorithm)(data_border_range_[kBorderLeft], inner_y_,
+      AlgorithmSimple3DLeft(data_border_range_[kBorderLeft], inner_y_,
                             inner_z_);
+      // (this->*RunAlgorithm)(data_border_range_[kBorderLeft], inner_y_,
+      //                       inner_z_);
     if (neighbours_ranks_[kBorderRight] != MPI_PROC_NULL)
-      (this->*RunAlgorithm)(data_border_range_[kBorderRight], inner_y_,
+      AlgorithmSimple3DRight(data_border_range_[kBorderRight], inner_y_,
                             inner_z_);
+      // (this->*RunAlgorithm)(data_border_range_[kBorderRight], inner_y_,
+      //                       inner_z_);
     if (neighbours_ranks_[kBorderBottom] != MPI_PROC_NULL)
-      (this->*RunAlgorithm)(inner_x_, data_border_range_[kBorderBottom],
+      AlgorithmSimple3DBottom(inner_x_, data_border_range_[kBorderBottom],
                             inner_z_);
+      // (this->*RunAlgorithm)(inner_x_, data_border_range_[kBorderBottom],
+      //                       inner_z_);
     if (neighbours_ranks_[kBorderTop] != MPI_PROC_NULL)
-      (this->*RunAlgorithm)(inner_x_, data_border_range_[kBorderTop],
+      AlgorithmSimple3DTop(inner_x_, data_border_range_[kBorderTop],
                             inner_z_);
+      // (this->*RunAlgorithm)(inner_x_, data_border_range_[kBorderTop],
+      //                       inner_z_);
     if (neighbours_ranks_[kBorderBack] != MPI_PROC_NULL)
-      (this->*RunAlgorithm)(inner_x_, inner_y_,
+      AlgorithmSimple3DBack(inner_x_, inner_y_,
                             data_border_range_[kBorderBack]);
+      // (this->*RunAlgorithm)(inner_x_, inner_y_,
+      //                       data_border_range_[kBorderBack]);
     if (neighbours_ranks_[kBorderFront] != MPI_PROC_NULL)
-      (this->*RunAlgorithm)(inner_x_, inner_y_,
+      AlgorithmSimple3DFront(inner_x_, inner_y_,
                             data_border_range_[kBorderFront]);
+      // (this->*RunAlgorithm)(inner_x_, inner_y_,
+      //                       data_border_range_[kBorderFront]);
   }  // end of BasicSimulationCore::DoStep()
   // ********************************************************************** //
   // ********************************************************************** //
@@ -507,7 +535,9 @@ namespace onza {
   ///
   /// @warning  It is repeated MANY times!
   void BasicSimulationCore::DoStep() {
-    (this->*RunAlgorithm)(inner_x_, inner_y_, inner_z_);
+    //debug
+    AlgorithmSimple3DMain(inner_x_, inner_y_, inner_z_);
+    // (this->*RunAlgorithm)(inner_x_, inner_y_, inner_z_);
   }  // end of BasicSimulationCore::DoStep()
   // ********************************************************************** //
   // ********************************************************************** //
