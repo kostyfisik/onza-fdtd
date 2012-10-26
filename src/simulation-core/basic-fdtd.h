@@ -248,21 +248,6 @@ namespace onza {
     void AlgorithmSimple3D(blitz::Range x,
                            blitz::Range y,
                            blitz::Range z);
-    //debug
-    void AlgorithmSimple3DLeft(blitz::Range x, blitz::Range y,
-                               blitz::Range z);
-    void AlgorithmSimple3DRight(blitz::Range x, blitz::Range y,
-                                blitz::Range z);
-    void AlgorithmSimple3DTop(blitz::Range x, blitz::Range y,
-                              blitz::Range z);
-    void AlgorithmSimple3DBottom(blitz::Range x, blitz::Range y,
-                               blitz::Range z);
-    void AlgorithmSimple3DBack(blitz::Range x, blitz::Range y,
-                               blitz::Range z);
-    void AlgorithmSimple3DFront(blitz::Range x, blitz::Range y,
-                                blitz::Range z);
-    void AlgorithmSimple3DMain(blitz::Range x, blitz::Range y,
-                               blitz::Range z);    
     /// @brief FDTD algorithm for TMz 2D case.
     void AlgorithmSimpleTMz2D(blitz::Range x,
                               blitz::Range y,
