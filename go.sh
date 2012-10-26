@@ -42,18 +42,23 @@ Possible predefined config files:\n
 \n
 testX1Dzero      \t\t- 1D FDTD (used in test to check border exchange)\n
 testTMz2Dspeedup \t- 2D FDTD (used in test to check speed up in 2D case)\n
-test3Dsimple     \t\t- 3D FDTD\n"
+test3Dsimple     \t\t- 3D FDTD\n
+\n
+Possible enviroment parameters:\n
+\n
+Onza_MPI_size   \t- total number of MPI processes
+Onza_MPI_nodes  \t- total number of MPI nodes for cluster enviroment
+\n
+In the case of enviroment parameters are not (or set with value 'unset')\n
+set some default vale (depending on executin host) will be used.\n"
 #############################################################################
-if [[ ! $MPIsize ]]; then MPIsize=2; fi
-MPInodes="-N 2"
-#MPInodes="-N 1 --ntasks-per-socket=2"
+if [[ ! $Onza_MPI_size ]]; then Onza_MPI_size="unset"; fi
+if [[ ! $Onza_MPI_nodes ]]; then Onza_MPI_nodes="unset"; fi
 MPIoptions="--bind-to-core"
 #############################################################################
 #   Parse input parameters   
 #############################################################################
-mode=$1
-configFile=$2
-wrong_params=$3
+mode=$1; configFile=$2; wrong_params=$3
 if [[ $wrong_params ]]; then
     echo ================ !ERROR! =================
     echo Should be not more than two input parameters: mode and config file
@@ -64,47 +69,29 @@ fi
 # Mode names
 mode_new="new"    # clang
 mode_new2="new2"  # gcc
-mode_new3="new3"  # gcc
-mode_old="old"    
-mode_old2="old2"
-mode_test="test"
-mode_prof="prof"
-mode_old2prof="old2prof"
-mode_custom="custom"
-mode_debug="debug"
+mode_new3="new3"  # gcc with -O3
+mode_old="old";       mode_old2="old2";         mode_test="test"; 
+mode_prof="prof";     mode_old2prof="old2prof"
+mode_custom="custom"; mode_debug="debug"
 # Default values
-compiler_gcc="gcc"
-compiler_clang="clang"
-yes="yes"
-no="no"
-isNew=$yes
-isTest=$no
-isProfile=$no
+compiler_gcc="gcc"; compiler_clang="clang"
 usedCompiler=$compiler_gcc # or clang
-path_onza=$PWD
-path_bin=$path_onza/bin
-path_build=$path_onza/build
-if [[ ! $mode ]]; then
-    mode="new"
-fi
-if [[ $mode = "help" || \
-    $mode = "--help" || \
-    $mode = "-h" ]]; then
+yes="yes";        no="no"
+isNew=$yes;       isTest=$no ;               isProfile=$no
+path_onza=$PWD;   path_bin=$path_onza/bin;   path_build=$path_onza/build
+if [[ ! $mode ]]; then  mode="new"; fi
+if [[ $mode = "help" || $mode = "--help" || $mode = "-h" ]]; then
  echo -e $USAGE
  exit 0
 fi 
 # Check mode
-if [[ $mode != $mode_new && \
-    $mode != $mode_new2 && \
-    $mode != $mode_new3 && \
-    $mode != $mode_old && \
-    $mode != $mode_old2 && \
+if [[ $mode != $mode_new && $mode != $mode_new2 && $mode != $mode_new3 && \
+    $mode != $mode_old && $mode != $mode_old2 && \
     $mode != $mode_test && \
-    $mode != $mode_prof && \
-    $mode != $mode_old2prof && \
+    $mode != $mode_prof && $mode != $mode_old2prof && \
     $mode != $mode_custom && \
     $mode != $mode_debug ]]; then
-    echo Using default mode: Full build with clang compiler.
+    # So mode may be miss spelled or contains config file path.
     if [[ $configFile ]]; then
         echo ================ !ERROR! =================
         echo Undefined mode
@@ -112,7 +99,8 @@ if [[ $mode != $mode_new && \
         echo -e  $USAGE
         exit 1
     fi  
-    configFile=$mode
+    echo Using default mode: Full build with clang compiler.
+    configFile=$mode 
     mode=$mode_new
 fi 
 if [[ $mode = $mode_test && $configFile ]]; then
@@ -128,8 +116,7 @@ path_test3Dsimple=$path_onza/data/test3Dsimple.config
 path_default_config=$path_onza/data/default-onza.config
 if [[ $mode = $mode_test ]]; then
     echo Check for tests config files...
-    if [[ ! -r $path_testX1Dzero || \
-        ! -r $path_testTMz2Dspeedup || \
+    if [[ ! -r $path_testX1Dzero || ! -r $path_testTMz2Dspeedup || \
         ! -r $path_test3Dsimple ]];
     then
         echo ================ !ERROR! =================
@@ -181,7 +168,6 @@ else
     echo Creating build folder...
     mkdir bin
 fi
-
 #############################################################################
 #   Compile settings
 #############################################################################
@@ -231,19 +217,9 @@ fi
 #############################################################################
 cd $path_build
 if [[ $isNew = $yes ]]; then
-    CC=mpicc CXX=mpic++ VERBOSE=1 cmake $path_onza -DCMAKE_INSTALL_PREFIX="$path_bin" $flag_cmake_profile
+    CC=mpicc CXX=mpic++ VERBOSE=1 cmake $path_onza \
+        -DCMAKE_INSTALL_PREFIX="$path_bin" $flag_cmake_profile
 fi
-# if [[ $isNew = $no ]]; then
-#     cmake $path_onza
-# fi
-# if [[ $isNew = "new2" ]]; then
-#     echo "Compile with gprof"
-#     ## TODO See
-#     ## http://www.open-mpi.org/community/lists/users/2009/04/9039.php
-#     ## to use gprof with mpi
-#     ## setenv GMON_OUT_PREFIX gout
-#     CC=mpicc CXX=mpic++ VERBOSE=1 cmake $path_onza -DCMAKE_INSTALL_PREFIX="$path_bin" -DCMAKE_CXX_FLAGS=-pg -DCMAKE_EXE_LINKER_FLAGS=-pg
-# fi
 make -j4 
 make install
 #############################################################################
@@ -258,14 +234,21 @@ if [[ $isTest = $no ]]; then
     cd $path_bin
     cp $configFile $path_bin/onza.config
     if [[ $HOST == "head.phoif.ifmo.ru" ]]; then
-        echo "Waiting for shared file system to distibute files"
-        sleep 6
-        salloc -N 8 -n 16 -p max1hour mpirun $MPIoptions ./run-onza-fdtd onza.config
+        echo "Waiting for shared file system to distibute files..."
+        sleep 2
+        if [[ $Onza_MPI_size = "unset" ]]; then Onza_MPI_size=16; fi
+        if [[ $Onza_MPI_nodes = "unset" ]]; then Onza_MPI_nodes=8; fi
+        echo "(1) Nodes $Onza_MPI_nodes procs $Onza_MPI_size"
+        salloc -N $Onza_MPI_nodes -n $Onza_MPI_size -p max1hour \
+            mpirun $MPIoptions ./run-onza-fdtd onza.config
     elif  [[ $HOST == "deb00" || $HOST == "dmmrkovich-birzha" ]]; then
-        echo "(1) Nodes XX  procs XX"
-        mpirun -np 4 $MPIoptions ./run-onza-fdtd onza.config
+        if [[ $Onza_MPI_size = "unset" ]]; then Onza_MPI_size=4; fi
+        echo "(1) Nodes 1  procs $Onza_MPI_size"
+        mpirun -np $Onza_MPI_size $MPIoptions ./run-onza-fdtd onza.config
     else
-        mpirun -np $MPIsize $MPIoptions ./run-onza-fdtd onza.config
+        if [[ $Onza_MPI_size = "unset" ]]; then Onza_MPI_size=2; fi
+        echo "(1) Nodes 1  procs $Onza_MPI_size"
+        mpirun -np $Onza_MPI_size $MPIoptions ./run-onza-fdtd onza.config
     fi
 fi  # end of if [[ $isTest = $no ]]
 
