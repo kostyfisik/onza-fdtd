@@ -481,24 +481,24 @@ namespace onza {
             = received_borders_(border)(component, all_x_, all_y_, all_z_);
       }  // end of for component
     }  // end of for border
-    if (neighbours_ranks_[kBorderLeft] != MPI_PROC_NULL)
-      (this->*RunAlgorithm)(data_border_range_[kBorderLeft], inner_y_,
-                            inner_z_);
-    if (neighbours_ranks_[kBorderRight] != MPI_PROC_NULL)
-      (this->*RunAlgorithm)(data_border_range_[kBorderRight], inner_y_,
-                            inner_z_);
-    if (neighbours_ranks_[kBorderBottom] != MPI_PROC_NULL)
-      (this->*RunAlgorithm)(inner_x_, data_border_range_[kBorderBottom],
-                            inner_z_);
-    if (neighbours_ranks_[kBorderTop] != MPI_PROC_NULL)
-      (this->*RunAlgorithm)(inner_x_, data_border_range_[kBorderTop],
-                            inner_z_);
-    if (neighbours_ranks_[kBorderBack] != MPI_PROC_NULL)
-      (this->*RunAlgorithm)(inner_x_, inner_y_,
-                            data_border_range_[kBorderBack]);
-    if (neighbours_ranks_[kBorderFront] != MPI_PROC_NULL)
-      (this->*RunAlgorithm)(inner_x_, inner_y_,
-                            data_border_range_[kBorderFront]);
+    // if (neighbours_ranks_[kBorderLeft] != MPI_PROC_NULL)
+    //   (this->*RunAlgorithm)(data_border_range_[kBorderLeft], inner_y_,
+    //                         inner_z_);
+    // if (neighbours_ranks_[kBorderRight] != MPI_PROC_NULL)
+    //   (this->*RunAlgorithm)(data_border_range_[kBorderRight], inner_y_,
+    //                         inner_z_);
+    // if (neighbours_ranks_[kBorderBottom] != MPI_PROC_NULL)
+    //   (this->*RunAlgorithm)(inner_x_, data_border_range_[kBorderBottom],
+    //                         inner_z_);
+    // if (neighbours_ranks_[kBorderTop] != MPI_PROC_NULL)
+    //   (this->*RunAlgorithm)(inner_x_, data_border_range_[kBorderTop],
+    //                         inner_z_);
+    // if (neighbours_ranks_[kBorderBack] != MPI_PROC_NULL)
+    //   (this->*RunAlgorithm)(inner_x_, inner_y_,
+    //                         data_border_range_[kBorderBack]);
+    // if (neighbours_ranks_[kBorderFront] != MPI_PROC_NULL)
+    //   (this->*RunAlgorithm)(inner_x_, inner_y_,
+    //                         data_border_range_[kBorderFront]);
   }  // end of BasicSimulationCore::DoStep()
   // ********************************************************************** //
   // ********************************************************************** //
@@ -672,9 +672,13 @@ namespace onza {
     // or backwrd direction for any decimal value less or equal
     // halo_width_. Note that aligment shift for each FDTD equation
     // should be applied to provide all ranges to be valid.
-    inner_x_ = blitz::Range(0, max_x);
-    inner_y_ = blitz::Range(0, max_y);
-    inner_z_ = blitz::Range(0, max_z);
+    //debug
+    inner_x_ = blitz::Range(-halo_width_x, max_x);
+    inner_y_ = blitz::Range(-halo_width_y, max_y);
+    inner_z_ = blitz::Range(-halo_width_z, max_z);
+    // inner_x_ = blitz::Range(0, max_x);
+    // inner_y_ = blitz::Range(0, max_y);
+    // inner_z_ = blitz::Range(0, max_z);
     // Specify data range for each border. Due to choice of
     // aligment shift in FDTD equation low and hi index ranges have
     // different number of elements.
@@ -892,7 +896,7 @@ namespace onza {
     SetBoundaryConditionsAllPML();
     pml_width_ = 1;
     pml_computational_ratio_ = 1.0;
-    snapshot_interval_ = 5;
+    snapshot_interval_ = 1;
     halo_width_ = 1;
     time_depth_ = 2;
     algorithm_ = kAlgorithmSimpleX1D;

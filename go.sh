@@ -249,6 +249,10 @@ fi
 if [[ $isTest = $no ]]; then
     cd $path_bin
     cp $configFile $path_bin/onza.config
+    if [[ $configFile = $path_testX1Dzero_config ]]; then
+        Onza_MPI_size=2
+        Onza_MPI_nodes=1
+    fi
     if [[ $HOST == "head.phoif.ifmo.ru" ]]; then
         echo "Waiting for shared file system to distibute files..."
         sleep 2
@@ -310,9 +314,9 @@ if [[ $isTest = $yes ]]; then
             salloc -N $Onza_MPI_nodes -n $Onza_MPI_size -p max1hour \
                 mpirun $MPIoptions ./$onza_bin onza.config
             if [[ $test = "testTMz2Dspeedup" ]]; then
-                echo "(*******) Nodes 16 procs 128 (1024 x 1024, step 1000, ~15.4s)"
-                salloc -N 16 -n 128 -p max1hour \
-                    mpirun $MPIoptions ./$onza_bin onza.config
+                # echo "(*******) Nodes 16 procs 128 (1024 x 1024, step 1000, ~15.4s)"
+                # salloc -N 16 -n 128 -p max1hour \
+                #     mpirun $MPIoptions ./$onza_bin onza.config
                 echo "(*******) Nodes 16 procs 16 (1024 x 1024, step 1000, ~7s)"
                 salloc -N 16 -n 16 -p max1hour \
                     mpirun $MPIoptions ./$onza_bin onza.config
@@ -345,5 +349,15 @@ if [[ $isTest = $yes ]]; then
         rm *.onza  >/dev/null  2>&1
     done  # end of for test in $tests; do
 fi  # end of if [[ $isTest = $yes ]]
-rm *.onza  >/dev/null  2>&1
+if [[ $configFile = $path_testX1Dzero_config ]]; then
+    echo "Prepare *.png from gnuplot ..."
+    cp $path_onza/data/gnuplot/* ./
+    ./gnuplot-all.sh >/dev/null  2>&1
+    # mkdir tmpdir
+    # cp *0241-* $path_bin/tmpdir
+    # rm $path_bin/*    
+    # cp $path_bin/tmpdir/* ./
+    # rm -r $path_bin/tmpdir
+fi
+#rm *.onza  >/dev/null  2>&1
     

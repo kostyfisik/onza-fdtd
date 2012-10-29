@@ -716,10 +716,10 @@ namespace onza {
       halo_to_exchange_.StartNonBlockingExchange();
       simulation_core_.Snapshot();
       simulation_core_.PrepareSource();
-      /// @todo1 Replace DoStep() call with direct RunAlgorithm call
-      simulation_core_.DoStep();
       halo_to_exchange_.FinishNonBlockingExchange();
       simulation_core_.DoBorderStep();
+      /// @todo1 Replace DoStep() call with direct RunAlgorithm call
+      simulation_core_.DoStep();
       simulation_core_.CycleSnapshots();
     }  // end of while time is stepping
     end_time   = MPI_Wtime();
