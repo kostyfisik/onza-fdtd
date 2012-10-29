@@ -706,7 +706,8 @@ namespace onza {
       return kErrorUninitiatedSimulationCore;
     }  // end of if simulation core is not initiated
     double start_time, end_time;
-    start_time = MPI_Wtime();
+    double do_step_total_time = 0, do_step_start_time;
+    start_time = MPI_Wtime();    
     while (simulation_core_.StepTime()) {
       /// @todo1 change to for (a little bit faster)
       simulation_core_.PrepareBordersToSend();
@@ -719,17 +720,22 @@ namespace onza {
       halo_to_exchange_.FinishNonBlockingExchange();
       simulation_core_.DoBorderStep();
       /// @todo1 Replace DoStep() call with direct RunAlgorithm call
+      do_step_start_time = MPI_Wtime();
       simulation_core_.DoStep();
+      do_step_total_time += MPI_Wtime() - do_step_start_time;
       simulation_core_.CycleSnapshots();
     }  // end of while time is stepping
     end_time   = MPI_Wtime();
     simulation_core_.Snapshot();
     double total_time_stepping = end_time-start_time;
-    if (process_rank_ == kOutput)
+    if (process_rank_ == kOutput) {
       printf("Stepping(%li) took %f seconds (%f s/step).\n",
              simulation_core_.total_time_steps(),
              total_time_stepping,
              total_time_stepping/simulation_core_.total_time_steps());
+    }
+      printf("DoStep() took %f seconds (%.1f%% from total).\n",
+             do_step_total_time, do_step_total_time/total_time_stepping*100);
     return kDone;
   }  // end of HaloExchangeProcess::RunSimulation()
 }  // end of namespace onza
