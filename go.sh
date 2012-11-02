@@ -314,9 +314,9 @@ if [[ $isTest = $yes ]]; then
             salloc -N $Onza_MPI_nodes -n $Onza_MPI_size -p max1hour \
                 mpirun $MPIoptions ./$onza_bin onza.config
             if [[ $test = "testTMz2Dspeedup" ]]; then
-                # echo "(*******) Nodes 16 procs 128 (1024 x 1024, step 1000, ~15.4s)"
-                # salloc -N 16 -n 128 -p max1hour \
-                #     mpirun $MPIoptions ./$onza_bin onza.config
+                echo "(*******) Nodes 16 procs 128 (1024 x 1024, step 1000, ~15.4s)"
+                salloc -N 16 -n 128 -p max1hour \
+                    mpirun $MPIoptions ./$onza_bin onza.config
                 echo "(*******) Nodes 16 procs 16 (1024 x 1024, step 1000, ~7s)"
                 salloc -N 16 -n 16 -p max1hour \
                     mpirun $MPIoptions ./$onza_bin onza.config
@@ -329,9 +329,12 @@ if [[ $isTest = $yes ]]; then
             fi
 
         elif  [[ $HOST == "deb00" || $HOST == "dmmrkovich-birzha" ]]; then
-            if [[ $Onza_MPI_size = "unset" ]]; then Onza_MPI_size=4; fi
-            echo "(1) Nodes 1  procs $Onza_MPI_size"
-            mpirun -np $Onza_MPI_size $MPIoptions ./$onza_bin onza.config
+            echo "(*******) Procs 1"
+            mpirun -np 1 $MPIoptions ./$onza_bin onza.config
+            echo "(*******) Procs 2"
+            mpirun -np 2 $MPIoptions ./$onza_bin onza.config
+            echo "(*******) Procs 4"
+            mpirun -np 4 $MPIoptions ./$onza_bin onza.config
         else
             if [[ $Onza_MPI_size = "unset" ]]; then Onza_MPI_size=2; fi
             echo "(1) Nodes 1  procs $Onza_MPI_size"

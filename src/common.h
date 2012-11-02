@@ -23,6 +23,7 @@
 ///
 /// @brief  Global variables, enumerations, macros, types, etc..
 #include <stdint.h>  // Including stdint.h to use int64_t.
+#include <sstream>
 #include <string>
 namespace onza {
   // ********************************************************************** //
@@ -35,6 +36,8 @@ namespace onza {
   enum Errors {
     /// no error
     kDone = 0,
+    /// Unspecified (pending to be described).
+    kError,
     /// Dublicated key during reading config file.
     kErrorConfigFileDublicatedKey,
     /// Was not able to open config file during init of
@@ -53,6 +56,10 @@ namespace onza {
     /// After splitting model to Cartesian grid current procces was
     /// not found in it.
     kErrorProcessNotInGrid,
+    /// Trying to start running timer.
+    kErrorProfilingTimerSecondStart,
+    /// Some error during stoping profiling timer.
+    kErrorProfilingTimerWrongStop,
     /// Buffers to send and recieve  halo has different sizes.
     /// Checked with HaloToExchange::Init().
     kErrorSendAndReceiveBuffersHasDifferentSizes,
@@ -202,7 +209,8 @@ namespace onza {
   ///
   /// Return zero for any error.
   /// Modified anser of Nawaz from
-  /// http://stackoverflow.com/questions/7370887/convert-an-ascii-string-to-long-long
+  /// http://stackoverflow.com/questions/7370887/
+  ///            convert-an-ascii-string-to-long-long
   template<class DecimalType> DecimalType
       convert_to_positive(const std::string &s, DecimalType &output) {
     DecimalType Error = 0;
@@ -218,5 +226,22 @@ namespace onza {
     output = v;
     return output;
   }  // end of DecimalType convert(const std::string &s);
+  /// @bief Convert anything to std::string
+  ///
+  /// Modified  answer from Konrad Rudolph from
+  /// http://stackoverflow.com/questions/332111/
+  ///           how-do-i-convert-a-double-into-a-string-in-c
+  template <typename T>
+      std::string to_string(T const& value) {
+    std::stringstream sstr;
+    // @todo3 Optimized for double (fraction in %) to string conversion
+    // Need work to check template is still usable for other conversions.
+    sstr.width(4);
+    sstr.precision(1);
+    sstr.fill('0');
+    sstr.setf(std::ios::fixed);
+    sstr << value;
+    return sstr.str();
+  }
 }  // end of namespace onza
 #endif  // SRC_COMMON_H_

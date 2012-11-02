@@ -24,6 +24,7 @@
 /// @brief  Exchange borders of computational domain
 #include <blitz/array.h>
 #include "../simulation-core/basic-fdtd.h"
+#include "../profiling/timer.h"
 namespace onza {
   /// @brief Pure halo data exchange, no calculations.
   ///
@@ -174,6 +175,8 @@ namespace onza {
     /// @brief Check subdomains start and finish indexes to be
     /// correlated with neighbours indexes.
     int CheckSubdomainIndexes();
+    /// @brief MPI_Wtime() based timer to perform profiling.
+    Timer timer_;
     // @}
   };  // end of class HaloExchangeProcess
 }  // end of namespace onza

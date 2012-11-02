@@ -28,6 +28,7 @@
 #include "./halo-exchange-process.h"
 #include "../common.h"
 #include "../simulation-core/basic-fdtd.h"
+#include "../profiling/timer.h"
 namespace onza {
   // ********************************************************************** //
   // ********************************************************************** //
@@ -705,37 +706,61 @@ namespace onza {
              process_rank_);
       return kErrorUninitiatedSimulationCore;
     }  // end of if simulation core is not initiated
+    const int timer_intervals = 10;
+    double timer_marks[timer_intervals], timer_total[timer_intervals];
+    for (int i = 0; i < timer_intervals - 1; ++i) timer_total[i] = 0;
     double start_time, end_time;
-    double do_step_total_time = 0, do_step_start_time;
-    start_time = MPI_Wtime();    
+    start_time = MPI_Wtime();
     while (simulation_core_.StepTime()) {
+      int errors = 0;
       /// @todo1 change to for (a little bit faster)
+      errors += timer_.Start("PrepareBordersToSend()");
       simulation_core_.PrepareBordersToSend();
+      errors += timer_.Stop("PrepareBordersToSend()");
       // Sending borders, prepared with simulation_core. See also
       // HaloExchangeProcess::InitSimulation(). Borders are used
       // directly by pointer.
+      errors += timer_.Start("StartNonBlockingExchange()");
       halo_to_exchange_.StartNonBlockingExchange();
+      errors += timer_.Stop("StartNonBlockingExchange()");
+      errors += timer_.Start("Snapshot()");
       simulation_core_.Snapshot();
+      errors += timer_.Stop("Snapshot()");
+      errors += timer_.Start("PrepareSource()");
       simulation_core_.PrepareSource();
+      errors += timer_.Stop("PrepareSource()");
+      errors += timer_.Start("FinishNonBlockingExchange()");
       halo_to_exchange_.FinishNonBlockingExchange();
+      errors += timer_.Stop("FinishNonBlockingExchange()");
+      errors += timer_.Start("DoBorderStep()");
       simulation_core_.DoBorderStep();
+      errors += timer_.Stop("DoBorderStep()");
+      errors += timer_.Start("DoStep()");
       /// @todo1 Replace DoStep() call with direct RunAlgorithm call
-      do_step_start_time = MPI_Wtime();
       simulation_core_.DoStep();
-      do_step_total_time += MPI_Wtime() - do_step_start_time;
+      errors += timer_.Stop("DoStep()");
+      errors += timer_.Start("CycleSnapshots()");
       simulation_core_.CycleSnapshots();
+      errors += timer_.Stop("CycleSnapshots()");
+      if (errors) return kError;
+      // Evaluate profile
     }  // end of while time is stepping
     end_time   = MPI_Wtime();
     simulation_core_.Snapshot();
     double total_time_stepping = end_time-start_time;
     if (process_rank_ == kOutput) {
-      printf("Stepping(%li) took %f seconds (%f s/step).\n",
+      printf("Stepping(%li) took %.2f seconds (%f s/step).\n",
              simulation_core_.total_time_steps(),
              total_time_stepping,
              total_time_stepping/simulation_core_.total_time_steps());
+      timer_.PrintAllRelative(total_time_stepping);
+      double wasted = total_time_stepping - timer_.GetAllTotalTime();
+      printf("*\t%04.1f%%\t%3.2f s\t%s\n",
+             wasted/total_time_stepping*100.0, wasted,  "**wasted**");
+
     }
-      printf("DoStep() took %f seconds (%.1f%% from total).\n",
-             do_step_total_time, do_step_total_time/total_time_stepping*100);
+      // printf("DoStep() took %f seconds (%.1f%% from total).\n",
+      //        do_step_total_time, do_step_total_time/total_time_stepping*100);
     return kDone;
   }  // end of HaloExchangeProcess::RunSimulation()
 }  // end of namespace onza
