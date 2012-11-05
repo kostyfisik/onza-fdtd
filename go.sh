@@ -262,9 +262,21 @@ if [[ $isTest = $no ]]; then
         salloc -N $Onza_MPI_nodes -n $Onza_MPI_size -p max1hour \
             mpirun $MPIoptions ./$onza_bin onza.config
     elif  [[ $HOST == "deb00" || $HOST == "dmmrkovich-birzha" ]]; then
-        if [[ $Onza_MPI_size = "unset" ]]; then Onza_MPI_size=4; fi
-        echo "(1) Nodes 1  procs $Onza_MPI_size"
-        mpirun -np $Onza_MPI_size $MPIoptions ./$onza_bin onza.config
+        if [[ $Onza_MPI_size = "unset" ]]; then Onza_MPI_size=4; fi            
+        if [[ $Onza_MPI_size = "1-4" ]]; then
+            Onza_MPI_size=4
+            echo "(1) Nodes 1  procs $Onza_MPI_size"
+            mpirun -np $Onza_MPI_size $MPIoptions ./$onza_bin onza.config
+            Onza_MPI_size=2
+            echo "(1) Nodes 1  procs $Onza_MPI_size"
+            mpirun -np $Onza_MPI_size $MPIoptions ./$onza_bin onza.config
+            Onza_MPI_size=1
+            echo "(1) Nodes 1  procs $Onza_MPI_size"
+            mpirun -np $Onza_MPI_size $MPIoptions ./$onza_bin onza.config
+        else
+            echo "(1) Nodes 1  procs $Onza_MPI_size"
+            mpirun -np $Onza_MPI_size $MPIoptions ./$onza_bin onza.config
+        fi
     else
         if [[ $Onza_MPI_size = "unset" ]]; then Onza_MPI_size=2; fi
         echo "(1) Nodes 1  procs $Onza_MPI_size"
