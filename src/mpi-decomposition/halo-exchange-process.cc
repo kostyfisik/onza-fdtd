@@ -707,8 +707,8 @@ namespace onza {
       return kErrorUninitiatedSimulationCore;
     }  // end of if simulation core is not initiated
     const int timer_intervals = 10;
-    double timer_marks[timer_intervals], timer_total[timer_intervals];
-    for (int i = 0; i < timer_intervals - 1; ++i) timer_total[i] = 0;
+    double timer_marks[timer_intervals], timer_total[timer_intervals] = {0};
+    // for (int i = 0; i < timer_intervals - 1; ++i) timer_total[i] = 0;
     double start_time, end_time;
     start_time = MPI_Wtime();
     while (simulation_core_.StepTime()) {

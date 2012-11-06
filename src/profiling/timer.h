@@ -20,24 +20,24 @@
 /// You should have received a copy of the GNU General Public License
 /// along with Onza FDTD.  If not, see <http://www.gnu.org/licenses/>.
 /// @date   Thu Nov  1 13:36:49 2012
-/// 
+///
 /// @brief  Number of tools for profiling.
 #include <map>
 #include <string>
 namespace onza {
   /// @brief MPI_Wtime based timer for profiling
   class Timer {
-   public:
-    int Start(const char *key);
-    int Stop(const char *key);
-    int StopStart(const char *stop_key, const char *start_key);
-    int Print(const char *key);
-    int PrintRelative(const char *key, double base);
+  public:
+    int Start(const char *key_input);
+    int Stop(const char *key_input);
+    int StopStart(const char *stop_key_input, const char *start_key_input);
+    int Print(const char *key_input);
+    int PrintRelative(const char *key_input, double base);
     int PrintAll();
     int PrintAllRelative(double base);
-    double GetKeyTotalTime(const char *key);
+    double GetKeyTotalTime(const char *key_input);
     double GetAllTotalTime();
-    int Reset(const char *key);
+    int Reset(const char *key_input);
     int ResetAll();
   private:
     std::map<std::string, double> start_mark_;
