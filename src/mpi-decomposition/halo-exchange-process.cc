@@ -693,7 +693,7 @@ namespace onza {
     }  // end of for i
     for (int i = kAxisX; i < kDimensions; ++i) subdomains[i] = best_n[i];
     return kDone;
-  }  // end of HaloExchangeProcess::StarTopologyDecomposition
+  }  // end of HaloExchangeProcess::StarTopologyDecomposition()
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
@@ -750,8 +750,13 @@ namespace onza {
              simulation_core_.total_time_steps(),
              total_time_stepping,
              total_time_stepping/simulation_core_.total_time_steps());
+      timer_.Preset("Timer1", 20);
+      timer_.Preset("Timer2", 30);
+      timer_.Preset("Timer3", 200);
+      timer_.Preset("Timer4", 300);
       //  timer_.PrintAllRelative(total_time_stepping);
-        timer_.PrintAll();
+      
+      timer_.PrintAll();
       //  timer_.PrintAllByKey();
       double wasted = total_time_stepping - timer_.GetAllTotalTime();
       printf("*\t%04.1f%%\t%3.2f s\t%s\n",

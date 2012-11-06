@@ -25,29 +25,45 @@
 #include <map>
 #include <string>
 namespace onza {
-  /// @brief MPI_Wtime based timer for profiling
+  /// @brief MPI_Wtime based timer for profiling.
   class Timer {
-  public:
+   public:
+    /// @brief Init (if needed) timer and set a start time mark.
     int Start(const char *key_input);
+    /// @brief Set a stop time mark and measure time.
     int Stop(const char *key_input);
+    /// @brief Sequentially stop and start timers.
     int StopStart(const char *stop_key_input, const char *start_key_input);
+    /// @brief Print total time spent on processing element.
     int Print(const char *key_input);
+    /// @brief Print total time spent on processing element as ratio to a base.
     int PrintRelative(const char *key_input, double base);
+    /// @brief For each element print its key (name) and value (time, spent on
+    /// processing).
     int PrintAll();
-    int PrintAllByKey();
+    /// @brief Print all collected data (ordered, percentage of base time).
     int PrintAllRelative(double base);
+    /// @brief Print all timer values sorted by key.
+    int PrintAllByKey();
+    /// @brief Get total time spent on processing the element.
     double GetKeyTotalTime(const char *key_input);
+    /// @brief Get total time spent on processing all elements.
     double GetAllTotalTime();
+    /// @brief Preset timer.
+    int Preset(const char *key_input, const double total_time);
+    /// @brief Reset timer.
     int Reset(const char *key_input);
+    /// @brief Reset timer for all elements.
     int ResetAll();
-  private:
-    /// Associative array for timer start points
+
+   private:
+    /// @brief Timer start time mark.
     std::map<std::string, double> start_mark_;
-    /// Associative array for timer stop points
+    /// @brief Timer stop time mark.
     std::map<std::string, double> stop_mark_;
-    /// Associative array for time points (stop - start)
+    /// @brief Total time (stop - start).
     std::map<std::string, double> total_time_;
-    /// Associative for timer status
+    /// @brief Timer status.
     std::map<std::string, int> is_running_;
     enum TimerStatus {kTimerOff = 0, kTimerOn};
   };

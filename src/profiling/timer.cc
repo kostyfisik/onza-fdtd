@@ -29,71 +29,77 @@ namespace onza {
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
-  /// @brief Set a start mark.
-  ///  
-  /// Sets a start mark for the input element(e.g. any function name
+  /// @brief Init (if needed) timer and set a start time mark.
+  ///
+  /// Sets a start mark for the input element (e.g. any function name
   /// to do profiling).
   int Timer::Start(const char *key_input) {
     std::string key(key_input);
     if (!total_time_.count(key)) {
       total_time_[key] = 0;
       is_running_[key] = kTimerOff;
-    }
+    }  // end of if starting timer for new key
     if (is_running_[key] != kTimerOff) {
-      printf("Error! Starting timer second time!\n");
+      printf("Error! Starting timer %s second time!\n", key.c_str());
       return kErrorProfilingTimerSecondStart;
-    }
+    }  // end of if starting timer already running
     is_running_[key] = kTimerOn;
     start_mark_[key] = MPI_Wtime();
     return kDone;
-  } // end of Timer::Start
+  }  // end of Timer::Start()
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
-  /// @brief Set a stop mark and measure time.
+  /// @brief Set a stop time mark and measure time.
   ///
-  /// Sets a stop mark for the input element(e.g. any function) and
-  /// adds total time (stop mark - start mark) spent on element's processing.
+  /// Sets a stop mark for the input element (e.g. any function) and
+  /// adds total time (stop mark - start mark) spent on element's
+  /// processing.
   int Timer::Stop(const char *key_input) {
     std::string key(key_input);
     stop_mark_[key] = MPI_Wtime();
     if (is_running_[key] != kTimerOn || !total_time_.count(key)) {
-      printf("Error! Wrong stopping timer!\n");
+      printf("Error! Stopping undefinded timer %s!\n", key.c_str());
       return kErrorProfilingTimerWrongStop;
-    }
+    }  // end of if trying to stop already stopped or not existing timer
     is_running_[key] = kTimerOff;
     total_time_[key] += stop_mark_[key] - start_mark_[key];
     return kDone;
-  } // end of Timer::Stop
+  }  // end of Timer::Stop()
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
-  /// @brief Stop timer for the first input parameter and start for the second.
+  /// @brief Sequentially stop and start timers.
   ///
-  /// Stops timer for the first input parameter (...stop_key_input) and
-  /// starts it for the second one (...start_key_input).
+  /// Stops timer for the first input parameter (...stop_key_input)
+  /// and starts it for the second one (...start_key_input).
+  /// Logically it is equal to sequential call of Stop() and Start(),
+  /// but uses single call of MPI_Wtime().
   int Timer::StopStart(const char *stop_key_input,
                        const char *start_key_input) {
     std::string stop_key(stop_key_input), start_key(start_key_input);
-    if (is_running_[stop_key] != kTimerOn) {
-      printf("Error! Attempting to stop the timer that is off!\n");
-      return kErrorProfilingTimerWrongStopStart;
-    }
-    else {
-      stop_mark_[stop_key] = MPI_Wtime();
-      total_time_[stop_key] += stop_mark_[stop_key] - start_mark_[stop_key];
-      is_running_[stop_key] = kTimerOff;
-      if (is_running_[start_key] != kTimerOff) {
-        printf("Error! Attempting to start the timer that is on!\n");
-	return kErrorProfilingTimerWrongStopStart;   
-      }
-      else {
-        start_mark_[start_key] = stop_mark_[stop_key];
-        is_running_[start_key] = kTimerOn;
-      }
-    } // end of else ( is_running_[stop_key] = kTimerOn )
+    double time_mark = MPI_Wtime();
+    // Stop.
+    stop_mark_[stop_key] = time_mark;
+    if (is_running_[stop_key] != kTimerOn || !total_time_.count(stop_key)) {
+      printf("Error! Stopping undefinded timer %s!\n", stop_key.c_str());
+      return kErrorProfilingTimerWrongStop;
+    }  // end of if trying to stop already stopped or not existing timer
+    is_running_[stop_key] = kTimerOff;
+    total_time_[stop_key] += stop_mark_[stop_key] - start_mark_[stop_key];
+    // Start.
+    if (!total_time_.count(start_key)) {
+      total_time_[start_key] = 0;
+      is_running_[start_key] = kTimerOff;
+    }  // end of if starting timer for new start_key
+    if (is_running_[start_key] != kTimerOff) {
+      printf("Error! Starting timer %s second time!\n", start_key.c_str());
+      return kErrorProfilingTimerSecondStart;
+    }  // end of if starting timer already running
+    is_running_[start_key] = kTimerOn;
+    start_mark_[start_key]  = time_mark;
     return kDone;
-  } // end of Timer::StopStart
+  }  // end of Timer::StopStart()
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
@@ -103,12 +109,16 @@ namespace onza {
   int Timer::Print(const char *key_input) {
     std::string key(key_input);
     if (!total_time_.count(key)) {
-      printf("Error! Printing unknown timer!\n");
+      printf("Error! Printing unknown timer %s!\n", key.c_str());
       return kErrorProfilingTimerPrintUnknownTimer;
-    }
+    }  // end of trying to print timer data for nonexistent timer
+    if (is_running_[key] != kTimerOff) {
+      printf("Error! Timer %s is not ready for printing!\n", key.c_str());
+      return kErrorProfilingTimerSecondStart;
+    }  // end of if timer already running
     printf("\t%04.2f s : %s\n", total_time_[key], key.c_str());
     return kDone;
-  }  // end of Timer::Print
+  }  // end of Timer::Print()
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
@@ -118,21 +128,25 @@ namespace onza {
   int Timer::PrintRelative(const char *key_input, double base) {
     std::string key(key_input);
     if (!total_time_.count(key)) {
-      printf("Error! Printing unknown timer!\n");
+      printf("Error! Printing unknown timer %s!\n", key.c_str());
       return kErrorProfilingTimerPrintUnknownTimer;
-    }
+    }  // end of trying to print timer data for nonexistent timer
+    if (is_running_[key] != kTimerOff) {
+      printf("Error! Timer %s is not ready for printing!\n", key.c_str());
+      return kErrorProfilingTimerSecondStart;
+    }  // end of if timer already running
     if (base == 0) {
-      printf("Error! Printing timer with zero base!\n");
+      printf("Error! Printing timer %s with zero base!\n", key.c_str());
       return kErrorProfilingTimerZeroBase;
-    }
+    }  // end of if base is zero
     double time = total_time_[key];
     printf("\t%04.1f%%\t%3.2f s\t%s\n", time/base*100.0, time,  key.c_str());
     return kDone;
-  } // end of Timer::PrintRelative
+  }  // end of Timer::PrintRelative()
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
-  /// @brief For each element print its key(name) and value(time, spent on
+  /// @brief For each element print its key (name) and value (time, spent on
   /// processing).
   ///
   /// Prints total time spent on processing each element.
@@ -150,25 +164,25 @@ namespace onza {
     for (it2 = sorted_keys.rbegin(); it2 != sorted_keys.rend(); ++it2)
       Print((*it2).second.c_str());
     return kDone;
-  } // end of Timer::PrintAll
+  }  // end of Timer::PrintAll()
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
-  /// @brief For each element print its key(name) and value(time, spent on
-  /// processing the element, divided by base) sorted by value.
+  /// @brief Print all collected data (ordered, percentage of base time).
   ///
-  /// Prints total time spent on processing each element in percentage to base.
+  /// Prints total time spent on processing each element in percentage
+  /// of base time. Sorted by value, largest values first.
   int Timer::PrintAllRelative(double base) {
     if (base == 0) {
-      printf("Error! Printing timer with zero base!\n");
-      return kErrorProfilingTimerZeroBase;  // kError
-    }
+      printf("Error! Printing timers with zero base!\n");
+      return kErrorProfilingTimerZeroBase;
+    }  // end of if base is zero
     std::map<std::string, double>::iterator it;
-    // Sorted by value, sorting keys.
+    // Sorting keys by value using map internal layout.
     std::map<std::string, std::string> sorted_keys;
     for (it = total_time_.begin(); it != total_time_.end(); ++it) {
-      std::string sorting_key = to_string((*it).second/base*100.0)
-        + (*it).first;
+      std::string sorting_key =
+        to_string((*it).second / base * 100.0) + (*it).first;
       sorted_keys[sorting_key] = (*it).first;
     }  // end of for sorting keys
     // Sorted by value, output.
@@ -180,23 +194,26 @@ namespace onza {
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
-  /// @brief Print all elements' values sorted by key.
-  /// Prints all elements' values sorted by key.
-  int Timer::PrintAllByKey () {
+  /// @brief Print all timer values sorted by key.
+  ///
+  /// Prints total time spent on processing each element in
+  /// seconds. Sorted by timer key name.
+  int Timer::PrintAllByKey() {
     std::map<std::string, double>::iterator it;
     for (it = total_time_.begin() ; it != total_time_.end(); ++it)
       Print((*it).first.c_str());
     return kDone;
-  } // end of Timer::PrintByKey ()
+  }  // end of Timer::PrintAllByKey()
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
   /// @brief Get total time spent on processing the element.
+  ///
   /// Gets total time spent on processing the element.
   double Timer::GetKeyTotalTime(const char *key_input) {
     std::string key(key_input);
     return total_time_[key];
-  } // end of Timer::GetKeyTotalTime
+  }  // end of Timer::GetKeyTotalTime()
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
@@ -209,49 +226,61 @@ namespace onza {
     for (it = total_time_.begin(); it != total_time_.end(); ++it)
       all_total_time += (*it).second;
     return all_total_time;
-  } // end of Timer::GetAllTotalTime
+  }  // end of Timer::GetAllTotalTime()
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
-  /// @brief Reset timer for input element
+  /// @brief Preset timer.
   ///
-  /// Resets timer for input element
+  /// Set timer total_time_ to some preset value.
+  int Timer::Preset(const char *key_input, const double total_time) {
+    std::string key(key_input);
+    if (is_running_[key] != kTimerOff) {
+      printf("Attempting to preset the timer %s, while it is on!\n",
+             key.c_str());
+      return kErrorProfilingTimerWrongPreset;
+    }  // end of if timer was running
+    total_time_[key] = total_time;
+    return kDone;
+  }
+  // ********************************************************************** //
+  // ********************************************************************** //
+  // ********************************************************************** //
+  /// @brief Reset timer.
+  ///
+  /// Restores timer to it uninitialized status.
   int Timer::Reset(const char *key_input) {
     std::string key(key_input);
-    if (is_running_[key] != kTimerOn) {
-      printf("Attempting to reset the timer that is off!\n");
-      return kErrorProfilingTimerWrongStopStart;
-    }
-    else {
-      is_running_[key] = kTimerOff;
-      total_time_[key] = 0;
-      is_running_[key] = kTimerOn;
-      start_mark_[key] = MPI_Wtime();
-      // Start(key.c_str());
-    }
+    if (is_running_[key] != kTimerOff) {
+      printf("Attempting to reset the timer %s, while it is on!\n",
+             key.c_str());
+      return kErrorProfilingTimerWrongReset;
+    }  // end of if timer was running
+    start_mark_.erase(key);
+    stop_mark_.erase(key);
+    total_time_.erase(key);
+    is_running_.erase(key);
     return kDone;
-  } // end of Timer::Reset
+  }  // end of Timer::Reset()
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
-  /// @brief Reset timer for all elements
+  /// @brief Reset timer for all elements.
   ///
   /// Resets timer for all elements
   int Timer::ResetAll() {
     std::map<std::string, double>::iterator it;
     for (it = total_time_.begin(); it != total_time_.end(); ++it) {
-      if (is_running_[(*it).first] != kTimerOn) {
-        printf("Attempting to reset the timer that is off!\n");
-	return kErrorProfilingTimerWrongStopStart;        
-      }
-      else {
-	is_running_[(*it).first] = kTimerOff;
-	total_time_[(*it).first] = 0;
-	is_running_[(*it).first] = kTimerOn;
-	start_mark_[(*it).first] = MPI_Wtime();
-	// Start((*it).first.c_str());
-      }
-    } // end of for
+      if (is_running_[(*it).first] != kTimerOff) {
+        printf("Attempting to reset the timer %s, while it is on!\n",   \
+               (*it).first.c_str());
+        return kErrorProfilingTimerWrongReset;
+      }  // end of if timer was running
+    }  // end of for all timers check running status
+    start_mark_.clear();
+    stop_mark_.clear();
+    total_time_.clear();
+    is_running_.clear();
     return kDone;
-  } // end of Timer::ResetAll
+  }  // end of Timer::ResetAll()
 }

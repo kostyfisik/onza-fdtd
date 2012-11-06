@@ -58,8 +58,16 @@ namespace onza {
     kErrorProcessNotInGrid,
     /// Trying to start running timer.
     kErrorProfilingTimerSecondStart,
+    /// Some error during preseting the timer.
+    kErrorProfilingTimerWrongPreset,
+    /// Some error during reseting the timer.
+    kErrorProfilingTimerWrongReset,
     /// Some error during stoping profiling timer.
     kErrorProfilingTimerWrongStop,
+    /// Base must be >= 0!
+    kErrorProfilingTimerZeroBase,
+    /// Printing a printer that's not specified
+    kErrorProfilingTimerPrintUnknownTimer,
     /// Buffers to send and recieve  halo has different sizes.
     /// Checked with HaloToExchange::Init().
     kErrorSendAndReceiveBuffersHasDifferentSizes,
@@ -84,14 +92,7 @@ namespace onza {
     /// HaloExchangeProcess::CheckSubdomainIndexes()
     kErrorWrongIndexDifference,
     /// FDTD algorithm`s time depth should be >= 1!
-    kErrorWrongTimeDepth,
-    /// Base must be >= 0!
-    kErrorProfilingTimerZeroBase,
-    /// Stopped timer cannot be stopped again or
-    /// started timer canot be started again
-    kErrorProfilingTimerWrongStopStart,
-    /// Printing a printer that's not specified
-    kErrorProfilingTimerPrintUnknownTimer
+    kErrorWrongTimeDepth
   };
   /// @brief Simulation status
   enum SimulationStatus {kSimulationStatusFinished = 0,
