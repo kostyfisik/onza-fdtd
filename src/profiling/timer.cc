@@ -223,9 +223,11 @@ namespace onza {
       return kErrorProfilingTimerWrongStopStart;
     }
     else {
-      //  is_running_[key] = kTimerOff;
-      //  total_time_[key] = 0;
-      Start(key.c_str());
+      is_running_[key] = kTimerOff;
+      total_time_[key] = 0;
+      is_running_[key] = kTimerOn;
+      start_mark_[key] = MPI_Wtime();
+      // Start(key.c_str());
     }
     return kDone;
   } // end of Timer::Reset
@@ -243,10 +245,13 @@ namespace onza {
 	return kErrorProfilingTimerWrongStopStart;        
       }
       else {
-	//  total_time_[(*it).first] = 0;
-        Start((*it).first.c_str());
+	is_running_[(*it).first] = kTimerOff;
+	total_time_[(*it).first] = 0;
+	is_running_[(*it).first] = kTimerOn;
+	start_mark_[(*it).first] = MPI_Wtime();
+	// Start((*it).first.c_str());
       }
-    }
+    } // end of for
     return kDone;
   } // end of Timer::ResetAll
 }
