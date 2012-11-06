@@ -34,15 +34,20 @@ namespace onza {
     int Print(const char *key_input);
     int PrintRelative(const char *key_input, double base);
     int PrintAll();
+    int PrintByKey();
     int PrintAllRelative(double base);
     double GetKeyTotalTime(const char *key_input);
     double GetAllTotalTime();
     int Reset(const char *key_input);
     int ResetAll();
   private:
+    // Associative array for timer start points
     std::map<std::string, double> start_mark_;
+    // Associative array for timer stop points
     std::map<std::string, double> stop_mark_;
+    // Associative array for time points (stop - start)
     std::map<std::string, double> total_time_;
+    // Associative for timer status
     std::map<std::string, int> is_running_;
     enum TimerStatus {kTimerOff = 0, kTimerOn};
   };

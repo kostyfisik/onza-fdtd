@@ -84,7 +84,9 @@ namespace onza {
     /// HaloExchangeProcess::CheckSubdomainIndexes()
     kErrorWrongIndexDifference,
     /// FDTD algorithm`s time depth should be >= 1!
-    kErrorWrongTimeDepth
+    kErrorWrongTimeDepth,
+    /// Base must be >= 0!
+    kErrorZeroBase
   };
   /// @brief Simulation status
   enum SimulationStatus {kSimulationStatusFinished = 0,
