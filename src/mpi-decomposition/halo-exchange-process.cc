@@ -706,9 +706,6 @@ namespace onza {
              process_rank_);
       return kErrorUninitiatedSimulationCore;
     }  // end of if simulation core is not initiated
-    const int timer_intervals = 10;
-    double timer_marks[timer_intervals], timer_total[timer_intervals] = {0};
-    // for (int i = 0; i < timer_intervals - 1; ++i) timer_total[i] = 0;
     double start_time, end_time;
     start_time = MPI_Wtime();
     while (simulation_core_.StepTime()) {
@@ -757,10 +754,7 @@ namespace onza {
       double wasted = total_time_stepping - timer_.GetAllTotalTime();
       printf("*\t%04.1f%%\t%3.2f s\t%s\n",
              wasted/total_time_stepping*100.0, wasted,  "**wasted**");
-
-    }
-      // printf("DoStep() took %f seconds (%.1f%% from total).\n",
-      //        do_step_total_time, do_step_total_time/total_time_stepping*100);
+    }  // end of if output profiling data
     return kDone;
   }  // end of HaloExchangeProcess::RunSimulation()
 }  // end of namespace onza
