@@ -706,9 +706,6 @@ namespace onza {
              process_rank_);
       return kErrorUninitiatedSimulationCore;
     }  // end of if simulation core is not initiated
-    const int timer_intervals = 10;
-    double timer_marks[timer_intervals], timer_total[timer_intervals] = {0};
-    // for (int i = 0; i < timer_intervals - 1; ++i) timer_total[i] = 0;
     double start_time, end_time;
     start_time = MPI_Wtime();
     while (simulation_core_.StepTime()) {
@@ -745,7 +742,7 @@ namespace onza {
       if (errors) return kError;
       // Evaluate profile
     }  // end of while time is stepping
-    end_time   = MPI_Wtime();
+    end_time = MPI_Wtime();
     simulation_core_.Snapshot();
     double total_time_stepping = end_time-start_time;
     if (process_rank_ == kOutput) {
@@ -753,14 +750,13 @@ namespace onza {
              simulation_core_.total_time_steps(),
              total_time_stepping,
              total_time_stepping/simulation_core_.total_time_steps());
-      timer_.PrintAllRelative(total_time_stepping);
+      //  timer_.PrintAllRelative(total_time_stepping);
+        timer_.PrintAll();
+      //  timer_.PrintAllByKey();
       double wasted = total_time_stepping - timer_.GetAllTotalTime();
       printf("*\t%04.1f%%\t%3.2f s\t%s\n",
              wasted/total_time_stepping*100.0, wasted,  "**wasted**");
-
-    }
-      // printf("DoStep() took %f seconds (%.1f%% from total).\n",
-      //        do_step_total_time, do_step_total_time/total_time_stepping*100);
+    }  // end of if output profiling data
     return kDone;
   }  // end of HaloExchangeProcess::RunSimulation()
 }  // end of namespace onza

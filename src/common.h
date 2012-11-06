@@ -84,7 +84,14 @@ namespace onza {
     /// HaloExchangeProcess::CheckSubdomainIndexes()
     kErrorWrongIndexDifference,
     /// FDTD algorithm`s time depth should be >= 1!
-    kErrorWrongTimeDepth
+    kErrorWrongTimeDepth,
+    /// Base must be >= 0!
+    kErrorProfilingTimerZeroBase,
+    /// Stopped timer cannot be stopped again or
+    /// started timer canot be started again
+    kErrorProfilingTimerWrongStopStart,
+    /// Printing a printer that's not specified
+    kErrorProfilingTimerPrintUnknownTimer
   };
   /// @brief Simulation status
   enum SimulationStatus {kSimulationStatusFinished = 0,
