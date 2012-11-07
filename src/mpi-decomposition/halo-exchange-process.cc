@@ -749,15 +749,16 @@ namespace onza {
       printf("Stepping(%li) took %.2f seconds (%f s/step).\n",
              simulation_core_.total_time_steps(),
              total_time_stepping,
+
              total_time_stepping/simulation_core_.total_time_steps());
-      timer_.Preset("Timer1", 20);
-      timer_.Preset("Timer2", 30);
-      timer_.Preset("Timer3", 200);
-      timer_.Preset("Timer4", 300);
-      //  timer_.PrintAllRelative(total_time_stepping);
       
-      timer_.PrintAll();
+      std::cout << "\tUsing PrintAllRelative:\n"; 
+      timer_.PrintAllRelative(total_time_stepping);
+     /*
+     std::cout << "\n\tUsing PrintAll:\n";
+       timer_.PrintAll();
       //  timer_.PrintAllByKey();
+      */
       double wasted = total_time_stepping - timer_.GetAllTotalTime();
       printf("*\t%04.1f%%\t%3.2f s\t%s\n",
              wasted/total_time_stepping*100.0, wasted,  "**wasted**");

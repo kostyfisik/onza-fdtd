@@ -244,8 +244,8 @@ namespace onza {
     std::stringstream sstr;
     // @todo3 Optimized for double (fraction in %) to string conversion
     // Need work to check template is still usable for other conversions.
-    sstr.width(4);
-    sstr.precision(1);
+    sstr.width(14);
+    sstr.precision(11);
     sstr.fill('0');
     sstr.setf(std::ios::fixed);
     sstr << value;

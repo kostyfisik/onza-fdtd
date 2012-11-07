@@ -155,7 +155,7 @@ namespace onza {
     // Sorted by value, sorting keys.
     std::map<std::string, std::string> sorted_keys;
     for (it = total_time_.begin(); it != total_time_.end(); ++it) {
-      std::string sorting_key = to_string((*it).second * 1.0)
+      std::string sorting_key = to_string((*it).second / GetAllTotalTime() * 100.0)
         + (*it).first;
       sorted_keys[sorting_key] = (*it).first;
     }  // end of for sorting keys
