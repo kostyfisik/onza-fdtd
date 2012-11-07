@@ -481,6 +481,7 @@ namespace onza {
             = received_borders_(border)(component, all_x_, all_y_, all_z_);
       }  // end of for component
     }  // end of for border
+    //debug
     // if (neighbours_ranks_[kBorderLeft] != MPI_PROC_NULL)
     //   (this->*RunAlgorithm)(data_border_range_[kBorderLeft], inner_y_,
     //                         inner_z_);

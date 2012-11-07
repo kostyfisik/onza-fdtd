@@ -116,7 +116,7 @@ namespace onza {
       printf("Error! Timer %s is not ready for printing!\n", key.c_str());
       return kErrorProfilingTimerSecondStart;
     }  // end of if timer already running
-    printf("\t%04.2f s : %s\n", total_time_[key], key.c_str());
+    printf("\t%13.2f s : %s\n", total_time_[key], key.c_str());
     return kDone;
   }  // end of Timer::Print()
   // ********************************************************************** //
@@ -140,23 +140,24 @@ namespace onza {
       return kErrorProfilingTimerZeroBase;
     }  // end of if base is zero
     double time = total_time_[key];
-    printf("\t%04.1f%%\t%3.2f s\t%s\n", time/base*100.0, time,  key.c_str());
+    printf("\t%04.1f%%\t%5.2f s : %s\n", time/base*100.0, time,  key.c_str());
     return kDone;
   }  // end of Timer::PrintRelative()
   // ********************************************************************** //
   // ********************************************************************** //
   // ********************************************************************** //
-  /// @brief For each element print its key (name) and value (time, spent on
-  /// processing).
+  /// @brief Print all collected data (ordered).
   ///
-  /// Prints total time spent on processing each element.
+  /// Prints total time spent on processing each element. Sorted by
+  /// value, largest values first.
   int Timer::PrintAll() {
-     std::map<std::string, double>::iterator it;
+    double base = GetAllTotalTime();
+    std::map<std::string, double>::iterator it;
     // Sorted by value, sorting keys.
     std::map<std::string, std::string> sorted_keys;
     for (it = total_time_.begin(); it != total_time_.end(); ++it) {
-      std::string sorting_key = to_string((*it).second / GetAllTotalTime() * 100.0)
-        + (*it).first;
+      std::string sorting_key =
+        to_string((*it).second / base * 100.0) + (*it).first;
       sorted_keys[sorting_key] = (*it).first;
     }  // end of for sorting keys
     // Sorted by value, output.

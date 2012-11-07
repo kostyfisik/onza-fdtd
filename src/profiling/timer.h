@@ -38,8 +38,7 @@ namespace onza {
     int Print(const char *key_input);
     /// @brief Print total time spent on processing element as ratio to a base.
     int PrintRelative(const char *key_input, double base);
-    /// @brief For each element print its key (name) and value (time, spent on
-    /// processing).
+    /// @brief Print all collected data (ordered).
     int PrintAll();
     /// @brief Print all collected data (ordered, percentage of base time).
     int PrintAllRelative(double base);
