@@ -259,9 +259,10 @@ int main(int argc, char *argv[]) {
 /// time-domain (FDTD) method][FDTD]. FDTD method generates very high
 /// computational load. To get simulation results in reasonable time
 /// your should use a powerful computer or a supercomputer
-/// cluster. Onza FDTD was designed to run efficiently with: -
-/// multi-core processors - multiprocessor systems - clusters and
-/// supercomputers
+/// cluster. Onza FDTD was designed to run efficiently with:
+/// - multi-core processors
+/// - multiprocessor systems
+/// - clusters and supercomputers
 ///
 /// Onza FDTD software is developed by [Metamaterials Laboratory] of
 /// Photonics and Optical Informatics Department of [NRU ITMO]. It is

@@ -26,18 +26,19 @@ e.g. from top-level Onza FDTD dir $./go.sh new\n
 Possible modes are:\n
 \n
 help        \t\t- show usage message.\n
-<empty>, new \t- start totaly new build of Onza with Clang\n
+<empty>, new \t- start totaly new build of Onza with Clang.\n
              \t\t\x20 compiler. Use it for first time compilation.\n
 new2         \t\t- same as new, but using gcc compiler.\n
-new3         \t\t- same as new2, but with -O3 and -ffast-math flags.
+new3         \t\t- same as new2, but with -O3 and -ffast-math flags.\n
 old, old2    \t- recomile updated source files using Clang or gcc.\n
 test         \t\t- compile with gcc benchmark flags, run a number of\n
              \t\t\x20 self tests, report about passing or failing them.\n
 prof         \t\t- compile with gcc with gprof flag.\n
-old2prof     \t- recompile with gprof. flag\n
-custom       \t- use new mode and config file should be defined\n
-debug        \t- use debug flag fro Blitz++
-\n
+old2prof     \t- recompile with gprof flag.\n
+custom       \t- use 'new' mode and config file should be defined.\n
+build        \t\t- just build with gcc compiler.\n
+debug        \t\t- use debug flag fro Blitz++.
+\n\n
 Possible predefined config files:\n
 \n
 testX1Dzero      \t\t- 1D FDTD (used in test to check border exchange)\n
@@ -72,7 +73,7 @@ mode_new2="new2"  # gcc
 mode_new3="new3"  # gcc with -O3
 mode_old="old";       mode_old2="old2";         mode_test="test"; 
 mode_prof="prof";     mode_old2prof="old2prof"
-mode_custom="custom"; mode_debug="debug"
+mode_custom="custom"; mode_debug="debug";       mode_build="build"
 # Default values
 compiler_gcc="gcc"; compiler_clang="clang"
 usedCompiler=$compiler_gcc # or clang
@@ -93,6 +94,7 @@ if [[ $mode != $mode_new && $mode != $mode_new2 && $mode != $mode_new3 && \
     $mode != $mode_test && \
     $mode != $mode_prof && $mode != $mode_old2prof && \
     $mode != $mode_custom && \
+    $mode != $mode_build && \
     $mode != $mode_debug ]]; then
     # So mode may be miss spelled or contains config file path.
     if [[ $configFile ]]; then
@@ -239,6 +241,11 @@ make install
 #############################################################################
 #   Run
 #############################################################################
+if [[ $mode = $mode_build ]]; then
+    cd $path_bin
+    mv run-onza-fdtd onza-fdtd.bin
+    exit 0; 
+fi
 HOST=`cat /etc/hostname`
 echo "Executing on host -> $HOST <-"
 if [[ $mode = $mode_test ]]; then isTest=$yes; fi
@@ -249,7 +256,7 @@ fi
 if [[ $isTest = $no ]]; then
     cd $path_bin
     cp $configFile $path_bin/onza.config
-    if [[ $configFile = $path_testX1Dzero_config ]]; then
+    if [[ $Onza_MPI_size = "unset" && $configFile = $path_testX1Dzero_config ]]; then
         Onza_MPI_size=2
         Onza_MPI_nodes=1
     fi
@@ -356,7 +363,8 @@ if [[ $isTest = $yes ]]; then
             echo "Prepare *.png from gnuplot ..."
             cp $path_onza/data/gnuplot/* ./
             ./gnuplot-all.sh >/dev/null  2>&1
-            cp *02??-*.png $path_bin/
+            cp *.png $path_bin/
+            # cp *02??-*.png $path_bin/
             rm *.png
         fi
         Onza_MPI_size=$backup_Onza_MPI_size
@@ -366,6 +374,7 @@ if [[ $isTest = $yes ]]; then
 fi  # end of if [[ $isTest = $yes ]]
 if [[ $configFile = $path_testX1Dzero_config ]]; then
     echo "Prepare *.png from gnuplot ..."
+    ls *
     cp $path_onza/data/gnuplot/* ./
     ./gnuplot-all.sh >/dev/null  2>&1
     # mkdir tmpdir
