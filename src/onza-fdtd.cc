@@ -47,6 +47,8 @@ int main(int argc, char *argv[]) {
     done_status = halo_exchange_process.RunSimulation();
     break;
   }  // end of while breaked with errors
+  if (done_status != onza::kDone && done_status != onza::kErrorProcessNotInGrid)
+    MPI_Abort(MPI_COMM_WORLD, done_status);  
   MPI_Finalize();
   return done_status;
 }  // end of main

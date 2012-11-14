@@ -637,6 +637,12 @@ namespace onza {
       printf("Error! FDTD algorithm`s time depth should be >= 2!\n");
       return kErrorWrongTimeDepth;
     }  // end of if error
+    if (!max_x && !max_y && !max_z) {
+      printf("Error! Single element subdomains are not supported!\n");
+      printf("\tUse bigger model or less processes!\n");
+      return kErrorSingleElementSubdomain;
+    }  // end of if error
+
     data_snapshot_.resize(time_depth_);
     // Mark reduce dimensions.
     int is_reduced_x = max_x == 0 ? 0 : 1;

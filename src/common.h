@@ -74,6 +74,8 @@ namespace onza {
     /// Grid size in any dimension should be more or equal to 1.
     /// @see GridInputConfig::set_total_grid_length()
     kErrorSettingWrongGridSize,
+    /// Number of elements in subdomain should be more than 1.
+    kErrorSingleElementSubdomain,
     /// case of too many processes during decomposition
     kErrorSubdomainSizeLessThanHaloWidth,
     /// onza::SimulationInputConfig forced to set total pml width in
