@@ -374,7 +374,6 @@ if [[ $isTest = $yes ]]; then
 fi  # end of if [[ $isTest = $yes ]]
 if [[ $configFile = $path_testX1Dzero_config ]]; then
     echo "Prepare *.png from gnuplot ..."
-    ls *
     cp $path_onza/data/gnuplot/* ./
     ./gnuplot-all.sh >/dev/null  2>&1
     # mkdir tmpdir

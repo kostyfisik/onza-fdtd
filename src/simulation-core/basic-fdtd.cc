@@ -891,7 +891,10 @@ namespace onza {
                                           int64_t length_x,
                                           int64_t length_y,
                                           int64_t length_z) {
-    printf("Preset X1Dzero\n");
+    int process_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
+    if (process_rank == kOutput)
+      printf("Preset X1Dzero\n");
     if (grid_input_config_.set_total_grid_length(length_x, length_y, length_z)
         != kDone) return kErrorSettingWrongGridSize;
     SetBoundaryConditionsAllPML();
@@ -920,7 +923,10 @@ namespace onza {
                                              int64_t length_x,
                                              int64_t length_y,
                                              int64_t length_z) {
-    //debug printf("Preset TMz2Dspeedup\n");
+    int process_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
+    if (process_rank == kOutput)
+      printf("Preset TMz2Dspeedup\n");
     if (grid_input_config_.set_total_grid_length(length_x, length_y, length_z)
         != kDone) return kErrorSettingWrongGridSize;
     SetBoundaryConditionsAllPML();
@@ -948,7 +954,10 @@ namespace onza {
                                             int64_t length_x,
                                             int64_t length_y,
                                             int64_t length_z) {
-    printf("Preset 3Dsimple\n");
+    int process_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
+    if (process_rank == kOutput)
+      printf("Preset 3Dsimple\n");
     if (grid_input_config_.set_total_grid_length(length_x, length_y, length_z)
         != kDone) return kErrorSettingWrongGridSize;
     SetBoundaryConditionsAllPML();
@@ -1058,8 +1067,10 @@ namespace onza {
   /// correctness, set values to SimulationInputConfig members.
   int SimulationInputConfig::SetConfigFromFileMap() {
     // todo2(tig) Do function realization.
-    //debug
-    printf("Using custom config\n");
+    int process_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
+    if (process_rank == kOutput)
+      printf("Using custom config\n");
     int64_t length_x = 200, length_y = 1, length_z = 1;
     if (grid_input_config_.set_total_grid_length(length_x, length_y, length_z)
         != kDone) return kErrorSettingWrongGridSize;
