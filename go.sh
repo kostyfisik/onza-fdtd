@@ -108,9 +108,9 @@ if [[ $mode != $mode_new && $mode != $mode_new2 && $mode != $mode_new3 && \
     configFile=$mode 
     mode=$mode_new
 fi 
-if [[ $mode = $mode_test && $configFile ]]; then
+if [[ ( $mode = $mode_test || $mode = $mode_build ) && $configFile ]]; then
     echo ================ !ERROR! =================
-    echo Test mode do not support external config file
+    echo Test and build modes do not support external config file
     echo ================ !ERROR! =================
     exit 1
 fi
@@ -119,7 +119,7 @@ tests="testX1Dzero testTMz2Dspeedup test3Dsimple"
 for test in $tests; do
     path_test_config="path_${test}_config"
     eval path_${test}_config=$path_onza/data/$test.config  
-    echo ${!path_test_config}
+    # echo ${!path_test_config}
 done
 # path_testX1Dzero_config=$path_onza/data/testX1Dzero.config
 # path_testTMz2Dspeedup_config=$path_onza/data/testTMz2Dspeedup.config
@@ -142,11 +142,11 @@ if [[ $mode = $mode_test ]]; then
     done
 fi
 # Should be tested after checking $test_mode 
-if [ ! $configFile ]; then
+if [[ ! $configFile && $mode != $mode_build ]]; then
     echo Setting default config file $path_default_config
     configFile=$path_default_config
 fi
-if  [[ ! -a $configFile ]]; then
+if  [[ ! -a $configFile && $mode != $mode_build ]]; then
     echo ================ !ERROR! =================
     echo Was not able to found config file using path: $configFile
     echo ================ !ERROR! =================
@@ -154,13 +154,15 @@ if  [[ ! -a $configFile ]]; then
 fi
 # Convert relative path for custom config file to absolute.
 firstChar=${configFile:0:1}
-if [[ ! $firstChar = "/" ]]; then
+if [[ $firstChar != "/" && $mode != $mode_build ]]; then
     configFile=$path_onza/$configFile
     echo Change config file path to absolute path: $configFile
 fi
 echo ============ Current script settings =============
 echo mode: $mode
-echo config file: $configFile
+if [[ $mode != $mode_test && $mode != $mode_build ]]; then
+    echo config file: $configFile
+fi
 echo base dir path: $path_onza
 # Check directory structure
 if [[ ! -d $path_src ]]; then
@@ -199,6 +201,7 @@ echo Cleaning bin
 rm -r $path_bin/* >/dev/null 2>&1
 # Profiling mode should use gcc compiler.
 flag_cmake_profile=
+flag_profile=
 if [[ $mode = $mode_prof || $mode = $mode_old2prof ]]; then
     echo Using gprof.
     isProfile=$yes
