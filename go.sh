@@ -115,7 +115,7 @@ if [[ ( $mode = $mode_test || $mode = $mode_build ) && $configFile ]]; then
     exit 1
 fi
 # Check config file(s)
-tests="testX1Dzero testTMz2Dspeedup test3Dsimple"
+tests="self-test-X1D-zero self-test-TMz2D-speedup self-test-3D-simple"
 for test in $tests; do
     path_test_config="path_${test}_config"
     eval path_${test}_config=$path_onza/data/$test.config  
@@ -222,7 +222,7 @@ fi
 # Select OMPI_CXXFLAGS
 flags_O2="-O2 -ftemplate-depth-30"
 flags_debug="-ftemplate-depth-30 -DBZ_DEBUG"
-flags_O3="-O3 -ffast-math -ftemplate-depth-30 -march=native -mtune=native -mfpmath=both -malign-double -mstackrealign -ftree-vectorize -msse2 -ftree-vectorizer-verbose=5"
+flags_O3="-O3 -ffast-math -ftemplate-depth-30 -march=native -mtune=native -mfpmath=both -malign-double -mstackrealign -ftree-vectorize -msse2 -ftree-vectorizer-verbose=5 -flto"
 export OMPI_CXXFLAGS=$flags_O2
 if [[ $mode = $mode_debug ]]; then
     echo Using debug mode for Biltz++.
