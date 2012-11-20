@@ -60,9 +60,9 @@ def PrintMean (path, mean, number) :
 	print "   Mean = ", mean
 	print "   Averaging number = ", number
 # Runs the file with preset parameters and measures means for performance times
-def ParametricRun (path, max_proc_number, number, Means) :
+def ParametricRun (path, binary_file, config_file, max_proc_number, number, Means) :
 	for i in range (max_proc_number[0]):
-		path[0] = "mpirun -n " + '%d' % (i + 1) + " " + sys.argv[1] + " " + sys.argv[2]
+		path[0] = "mpirun -n " + '%d' % (i + 1) + " " + binary_file + " " + config_file
                 stmt = "Start(path)"
 		Means[i] = GetMean(stmt, number)
 # Runs the file with preset parameters and measures means for performance times in case of multiple nodes
@@ -441,15 +441,20 @@ else:
 		print "\n>> Using predefined config file " + sys.argv[2]
 	else:
 		print "\n>> No predefined config file selected, running binary with default parameters"
-	if sys.argv[1] == "onza-fdtd.bin":
-                path = ["./" + sys.argv[1] + " " + sys.argv[2]]
-        else:
-                path = ["./" + sys.argv[1]]
-        stmt = "Start(path)"        
+	if len(sys.argv) == 2:
+		if sys.argv[1] == "onza-fdtd.bin":
+			config_file = "test-parallel-3D.config"
+		else:
+			config_file = ""
+	else:
+		binary_file = sys.argv[1]
+		config_file = sys.argv[2]
+
+	path = ["./" + binary_file + " " + config_file]
+	stmt = "Start(path)"        
        # number = GetNumber(stmt)
         number = 3
-	binary_file = sys.argv[1]
-	config_file = sys.argv[2]
+	
         if len(sys.argv) == 5:
                 fixed_node = int(sys.argv[3])
                 fixed_proc = int(sys.argv[4])
@@ -458,7 +463,7 @@ else:
         if nodes_number[0] == 1:
                 Procs = range(1, max_proc_number[0] + 1)
                 Means = range(max_proc_number[0])
-                ParametricRun(path, max_proc_number, number, Means)
+                ParametricRun(path, binary_file, config_file, max_proc_number, number, Means)
                 optimal = [1]
                 Acceleration = range(max_proc_number[0])
                 Efficiency = range(max_proc_number[0])
