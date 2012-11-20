@@ -39,12 +39,6 @@ custom       \t- use 'new' mode and config file should be defined.\n
 build        \t\t- just build with gcc compiler.\n
 debug        \t\t- use debug flag fro Blitz++.
 \n\n
-Possible predefined config files:\n
-\n
-testX1Dzero      \t\t- 1D FDTD (used in test to check border exchange)\n
-testTMz2Dspeedup \t- 2D FDTD (used in test to check speed up in 2D case)\n
-test3Dsimple     \t\t- 3D FDTD\n
-\n
 Possible enviroment parameters:\n
 \n
 Onza_MPI_size   \t- total number of MPI processes
@@ -117,19 +111,18 @@ fi
 # Check config file(s)
 tests="self-test-X1D-zero self-test-TMz2D-speedup self-test-3D-simple"
 for test in $tests; do
-    path_test_config="path_${test}_config"
-    eval path_${test}_config=$path_onza/data/$test.config  
-    # echo ${!path_test_config}
+    test_name=${test//-/_}
+    path_test_config="path_${test_name}_config"
+    eval path_${test_name}_config=$path_onza/data/$test.config  
+    echo ${!path_test_config}
 done
-# path_testX1Dzero_config=$path_onza/data/testX1Dzero.config
-# path_testTMz2Dspeedup_config=$path_onza/data/testTMz2Dspeedup.config
-# path_test3Dsimple_config=$path_onza/data/test3Dsimple.config
 path_default_config=$path_onza/data/default-onza.config
 if [[ $mode = $mode_test ]]; then
     echo Check for tests config files...
     for test in $tests; do
-        path_test_config="path_${test}_config"
-        eval path_${test}_config=$path_onza/data/$test.config  
+        test_name=${test//-/_}
+        path_test_config="path_${test_name}_config"
+        eval path_${test_name}_config=$path_onza/data/$test.config  
         echo ${!path_test_config}
         if [[ ! -r ${!path_test_config} ]];
         then
@@ -259,7 +252,8 @@ fi
 if [[ $isTest = $no ]]; then
     cd $path_bin
     cp $configFile $path_bin/onza.config
-    if [[ $Onza_MPI_size = "unset" && $configFile = $path_testX1Dzero_config ]]; then
+    if [[ $Onza_MPI_size = "unset" && \
+        $configFile = $path_self_test_X1D_zero_config ]]; then
         Onza_MPI_size=2
         Onza_MPI_nodes=1
     fi
@@ -315,14 +309,16 @@ if [[ $isTest = $yes ]]; then
         # For each test make dir, copy config and binary to it, run.
         cd $path_bin
         mkdir $test
+        test_name=${test//-/_}
+        path_test_config="path_${test_name}_config"
         path_test="$path_bin/$test"  
-        path_test_config="path_${test}_config"
+        #path_test_config="path_${test}_config"
         cp ${!path_test_config} ${path_test}/onza.config
         cp $onza_bin $path_test
         cd $path_test
         backup_Onza_MPI_size=$Onza_MPI_size
         backup_Onza_MPI_nodes=$Onza_MPI_nodes
-        if [[ $test = "testX1Dzero" ]]; then
+        if [[ $test = "self-test-X1D-zero" ]]; then
             Onza_MPI_size=2
             Onza_MPI_nodes=1
         fi
@@ -335,7 +331,7 @@ if [[ $isTest = $yes ]]; then
             echo "(1) Nodes $Onza_MPI_nodes procs $Onza_MPI_size"
             salloc -N $Onza_MPI_nodes -n $Onza_MPI_size -p max1hour \
                 mpirun $MPIoptions ./$onza_bin onza.config
-            if [[ $test = "testTMz2Dspeedup" ]]; then
+            if [[ $test = "self-test-TMz2D-speedup" ]]; then
                 echo "(*******) Nodes 16 procs 128 (1024 x 1024, step 1000, ~15.4s)"
                 salloc -N 16 -n 128 -p max1hour \
                     mpirun $MPIoptions ./$onza_bin onza.config
@@ -362,7 +358,7 @@ if [[ $isTest = $yes ]]; then
             echo "(1) Nodes 1  procs $Onza_MPI_size"
             mpirun -np $Onza_MPI_size $MPIoptions ./$onza_bin onza.config
         fi
-        if [[ $test = "testX1Dzero" ]]; then
+        if [[ $test = "self-test-X1D-zero" ]]; then
             echo "Prepare *.png from gnuplot ..."
             cp $path_onza/data/gnuplot/* ./
             ./gnuplot-all.sh >/dev/null  2>&1
@@ -375,7 +371,7 @@ if [[ $isTest = $yes ]]; then
         rm *.onza  >/dev/null  2>&1
     done  # end of for test in $tests; do
 fi  # end of if [[ $isTest = $yes ]]
-if [[ $configFile = $path_testX1Dzero_config ]]; then
+if [[ $configFile = $path_self_test_X1D_zero_config ]]; then
     echo "Prepare *.png from gnuplot ..."
     cp $path_onza/data/gnuplot/* ./
     ./gnuplot-all.sh >/dev/null  2>&1
