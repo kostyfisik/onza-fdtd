@@ -76,7 +76,7 @@ def ParametricRunNodes(path, binary_file, config_file, nodes_number, max_proc_nu
          #!!!!!!!!!!!more common analysis required
                 for j in i, i *  max_proc_number[0] / 4, i * max_proc_number[0] / 2, i * 3 *  max_proc_number[0] / 4, i * max_proc_number[0]:
 			n.append(j)
-                        path[0] = "salloc -N " + '%d' % (i) + " -n " + '%d' % (j) + " -p max1hour " + "mpirun --bind-to-core ./" + binary_file + " " + config_file
+                        path[0] = "salloc -N " + '%d' % (i) + " -n " + '%d' % (j) + " -p max1day " + "mpirun --bind-to-core ./" + binary_file + " " + config_file
                     #    print path[0]
                         stmt = "Start(path)"
                 #        means.append(10.0 / (1 + 0.05 * i + 0.01 * j))
