@@ -21,24 +21,30 @@
 # @brief  Compile Onza FDTD and run simulation.
 USAGE="\nUsage: Onza can be (re-)compiled and run with call \n
 $./go.sh [mode] [config]\n
-e.g. from top-level Onza FDTD dir $./go.sh new\n
+e.g. from top-level Onza FDTD dir $./go.sh new1\n
 \n
-Possible modes are:\n
+Possible modes (build + run) are:\n
 \n
 help        \t\t- show usage message.\n
-<empty>, new \t- start totaly new build of Onza with Clang.\n
+<empty>, new1 \t- start totaly new build of Onza with Clang.\n
              \t\t\x20 compiler. Use it for first time compilation.\n
-new2         \t\t- same as new, but using gcc compiler.\n
+new2         \t\t- same as new1, but using gcc compiler.\n
 new3         \t\t- same as new2, but with -O3 and -ffast-math flags.\n
-old, old2    \t- recomile updated source files using Clang or gcc.\n
+old1, old2    \t- recomile updated source files using Clang or gcc.\n
 test         \t\t- compile with gcc benchmark flags, run a number of\n
              \t\t\x20 self tests, report about passing or failing them.\n
 prof         \t\t- compile with gcc with gprof flag.\n
 old2prof     \t- recompile with gprof flag.\n
-custom       \t- use 'new' mode and config file should be defined.\n
-build        \t\t- just build with gcc compiler.\n
+custom       \t- use 'new1' mode and config file should be defined.\n
+build        \t\t- just build with gcc compiler (no run).\n
 debug        \t\t- use debug flag fro Blitz++.
 \n\n
+Possible config files:\n
+\n
+Any valid file. If it can be treated as config will be checked with onza\n
+or\n
+build - only to build with predefined mode (no run).
+\n
 Possible enviroment parameters:\n
 \n
 Onza_MPI_size   \t- total number of MPI processes
@@ -62,10 +68,10 @@ if [[ $wrong_params ]]; then
     exit 1
 fi
 # Mode names
-mode_new="new"    # clang
+mode_new1="new1"    # clang
 mode_new2="new2"  # gcc
 mode_new3="new3"  # gcc with -O3
-mode_old="old";       mode_old2="old2";         mode_test="test"; 
+mode_old1="old1";       mode_old2="old2";         mode_test="test"; 
 mode_prof="prof";     mode_old2prof="old2prof"
 mode_custom="custom"; mode_debug="debug";       mode_build="build"
 # Default values
@@ -73,18 +79,22 @@ compiler_gcc="gcc"; compiler_clang="clang"
 usedCompiler=$compiler_gcc # or clang
 yes="yes";        no="no"
 isNew=$yes;       isTest=$no ;               isProfile=$no
+isBuildOnly=$no;
+if [[ $mode = $mode_build || $configFile = $mode_build ]]; then
+    isBuildOnly=$yes    
+fi
 path_onza=$PWD;   path_bin=$path_onza/bin;   path_build=$path_onza/build
 path_src=$path_onza/src
 # Should be same as in cmake config in $path_src
 onza_bin="run-onza-fdtd"
-if [[ ! $mode ]]; then  mode="new"; fi
+if [[ ! $mode ]]; then  mode="new1"; fi
 if [[ $mode = "help" || $mode = "--help" || $mode = "-h" ]]; then
  echo -e $USAGE
  exit 0
 fi 
 # Check mode
-if [[ $mode != $mode_new && $mode != $mode_new2 && $mode != $mode_new3 && \
-    $mode != $mode_old && $mode != $mode_old2 && \
+if [[ $mode != $mode_new1 && $mode != $mode_new2 && $mode != $mode_new3 && \
+    $mode != $mode_old1 && $mode != $mode_old2 && \
     $mode != $mode_test && \
     $mode != $mode_prof && $mode != $mode_old2prof && \
     $mode != $mode_custom && \
@@ -100,7 +110,7 @@ if [[ $mode != $mode_new && $mode != $mode_new2 && $mode != $mode_new3 && \
     fi  
     echo Using default mode: Full build with clang compiler.
     configFile=$mode 
-    mode=$mode_new
+    mode=$mode_new1
 fi 
 if [[ ( $mode = $mode_test || $mode = $mode_build ) && $configFile ]]; then
     echo ================ !ERROR! =================
@@ -109,14 +119,8 @@ if [[ ( $mode = $mode_test || $mode = $mode_build ) && $configFile ]]; then
     exit 1
 fi
 # Check config file(s)
-tests="self-test-X1D-zero self-test-TMz2D-speedup self-test-3D-simple"
-for test in $tests; do
-    test_name=${test//-/_}
-    path_test_config="path_${test_name}_config"
-    eval path_${test_name}_config=$path_onza/data/$test.config  
-    echo ${!path_test_config}
-done
 path_default_config=$path_onza/data/default-onza.config
+tests="self-test-X1D-zero self-test-TMz2D-speedup self-test-3D-simple"
 if [[ $mode = $mode_test ]]; then
     echo Check for tests config files...
     for test in $tests; do
@@ -139,7 +143,7 @@ if [[ ! $configFile && $mode != $mode_build ]]; then
     echo Setting default config file $path_default_config
     configFile=$path_default_config
 fi
-if  [[ ! -a $configFile && $mode != $mode_build ]]; then
+if  [[ ! -a $configFile && $isBuildOnly != $yes ]]; then
     echo ================ !ERROR! =================
     echo Was not able to found config file using path: $configFile
     echo ================ !ERROR! =================
@@ -147,13 +151,13 @@ if  [[ ! -a $configFile && $mode != $mode_build ]]; then
 fi
 # Convert relative path for custom config file to absolute.
 firstChar=${configFile:0:1}
-if [[ $firstChar != "/" && $mode != $mode_build ]]; then
+if [[ $firstChar != "/" && $isBuildOnly != $yes ]]; then
     configFile=$path_onza/$configFile
     echo Change config file path to absolute path: $configFile
 fi
 echo ============ Current script settings =============
 echo mode: $mode
-if [[ $mode != $mode_test && $mode != $mode_build ]]; then
+if [[ $mode != $mode_test && $isBuildOnly != $yes ]]; then
     echo config file: $configFile
 fi
 echo base dir path: $path_onza
@@ -182,7 +186,7 @@ fi
 #   Compile settings
 #############################################################################
 echo ============ Compile settings =============
-if [[ ( $mode = $mode_old || $mode = $mode_old2 || $mode = $mode_old2prof || \
+if [[ ( $mode = $mode_old1 || $mode = $mode_old2 || $mode = $mode_old2prof || \
     $mode = $mode_test ) && $force_new_build = $no ]]; then
     isNew=$no
     echo Recompile mode is on.
@@ -202,7 +206,7 @@ if [[ $mode = $mode_prof || $mode = $mode_old2prof ]]; then
     flag_cmake_profile="-DCMAKE_CXX_FLAGS=-pg -DCMAKE_EXE_LINKER_FLAGS=-pg"
 fi 
 # Set compiler
-if [[ $mode = $mode_new || $mode = $mode_old ]]; then
+if [[ $mode = $mode_new1 || $mode = $mode_old1 ]]; then
     echo Using \'clang\' compiler.
     usedCompiler=$compiler_clang
     export OMPI_CC=clang
@@ -237,7 +241,7 @@ make install
 #############################################################################
 #   Run
 #############################################################################
-if [[ $mode = $mode_build ]]; then
+if [[ $isBuildOnly = $yes ]]; then
     cd $path_bin
     mv run-onza-fdtd onza-fdtd.bin
     exit 0; 
