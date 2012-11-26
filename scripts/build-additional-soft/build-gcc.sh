@@ -71,10 +71,10 @@ else
 fi
 ###########################################
 echo Unpack sources...
-for file in *.tar.gz; do
-    echo Unpacking $file ...
-    tar xzf $file
-done
+# for file in *.tar.gz; do
+#     echo Unpacking $file ...
+#     tar xzf $file
+# done
 for file in *.tar.bz2; do
     echo Unpacking $file ...
     tar xjf $file

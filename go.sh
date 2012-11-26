@@ -75,9 +75,10 @@ mode_old1="old1";       mode_old2="old2";         mode_test="test";
 mode_prof="prof";     mode_old2prof="old2prof"
 mode_custom="custom"; mode_debug="debug";       mode_build="build"
 # Default values
+yes="yes";        no="no"
 compiler_gcc="gcc"; compiler_clang="clang"
 usedCompiler=$compiler_gcc # or clang
-yes="yes";        no="no"
+useGCC47=$yes  # use gcc 4.7 if it is available in build area of scripts folder
 isNew=$yes;       isTest=$no ;               isProfile=$no
 isBuildOnly=$no;
 if [[ $mode = $mode_build || $configFile = $mode_build ]]; then
@@ -213,18 +214,19 @@ if [[ $mode = $mode_new1 || $mode = $mode_old1 ]]; then
     export OMPI_CXX=clang++
 else
     path_gcc47=$path_onza/scripts/build-additional-soft/gcc-4.7/output/bin/
-    if [[ -a $path_gcc47/gcc ]]; then
+    if [[ -a $path_gcc47/gcc-4.7 && $useGCC47 = $yes ]]; then
         echo Using \'gcc-4.7.2\' compiler.
-        export OMPI_CC=$path_gcc47/gcc
-        export OMPI_CXX=$path_gcc47/g++
+        export OMPI_CC=$path_gcc47/gcc-4.7
+        export OMPI_CXX=$path_gcc47/g++-4.7
     else
+        echo Using gcc compiler.
         path_gcc47=
         export OMPI_CC=gcc
         export OMPI_CXX=g++
     fi
 fi 
 # Select OMPI_CXXFLAGS
-flags_O2="-O2 -ftemplate-depth-30"
+flags_O2="-O2 -ftemplate-depth-30 -Wall"
 flags_debug="-ftemplate-depth-30 -DBZ_DEBUG"
 flags_O3="-O3 -ffast-math -ftemplate-depth-30 -march=native -mtune=native -mfpmath=both -malign-double -mstackrealign -ftree-vectorize -msse2 -ftree-vectorizer-verbose=5 -flto"
 export OMPI_CXXFLAGS=$flags_O2
