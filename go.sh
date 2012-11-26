@@ -212,9 +212,16 @@ if [[ $mode = $mode_new1 || $mode = $mode_old1 ]]; then
     export OMPI_CC=clang
     export OMPI_CXX=clang++
 else
-    echo Using \'gcc\' compiler.
-    export OMPI_CC=gcc
-    export OMPI_CXX=g++
+    path_gcc47=$path_onza/scripts/build-additional-soft/gcc-4.7/output/bin/
+    if [[ -a $path_gcc47/gcc ]]; then
+        echo Using \'gcc-4.7.2\' compiler.
+        export OMPI_CC=$path_gcc47/gcc
+        export OMPI_CXX=$path_gcc47/g++
+    else
+        path_gcc47=
+        export OMPI_CC=gcc
+        export OMPI_CXX=g++
+    fi
 fi 
 # Select OMPI_CXXFLAGS
 flags_O2="-O2 -ftemplate-depth-30"
