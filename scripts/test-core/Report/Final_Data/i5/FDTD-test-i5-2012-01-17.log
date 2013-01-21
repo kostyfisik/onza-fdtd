@@ -1,0 +1,486 @@
+tig@deb00:~/stud-prog/FDTD_test$ ./run-all-tests.sh 
+>> Running 2D C++ tests
+
+>> __Processing task: 2D 32x32x409600(steps)
+
+>> Stencil 2D took 4.939923 
+
+>> Range 2D took 5.204037 
+
+>> Stencil 2D(4 blocks) took 20.316929 
+
+>> Range 2D(blocks) took 22.542177 
+
+>> Stencil 2D(2 blocks) took 8.278074 
+
+>> Range 2D(blocks) took 9.025765 
+
+>> __Done processing task: 2D 32x32x409600(steps)
+
+>> __Processing task: 2D 64x64x102400(steps)
+
+>> Stencil 2D took 4.072690 
+
+>> Range 2D took 4.120178 
+
+>> Stencil 2D(8 blocks) took 20.460154 
+
+>> Range 2D(blocks) took 22.655949 
+
+>> Stencil 2D(4 blocks) took 8.697928 
+
+>> Range 2D(blocks) took 9.373758 
+
+>> Stencil 2D(2 blocks) took 5.410785 
+
+>> Range 2D(blocks) took 5.567544 
+
+>> __Done processing task: 2D 64x64x102400(steps)
+
+>> __Processing task: 2D 128x128x25600(steps)
+
+>> Stencil 2D took 3.776067 
+
+>> Range 2D took 3.989304 
+
+>> Stencil 2D(16 blocks) took 20.660648 
+
+>> Range 2D(blocks) took 23.048578 
+
+>> Stencil 2D(8 blocks) took 8.689957 
+
+>> Range 2D(blocks) took 9.375782 
+
+>> Stencil 2D(4 blocks) took 5.542109 
+
+>> Range 2D(blocks) took 5.780338 
+
+>> Stencil 2D(2 blocks) took 4.568263 
+
+>> Range 2D(blocks) took 4.455916 
+
+>> __Done processing task: 2D 128x128x25600(steps)
+
+>> __Processing task: 2D 256x256x6400(steps)
+
+>> Stencil 2D took 4.218172 
+
+>> Range 2D took 7.963596 
+
+>> Stencil 2D(32 blocks) took 24.103184 
+
+>> Range 2D(blocks) took 26.192917 
+
+>> Stencil 2D(16 blocks) took 12.168590 
+
+>> Range 2D(blocks) took 12.921732 
+
+>> Stencil 2D(8 blocks) took 8.057841 
+
+>> Range 2D(blocks) took 7.984526 
+
+>> Stencil 2D(4 blocks) took 5.918932 
+
+>> Range 2D(blocks) took 5.673146 
+
+>> Stencil 2D(2 blocks) took 5.277562 
+
+>> Range 2D(blocks) took 8.148324 
+
+>> __Done processing task: 2D 256x256x6400(steps)
+
+>> __Processing task: 2D 512x512x1600(steps)
+
+>> Stencil 2D took 5.849810 
+
+>> Range 2D took 10.498178 
+
+>> Stencil 2D(64 blocks) took 25.428524 
+
+>> Range 2D(blocks) took 27.157333 
+
+>> Stencil 2D(32 blocks) took 13.411267 
+
+>> Range 2D(blocks) took 14.048352 
+
+>> Stencil 2D(16 blocks) took 10.235414 
+
+>> Range 2D(blocks) took 10.604941 
+
+>> Stencil 2D(8 blocks) took 8.198114 
+
+>> Range 2D(blocks) took 8.034430 
+
+>> Stencil 2D(4 blocks) took 6.161726 
+
+>> Range 2D(blocks) took 9.501138 
+
+>> Stencil 2D(2 blocks) took 6.676350 
+
+>> Range 2D(blocks) took 9.708637 
+
+>> __Done processing task: 2D 512x512x1600(steps)
+
+>> __Processing task: 2D 1024x1024x400(steps)
+
+>> Stencil 2D took 5.960367 
+
+>> Range 2D took 10.897877 
+
+>> Stencil 2D(128 blocks) took 26.160002 
+
+>> Range 2D(blocks) took 27.809252 
+
+>> Stencil 2D(64 blocks) took 13.656393 
+
+>> Range 2D(blocks) took 14.348397 
+
+>> Stencil 2D(32 blocks) took 10.399128 
+
+>> Range 2D(blocks) took 10.778231 
+
+>> Stencil 2D(16 blocks) took 8.660348 
+
+>> Range 2D(blocks) took 8.710088 
+
+>> Stencil 2D(8 blocks) took 7.627453 
+
+>> Range 2D(blocks) took 10.410310 
+
+>> Stencil 2D(4 blocks) took 6.969146 
+
+>> Range 2D(blocks) took 10.728607 
+
+>> Stencil 2D(2 blocks) took 6.892600 
+
+>> Range 2D(blocks) took 11.080808 
+
+>> __Done processing task: 2D 1024x1024x400(steps)
+
+>> __Processing task: 2D 2048x2048x100(steps)
+
+>> Stencil 2D took 5.841640 
+
+>> Range 2D took 11.372684 
+
+>> Stencil 2D(256 blocks) took 26.971424 
+
+>> Range 2D(blocks) took 29.779631 
+
+>> Stencil 2D(128 blocks) took 14.267590 
+
+>> Range 2D(blocks) took 15.511959 
+
+>> Stencil 2D(64 blocks) took 10.970051 
+
+>> Range 2D(blocks) took 11.910299 
+
+>> Stencil 2D(32 blocks) took 10.482511 
+
+>> Range 2D(blocks) took 11.096870 
+
+>> Stencil 2D(16 blocks) took 8.277816 
+
+>> Range 2D(blocks) took 11.341055 
+
+>> Stencil 2D(8 blocks) took 7.210418 
+
+>> Range 2D(blocks) took 11.436116 
+
+>> Stencil 2D(4 blocks) took 6.962498 
+
+>> Range 2D(blocks) took 11.586072 
+
+>> Stencil 2D(2 blocks) took 6.555264 
+
+>> Range 2D(blocks) took 11.499120 
+
+>> __Done processing task: 2D 2048x2048x100(steps)
+
+>> __Now processing task 2D 32x32x409600(steps)
+
+>> StdC 2D took 22.535322 
+
+>> StdC 2D(4 blocks) took 23.359810 
+
+>> StdC 2D(2 blocks) took 22.936071 
+
+>> __Done processing task 2D 32x32x409600(steps)
+
+>> __Now processing task 2D 64x64x102400(steps)
+
+>> StdC 2D took 22.023876 
+
+>> StdC 2D(8 blocks) took 22.977779 
+
+>> StdC 2D(4 blocks) took 22.952009 
+
+>> StdC 2D(2 blocks) took 22.575529 
+
+>> __Done processing task 2D 64x64x102400(steps)
+
+>> __Now processing task 2D 128x128x25600(steps)
+
+>> StdC 2D took 21.017406 
+
+>> StdC 2D(16 blocks) took 21.977221 
+
+>> StdC 2D(8 blocks) took 21.892876 
+
+>> StdC 2D(4 blocks) took 21.750040 
+
+>> StdC 2D(2 blocks) took 21.567926 
+
+>> __Done processing task 2D 128x128x25600(steps)
+
+>> __Now processing task 2D 256x256x6400(steps)
+
+>> StdC 2D took 22.915440 
+
+>> StdC 2D(32 blocks) took 26.646145 
+
+>> StdC 2D(16 blocks) took 26.738762 
+
+>> StdC 2D(8 blocks) took 26.321877 
+
+>> StdC 2D(4 blocks) took 24.276421 
+
+>> StdC 2D(2 blocks) took 23.935276 
+
+>> __Done processing task 2D 256x256x6400(steps)
+
+>> __Now processing task 2D 512x512x1600(steps)
+
+>> StdC 2D took 24.817327 
+
+>> StdC 2D(64 blocks) took 29.120543 
+
+>> StdC 2D(32 blocks) took 28.905033 
+
+>> StdC 2D(16 blocks) took 28.685722 
+
+>> StdC 2D(8 blocks) took 27.444719 
+
+>> StdC 2D(4 blocks) took 25.098238 
+
+>> StdC 2D(2 blocks) took 25.917160 
+
+>> __Done processing task 2D 512x512x1600(steps)
+
+>> __Now processing task 2D 1024x1024x400(steps)
+
+>> StdC 2D took 24.622519 
+
+>> StdC 2D(128 blocks) took 29.200258 
+
+>> StdC 2D(64 blocks) took 28.806223 
+
+>> StdC 2D(32 blocks) took 28.568773 
+
+>> StdC 2D(16 blocks) took 27.310581 
+
+>> StdC 2D(8 blocks) took 25.344440 
+
+>> StdC 2D(4 blocks) took 25.722725 
+
+>> StdC 2D(2 blocks) took 25.516088 
+
+>> __Done processing task 2D 1024x1024x400(steps)
+
+>> __Now processing task 2D 2048x2048x100(steps)
+
+>> StdC 2D took 24.435999 
+
+>> StdC 2D(256 blocks) took 29.167515 
+
+>> StdC 2D(128 blocks) took 28.852491 
+
+>> StdC 2D(64 blocks) took 28.541153 
+
+>> StdC 2D(32 blocks) took 27.274944 
+
+>> StdC 2D(16 blocks) took 25.124821 
+
+>> StdC 2D(8 blocks) took 25.629108 
+
+>> StdC 2D(4 blocks) took 25.361906 
+
+>> StdC 2D(2 blocks) took 24.916719 
+
+>> __Done processing task 2D 2048x2048x100(steps)
+>> Done running 2D C++ tests
+>> Running 2D Fortran tests
+ >> Task          32 x          32 x      409600 (steps)
+ >> Fortran 2D (elements) took   3.3762109279632568      s
+ >> Task          64 x          64 x      102400 (steps)
+ >> Fortran 2D (elements) took   3.4802169799804688      s
+ >> Task         128 x         128 x       25600 (steps)
+ >> Fortran 2D (elements) took   3.7682349681854248      s
+ >> Task         256 x         256 x        6400 (steps)
+ >> Fortran 2D (elements) took   4.3162689208984375      s
+ >> Task         512 x         512 x        1600 (steps)
+ >> Fortran 2D (elements) took   6.6084132194519043      s
+ >> Task        1024 x        1024 x         400 (steps)
+ >> Fortran 2D (elements) took   6.6244139671325684      s
+ >> Task        2048 x        2048 x         100 (steps)
+ >> Fortran 2D (elements) took   6.5684103965759277      s
+ >> Task          32 x          32 x      409600 (steps)
+ >> Fortran 2D took   3.2081999778747559      s
+ >> Task          64 x          64 x      102400 (steps)
+ >> Fortran 2D took   3.2922050952911377      s
+ >> Task         128 x         128 x       25600 (steps)
+ >> Fortran 2D took   3.3202071189880371      s
+ >> Task         256 x         256 x        6400 (steps)
+ >> Fortran 2D took   3.6682291030883789      s
+ >> Task         512 x         512 x        1600 (steps)
+ >> Fortran 2D took   6.2323889732360840      s
+ >> Task        1024 x        1024 x         400 (steps)
+ >> Fortran 2D took   6.2923941612243652      s
+ >> Task        2048 x        2048 x         100 (steps)
+ >> Fortran 2D took   6.2523913383483887      s
+>> Done Running 2D Fortran tests
+>> Running 3D C++ tests
+
+>> __Processing task: 3D 32x32x32x6400(steps)
+
+>> Stencil 3D took 5.751822 
+
+>> Range 3D took 4.538232 
+
+>> Stencil 3D (4 blocks) took 13.131926 
+
+>> Range 3D (4 blocks) took 13.584238 
+
+>> Stencil 3D (2 blocks) took 8.205103 
+
+>> Range 3D (2 blocks) took 7.169570 
+
+>> __Done processing task: 3D 32x32x32x6400(steps)
+
+>> __Processing task: 3D 64x64x64x800(steps)
+
+>> Stencil 3D took 6.551850 
+
+>> Range 3D took 5.161715 
+
+>> Stencil 3D (8 blocks) took 14.124253 
+
+>> Range 3D (8 blocks) took 15.602877 
+
+>> Stencil 3D (4 blocks) took 10.003930 
+
+>> Range 3D (4 blocks) took 9.320684 
+
+>> Stencil 3D (2 blocks) took 9.685013 
+
+>> Range 3D (2 blocks) took 8.264990 
+
+>> __Done processing task: 3D 64x64x64x800(steps)
+
+>> __Processing task: 3D 128x128x128x100(steps)
+
+>> Stencil 3D took 6.232018 
+
+>> Range 3D took 4.951811 
+
+>> Stencil 3D (16 blocks) took 14.648139 
+
+>> Range 3D (16 blocks) took 16.382236 
+
+>> Stencil 3D (8 blocks) took 11.779253 
+
+>> Range 3D (8 blocks) took 11.332084 
+
+>> Stencil 3D (4 blocks) took 14.469028 
+
+>> Range 3D (4 blocks) took 12.640753 
+
+>> Stencil 3D (2 blocks) took 11.035450 
+
+>> Range 3D (2 blocks) took 8.911454 
+
+>> __Done processing task: 3D 128x128x128x100(steps)
+
+>> __Now processing task 3D 32x32x32x6400(steps)
+
+>> StdC 3D took 19.762463 
+
+>> StdC 3D Ez control sum is 1.004426e+08
+
+>> StdC 3D (4 blocks) took 24.182589 
+
+>> StdC 3D (4 blocks) Ez control sum is 1.004426e+08
+
+>> StdC 3D (2 blocks) took 21.824291 
+
+>> StdC 3D (2 blocks) Ez control sum is 1.004426e+08
+
+>> __Done processing task 3D 32x32x32(steps)
+
+>> __Now processing task 3D 64x64x64x800(steps)
+
+>> StdC 3D took 19.393686 
+
+>> StdC 3D Ez control sum is 1.471258e+08
+
+>> StdC 3D (8 blocks) took 24.169067 
+
+>> StdC 3D (8 blocks) Ez control sum is 1.471258e+08
+
+>> StdC 3D (4 blocks) took 22.559847 
+
+>> StdC 3D (4 blocks) Ez control sum is 1.471258e+08
+
+>> StdC 3D (2 blocks) took 22.672928 
+
+>> StdC 3D (2 blocks) Ez control sum is 1.471258e+08
+
+>> __Done processing task 3D 64x64x64(steps)
+
+>> __Now processing task 3D 128x128x128x100(steps)
+
+>> StdC 3D took 18.244259 
+
+>> StdC 3D Ez control sum is 1.561248e+08
+
+>> StdC 3D (16 blocks) took 23.736498 
+
+>> StdC 3D (16 blocks) Ez control sum is 1.561248e+08
+
+>> StdC 3D (8 blocks) took 22.117016 
+
+>> StdC 3D (8 blocks) Ez control sum is 1.561248e+08
+
+>> StdC 3D (4 blocks) took 26.153721 
+
+>> StdC 3D (4 blocks) Ez control sum is 1.561248e+08
+
+>> StdC 3D (2 blocks) took 22.363657 
+
+>> StdC 3D (2 blocks) Ez control sum is 1.561248e+08
+
+>> __Done processing task 3D 128x128x128(steps)
+>> Done running 3D C++ tests
+>> Running 3D Fortran tests
+ >> Task          32 x          32 x          32 x        6400 (steps)
+ >> Fortran 3D (elements) took   4.6882929801940918      s
+ >> Task          64 x          64 x          64 x         800 (steps)
+ >> Fortran 3D (elements) took   6.7564210891723633      s
+ >> Task         128 x         128 x         128 x         100 (steps)
+ >> Fortran 3D (elements) took   6.7564210891723633      s
+ >> Task          32 x          32 x      409600 (steps)
+ >> Fortran 2D took   3.1721980571746826      s
+ >> Task          64 x          64 x      102400 (steps)
+ >> Fortran 2D took   3.2842049598693848      s
+ >> Task         128 x         128 x       25600 (steps)
+ >> Fortran 2D took   3.3362078666687012      s
+ >> Task         256 x         256 x        6400 (steps)
+ >> Fortran 2D took   3.6882300376892090      s
+ >> Task         512 x         512 x        1600 (steps)
+ >> Fortran 2D took   6.2363891601562500      s
+ >> Task        1024 x        1024 x         400 (steps)
+ >> Fortran 2D took   6.2883920669555664      s
+ >> Task        2048 x        2048 x         100 (steps)
+ >> Fortran 2D took   6.2723922729492188      s
+>> Done Running 3D Fortran tests
+
