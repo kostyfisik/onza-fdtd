@@ -164,7 +164,7 @@ $path_sources/$gcc/configure \
     --enable-shared \
     --enable-multiarch  \
     --enable-linker-build-id \
-    --with-system-zlib \
+#    --with-system-zlib \
     --without-included-gettext \
     --enable-threads=posix \
     --enable-nls  \
