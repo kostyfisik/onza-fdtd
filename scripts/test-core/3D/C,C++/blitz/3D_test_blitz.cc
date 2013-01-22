@@ -550,7 +550,7 @@ int main(int argc, char *argv[]) {
   MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
   // Fixed parameters **********************************************************
   components = kSrcEz + 1;
-  sum_flag = 0;
+  sum_flag = 1;
   print_flag = 0;
   time_flag = 1;
   block_flag = blk;

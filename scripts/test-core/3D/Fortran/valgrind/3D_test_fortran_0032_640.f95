@@ -127,7 +127,7 @@ PROGRAM MAIN
         END DO
      END DO
   END DO
- ! PRINT *,'>> Ez control sum is',sum
+ PRINT *,'>> Ez control sum is',sum
   ! End Calculating Ez control sum
   STOP
 END PROGRAM MAIN

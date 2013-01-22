@@ -255,7 +255,7 @@ void RunCalculation() {
 
 int main(int argc, char *argv[]) {
   // Flags *********************************************************
-  sum_flag = 0;
+  sum_flag = 1;
   time_flag = 1;
   size_check_flag = 0;
   // ***************************************************************
