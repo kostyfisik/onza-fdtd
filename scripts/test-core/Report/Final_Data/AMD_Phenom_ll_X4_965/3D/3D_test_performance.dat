@@ -1,4 +1,0 @@
-#Size x Size x Size x Steps	Stencil	Stencil(blocks)	Range	Range(blocks)	StdC	StdC(blocks) Fortran
-32x32x32x6400			10.84	18.53		8.79	16.36		37.50	43.74	     10.57
-64x64x64x800			14.22	21.12		11.33	18.89		35.86	44.32	     15.45
-128x128x128x100			14.83	23.72		11.17	18.73		33.63	40.60	     15.49
