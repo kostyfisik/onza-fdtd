@@ -59,6 +59,7 @@ set some default vale (depending on executing host) will be used.\n"
 if [[ ! $Onza_MPI_size ]]; then Onza_MPI_size="unset"; fi
 if [[ ! $Onza_MPI_nodes ]]; then Onza_MPI_nodes="unset"; fi
 MPI_options="--bind-to-core"
+HOST=`hostname`
 #############################################################################
 #   Parse input parameters   
 #############################################################################
@@ -219,6 +220,8 @@ if [[ $mode = $mode_new1 || $mode = $mode_old1 ]]; then
     usedCompiler=$compiler_clang
     export OMPI_CC=clang
     export OMPI_CXX=clang++
+    export CC=clang
+    export CXX=clang++	
 else
     path_gcc47=$path_onza/scripts/build-additional-soft/gcc-4.7/output/bin/
     if [[ -a $path_gcc47/gcc-4.7 && $useGCC47 = $yes ]]; then
@@ -232,6 +235,16 @@ else
         export OMPI_CXX=g++
     fi
 fi 
+if  [[ $HOST == "rh-lum.metalab.ifmo.ru" ]]; then
+    echo Setting MPI path on rh-lum.metalab.ifmo.ru !
+    ompi_path_bin=/usr/lib64/openmpi/bin/
+    ompi_path_lib=/usr/lib64/openmpi/lib/
+    if [ -d "$ompi_path_bin" ] && [[ ":$PATH:" != *":$ompi_path_bin:"* ]]; then
+        PATH="${PATH:+"$PATH:"}$ompi_path_bin"
+    fi
+    export LD_LIBRARY_PATH=$ompi_path_lib
+fi
+
 # Select OMPI_CXXFLAGS
 flags_O2="-O2 -ftemplate-depth-30 -Wall"
 flags_debug="-ftemplate-depth-30 -DBZ_DEBUG -Wall"
@@ -281,7 +294,6 @@ if [[ $isBuildOnly = $yes ]]; then
     mv run-onza-fdtd onza-fdtd.bin
     exit 0; 
 fi
-HOST=`cat /etc/hostname`
 echo "Executing on host -> $HOST <-"
 if [[ $mode = $mode_test ]]; then isTest=$yes; fi
 if [[ $isProfile = $yes ]]; then 
@@ -300,6 +312,8 @@ function TuneOnzaOptionsMPI {
         if [[ $Onza_MPI_nodes = "unset" ]]; then Onza_MPI_nodes=8; fi
     elif  [[ $HOST == "deb00" || $HOST == "dmmrkovich-birzha" ]]; then
         if [[ $Onza_MPI_size = "unset" ]]; then Onza_MPI_size=4; fi            
+    elif  [[ $HOST == "rh-lum.metalab.ifmo.ru" ]]; then
+        if [[ $JADE_MPI_size = "unset" ]]; then JADE_MPI_size=12; fi            
     else
         if [[ $Onza_MPI_size = "unset" ]]; then Onza_MPI_size=2; fi
     fi
