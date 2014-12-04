@@ -1,8 +1,8 @@
 // Using Doxygen 1.8.0 (with Markdown)
 ///
 /// @file   onza-fdtd.cc
-/// @author Ladutenko Konstantin <kostyfisik at gmail (.) com>
-/// @copyright 2012 Ladutenko Konstantin
+/// @author Konstantin Ladutenko <kostyfisik at gmail (.) com>
+/// @copyright 2012 Konstantin Ladutenko
 /// @section LICENSE
 /// This file is part of Onza FDTD.
 ///
@@ -270,7 +270,7 @@ int main(int argc, char *argv[]) {
 /// Photonics and Optical Informatics Department of [NRU ITMO]. It is
 /// also supported by [Ioffe Institute].
 ///
-/// Contact Ladutenko Konstantin <kostyfisik at gmail (.)  com>
+/// Contact Konstantin Ladutenko <kostyfisik at gmail (.)  com>
 /// with any questions about Onza FDTD.
 ///
 /// #Prerequisites

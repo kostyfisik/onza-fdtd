@@ -2,8 +2,8 @@
 #define SRC_SIMULATION_CORE_BASIC_FDTD_H_
 ///
 /// @file   basic-fdtd.h
-/// @author Ladutenko Konstantin <kostyfisik at gmail (.) com>
-/// @copyright 2012 Ladutenko Konstantin
+/// @author Konstantin Ladutenko <kostyfisik at gmail (.) com>
+/// @copyright 2012 Konstantin Ladutenko
 /// @section LICENSE
 /// This file is part of Onza FDTD.
 ///
