@@ -246,9 +246,9 @@ if  [[ $HOST == "rh-lum.metalab.ifmo.ru" ]]; then
 fi
 
 # Select OMPI_CXXFLAGS
-flags_O2="-O2 -ftemplate-depth-30 -Wall"
-flags_debug="-ftemplate-depth-30 -DBZ_DEBUG -Wall"
-flags_O3="-O3 -ffast-math -ftemplate-depth-30 -march=native -mtune=native -mfpmath=both -malign-double -mstackrealign -ftree-vectorize -msse2 -ftree-vectorizer-verbose=5  -Wall" 
+flags_O2="-O2 -Wall -std=c++11 -DNDEBUG"
+flags_debug="-DBZ_DEBUG -Wall -std=c++11 "
+flags_O3="-O3 -ffast-math -march=native -mtune=native -mfpmath=both -malign-double -mstackrealign -ftree-vectorize -msse2 -ftree-vectorizer-verbose=5  -Wall -std=c++11  -DNDEBUG" 
 # TODO option -flto   -- Do we need it?
 export OMPI_CXXFLAGS=$flags_O2
 if [[ $mode = $mode_debug ]]; then

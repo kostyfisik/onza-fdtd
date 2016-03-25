@@ -98,15 +98,15 @@ namespace onza {
       // Check array are valid for pointer arithmetics
       if (!borders_to_send(border).isStorageContiguous() ||
           !received_borders(border).isStorageContiguous()) {
-        printf("Proc[%i]: Buffers for halo exchange is not contiguous!!!\n",
-               process_rank_);
-        return kErrorExchangeBufferIsNotContiguous;
+	throw std::invalid_argument
+	  (std::string("Proc[") + std::to_string(process_rank_) +
+	   "]: Buffers for halo exchange is not contiguous!!!\n");
       }  // end of if error: buffers are not contiguous
       if (borders_to_send(border).size() !=
           received_borders(border).size()) {
-        printf("Proc[%i]: Buffers to send and recieve halo do not match!!!\n",
-               process_rank_);
-        return kErrorSendAndReceiveBuffersHasDifferentSizes;
+	throw std::invalid_argument
+	  (std::string("Proc[") + std::to_string(process_rank_) +
+	   "]: Buffers to send and recieve halo do not match!!!\n");
       }  // end of if error: borders size send != receive
       borders_to_send_[border] = borders_to_send(border).data();
       received_borders_[border] = received_borders(border).data();
@@ -162,7 +162,7 @@ namespace onza {
         grid_input_config_.
         get_total_grid_length(static_cast<Axis>(border%kDimensions))-1;
       if (index_from_neighbour[border] != -1) {
-        int64_t difference = abs(index_for_output[border]
+        int64_t difference = std::abs(index_for_output[border]
                                  -index_from_neighbour[border]);
         if (difference !=1 && difference != size) {
           printf("Process[%i] border[%i]: Error! Wrong index difference!\n",
@@ -171,18 +171,18 @@ namespace onza {
                  index_from_neighbour[border],
                  index_for_output[border],
                  size);
-          return kErrorWrongIndexDifference;
+	  throw std::invalid_argument("Error! Wrong index difference!\n");
         }  // end of if error
       } else {  // end of if border is domains internal
         if (border < kDimensions && index_for_output[border] != 0) {
           printf("Process[%i]: Error! Wrong start index!\n",
                  process_rank_);
-          return kErrorWrongIndexDifference;
+	  throw std::invalid_argument("Error! Wrong start index!\n");
         }  // end of if nonzero index of most left (bottom, back) border
         if (border >= kDimensions && index_for_output[border] != size) {
           printf("Process[%i]: Error! Wrong finish index!\n",
                  process_rank_);
-          return kErrorWrongIndexDifference;
+	  throw std::invalid_argument("Error! Wrong finish index!\n");
         }  // end of if most right (top, front) index doesn`t
            // correlates with domain length
       }  // end of else sudmain`s border is domain external border
@@ -318,12 +318,12 @@ namespace onza {
       }  // end of if subdomian in inner area (without PML)
       // HACK! try to deal with double rounding unstability.
       double ceil_subdomain_start_coord = ceil(subdomain_start_coord);
-      if (abs(ceil_subdomain_start_coord - subdomain_start_coord) < 0.01
+      if (std::abs(ceil_subdomain_start_coord - subdomain_start_coord) < 0.01
           && subdomain_start_coord > 0.1)
         subdomain_start_coord -= 0.1;
       double ceil_subdomain_finish_coord = ceil(subdomain_finish_coord);
-      if (abs(ceil_subdomain_finish_coord - subdomain_finish_coord) < 0.01
-          && abs(total_size - subdomain_finish_coord) > 0.1)
+      if (std::abs(ceil_subdomain_finish_coord - subdomain_finish_coord) < 0.01
+          && std::abs(total_size - subdomain_finish_coord) > 0.1)
         subdomain_finish_coord -= 0.1;
       // Evaluate index!
       subdomain_start_index_[axis] = ceil(subdomain_start_coord);
@@ -332,10 +332,10 @@ namespace onza {
         - subdomain_start_index_[axis] + 1;
       int halo_width = simulation_core_.simulation_input_config_.halo_width();
       if (subdomain_size_[axis] < halo_width && subdomain_size_[axis] != 1) {
-        printf("Proc[%i] ERR! Subdomain size[%i] %li less than halo width %i\n",
+        printf("Proc[%i] ERROR! Subdomain size[%i] %li less than halo width %i\n",
                process_rank_, axis, subdomain_size_[axis], halo_width);
         printf("Use less MPI procs, smaller halo or bigger domain!\n");
-        return kErrorSubdomainSizeLessThanHaloWidth;
+	throw std::invalid_argument("ERROR! Subdomain size less than halo width\n");
       }
       /// @todo3 remove output in HaloExchangeProcess::EvaluateSubdomainSize().
       // int zeros = 0;
@@ -374,7 +374,7 @@ namespace onza {
     // (0) Prepare.
     if (simulation_core_.simulation_input_config_.
         status() != kInputConfigAllDone)
-      return kErrorUsingInputConfigTooEarly;
+      throw std::invalid_argument("Error! Using input config too early!");
     int64_t length[kDimensions], orig_length[kDimensions];
     // Original length of simulation domain
     for (int axis = kAxisX; axis < kDimensions; ++axis) {
@@ -413,8 +413,7 @@ namespace onza {
              length[kAxisY], length[kAxisZ]);
     }  // end of if process_rank_ == kOutput
     // (2) Start new communicator.
-    if (StartCartesianGridCommunicator() != kDone)
-      return kErrorProcessNotInGrid;
+    StartCartesianGridCommunicator();
     // (3) Find neighbours.
     EvaluateCoordsAndRanks();
     /// @todo3 Remove output in HaloExchangeProcess::RunDecomposition()
@@ -426,7 +425,7 @@ namespace onza {
     //        neighbours_ranks_[kBorderBack],  neighbours_ranks_[kBorderFront]);
     // (4) Find current process subdomain size.
     EvaluateSubdomainSize();
-    if (CheckSubdomainIndexes() != kDone) return kErrorWrongIndexDifference;
+    CheckSubdomainIndexes();
     return kDone;
   }  // end of HaloExchangeProcess::RunDecomposition
   // ********************************************************************** //
@@ -496,7 +495,7 @@ namespace onza {
                     is_grid_periodic, reorder_processes_ranks,
                     &cartesian_grid_communicator_);
     if (cartesian_grid_communicator_ == MPI_COMM_NULL)
-      return kErrorProcessNotInGrid;
+      throw std::invalid_argument("Error! Process is not in the grid!");
     MPI_Comm_rank(cartesian_grid_communicator_, &process_rank_);
     return kDone;
   }  // end of HaloExchangeProcess::StartCartesianGridCommunicator()
@@ -529,21 +528,22 @@ namespace onza {
   int  HaloExchangeProcess::Init(int argc, char *argv[]) {
     MPI_Comm_size(MPI_COMM_WORLD, &processes_total_number_);
     MPI_Comm_rank(MPI_COMM_WORLD, &process_rank_);
-    if (argc < 2) {
-      printf("Proc[%i]: Error! Config file name was not defined!\n",
-               process_rank_);
-      return kErrorConfigFileNameWasNotDefined;
-    }
-    if (argc > 2) {
-      printf("Proc[%i]: Error! Too many input parameters!\n",
-               process_rank_);
-      return kErrorConfigFileNameWasNotDefined;
-    }
+    process_name_ =std::string("Proc[") + std::to_string(process_rank_) 
+      + "]:"; 
+    if (argc < 2)
+      throw std::invalid_argument(process_name_ +
+    				  "Error! Config file name was not defined!\n" +
+    				  "in file " + __FILE__ + " line "
+    				  + std::to_string( __LINE__) );
+    if (argc > 2) 
+      throw std::invalid_argument(process_name_ +
+				  "Error! Too many input parameters!\n" +
+				  "in file " + __FILE__ + " line "
+				  + std::to_string( __LINE__) );
     std::string config_file_name(argv[1]);
     simulation_core_.simulation_input_config_.
       set_config_file_name(config_file_name);
-    if (simulation_core_.simulation_input_config_.ReadConfig() != kDone)
-      return kErrorTooWidePml;
+    simulation_core_.simulation_input_config_.ReadConfig();
     return kDone;
   }  // end of HaloExchangeProcess::Init()
   // ********************************************************************** //
@@ -702,9 +702,7 @@ namespace onza {
   /// This function runs FDTD simulation in MPI enviroment.
   int HaloExchangeProcess::RunSimulation() {
     if (simulation_core_.status() != kSimulationStatusInitiated) {
-      printf("Process[%i] Error! Trying to run uninitiated simulation core\n",
-             process_rank_);
-      return kErrorUninitiatedSimulationCore;
+      throw std::invalid_argument("Error! Trying to run uninitiated simulation core\n");
     }  // end of if simulation core is not initiated
     double start_time, end_time;
     start_time = MPI_Wtime();
@@ -721,7 +719,7 @@ namespace onza {
       halo_to_exchange_.StartNonBlockingExchange();
       errors += timer_.Stop("StartNonBlockingExchange()");
       errors += timer_.Start("Snapshot()");
-      //simulation_core_.Snapshot();
+      simulation_core_.Snapshot();
       errors += timer_.Stop("Snapshot()");
       errors += timer_.Start("PrepareSource()");
       simulation_core_.PrepareSource();

@@ -45,14 +45,12 @@ namespace onza {
     /// @brief Mutator.
     /// @param[in] length_x, length_y, length_z Length of grid in
     /// corresponding direction.
-    /// @return 0 is OK.
     int set_total_grid_length(int64_t length_x, int64_t length_y,
                               int64_t length_z) {
-      if (length_x < 1) return kErrorSettingWrongGridSize;
-        total_grid_length_[kAxisX] = length_x;
-      if (length_y < 1) return kErrorSettingWrongGridSize;
+      if ( (length_x < 1) || (length_y < 1) || (length_z < 1))
+	throw std::invalid_argument("Error! Wrong Grid Size!");
+      total_grid_length_[kAxisX] = length_x;
       total_grid_length_[kAxisY] = length_y;
-      if (length_z < 1) return kErrorSettingWrongGridSize;
       total_grid_length_[kAxisZ] = length_z;
       return kDone;
     };  // end of set_total_grid_length

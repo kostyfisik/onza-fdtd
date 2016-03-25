@@ -32,25 +32,23 @@
 /// @return Zero by default.
 int main(int argc, char *argv[]) {
   MPI_Init(&argc, &argv);
-  onza::HaloExchangeProcess halo_exchange_process;
-  int done_status = onza::kDone;
-  while (1) {  // use break to report error with done_status.
-    done_status = halo_exchange_process.Init(argc, argv);
-    if (done_status != onza::kDone) break;
+  try {
+    onza::HaloExchangeProcess halo_exchange_process;
+    halo_exchange_process.Init(argc, argv);
     // Split total simualation domain into subdomains for parallel
     // execution. Each subdomain is simulated on its own MPI processes
     // (physicaly it would be a single core, processor, node etc.).
-    done_status = halo_exchange_process.RunDecomposition();
-    if (done_status != onza::kDone) break;
-    done_status = halo_exchange_process.InitSimulation();
-    if (done_status != onza::kDone) break;
-    done_status = halo_exchange_process.RunSimulation();
-    break;
-  }  // end of while breaked with errors
-  if (done_status != onza::kDone && done_status != onza::kErrorProcessNotInGrid)
-    MPI_Abort(MPI_COMM_WORLD, done_status);  
+    halo_exchange_process.RunDecomposition();
+    halo_exchange_process.InitSimulation();
+    halo_exchange_process.RunSimulation();
+  } catch( const std::invalid_argument& ia ) {
+    // Will catch if  multi_layer_mie fails or other errors.
+    std::cerr << "Invalid argument: " << ia.what() << std::endl;
+    MPI_Abort(MPI_COMM_WORLD, 1);  
+    return 1;
+  }  
   MPI_Finalize();
-  return done_status;
+  return 0;
 }  // end of main
 // ************************************************************************* //
 /// \page DevPlan Plan of the Development (in Russian)

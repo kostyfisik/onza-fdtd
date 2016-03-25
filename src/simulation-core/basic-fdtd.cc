@@ -89,7 +89,7 @@ namespace onza {
                my_coords_[kAxisX], my_coords_[kAxisY], my_coords_[kAxisZ]);
       FILE *snapshot;
       snapshot = fopen(filename, "w");
-      int offset_x = my_coords_[kAxisX] * subdomain_size_[kAxisX];
+      // int offset_x = my_coords_[kAxisX] * subdomain_size_[kAxisX];
       /// @todo2 make snapshot output  call be warper of algorithm
       /// dependent function call (call snapshot  with function pointer
       /// assigned at init time)
@@ -474,7 +474,7 @@ namespace onza {
            component < number_of_components_to_exchange_;
            ++component) {
         const int the_only_component_index = 0;
-        int opposite_border = (border + kDimensions) % (kDimensions*2);
+        // int opposite_border = (border + kDimensions) % (kDimensions*2);
         if (neighbours_ranks_[border] != MPI_PROC_NULL)
           data_(received_borders_range_(border, component))
                   (the_only_component_index, all_x_, all_y_, all_z_)
@@ -556,8 +556,7 @@ namespace onza {
       data_(kChze, all_x_, all_y_, all_z_) = courant_3D / imp0;
       break;
     default:
-      printf("Error! Should use some FDTD algorithm!\n");
-      return kErrorWrongAlgorithm;
+      throw std::invalid_argument("Error! Should use some FDTD algorithm!\n");
     }
     // Prepare snapshots. data_snapshot_(time_depth_ - 2) and data_
     // references to the same memory area.
@@ -579,7 +578,7 @@ namespace onza {
                                  int64_t subdomain_start_index[],
                                  int64_t subdomain_finish_index[]) {
     if (simulation_input_config_.status() != kInputConfigAllDone)
-      return kErrorUsingInputConfigTooEarly;
+      throw std::invalid_argument("Error! Using input config too early!");
     status_ = kSimulationStatusUndefined;
     // Init member in alphabetical order
     algorithm_ = simulation_input_config_.algorithm();
@@ -600,13 +599,11 @@ namespace onza {
       RunAlgorithm = &BasicSimulationCore::AlgorithmSimple3D;
       break;
     default:
-      printf("Error! Should use some FDTD algorithm!\n");
-      return kErrorWrongAlgorithm;
+      throw std::invalid_argument("Error! Should use some FDTD algorithm!\n");
     }  // end of switch algorithm
     halo_width_ = simulation_input_config_.halo_width();
     if (halo_width_ < 1) {
-      printf("Error! FDTD algorithm`s should have some subdomain halo!\n");
-      return kErrorWrongHaloWidth;
+      throw std::invalid_argument("Error! FDTD algorithm`s should have some halo!\n");
     }  // end of if error
     local_time_step_ = 0;
     for (int border = kBorderLeft; border < kDimensions*2; ++border)
@@ -634,13 +631,11 @@ namespace onza {
     int max_y = subdomain_size_[kAxisY]-1;
     int max_z = subdomain_size_[kAxisZ]-1;
     if (time_depth_ < 2) {
-      printf("Error! FDTD algorithm`s time depth should be >= 2!\n");
-      return kErrorWrongTimeDepth;
+      throw std::invalid_argument("Error! FDTD algorithm`s time depth should be >= 2!\n");
     }  // end of if error
     if (!max_x && !max_y && !max_z) {
-      printf("Error! Single element subdomains are not supported!\n");
       printf("\tUse bigger model or less processes!\n");
-      return kErrorSingleElementSubdomain;
+      throw std::invalid_argument("Error! Single element subdomains are not supported!\n");
     }  // end of if error
 
     data_snapshot_.resize(time_depth_);
@@ -775,7 +770,7 @@ namespace onza {
           !received_borders_.isStorageContiguous()) {
         printf("Proc[%i]: Error! Halo exchange buffer is not contiguous!\n",
                process_rank_);
-        return kErrorExchangeBufferIsNotContiguous;
+	throw std::invalid_argument("Error! Halo exchange buffer is not contiguous!\n");
       }  // end of if error
     }  // end of for border
     status_ = kSimulationStatusInitiated;
@@ -812,10 +807,8 @@ namespace onza {
   /// config_file_map_ private member.
   int SimulationInputConfig::SetConfigFileMap() {
     FILE *config_file_pointer = fopen(config_file_name_.c_str(), "r");
-    if (config_file_pointer == NULL) {
-      printf("Error! Was not able to open config file!\n");
-      return kErrorConfigFileWasNotAbleToOpen;
-    }
+    if (config_file_pointer == NULL) 
+      throw std::invalid_argument("Error! Was not able to open config file!\n");
     std::string key_name, key_value;
     int reading_key_name = 1;
     config_file_map_.clear();
@@ -833,10 +826,9 @@ namespace onza {
       if (input_char == EOF || input_char == '\n') {
         reading_key_name = 1;
         if (key_name.size() != 0 && key_value.size() != 0) {
-          if (config_file_map_.count(key_name)) {
-            printf("Error! Redefining key in config file is not allowed!\n");
-            return kErrorConfigFileDublicatedKey;
-          }  // end of if key is dublicated
+          if (config_file_map_.count(key_name)) 
+	    throw std::invalid_argument
+	      ("Error! Redefining key in config file is not allowed!\n");
           config_file_map_[key_name] = key_value;
         }  // end of if input is valid
         key_name = "";
@@ -870,8 +862,8 @@ namespace onza {
         int process_rank;
         MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
         if (process_rank == 0)
-          printf("Error! Too wide PML in axis = %i!\n", axis);
-        return kErrorTooWidePml;
+	  throw std::invalid_argument("Error! Too wide PML in axis = "
+				      + std::to_string(axis));
       }  // end of if pml is too wide
     }  // end of for axis check pml width
     return kDone;
@@ -901,8 +893,7 @@ namespace onza {
     MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
     if (process_rank == kOutput)
       printf("Preset X1Dzero\n");
-    if (grid_input_config_.set_total_grid_length(length_x, length_y, length_z)
-        != kDone) return kErrorSettingWrongGridSize;
+    grid_input_config_.set_total_grid_length(length_x, length_y, length_z);
     SetBoundaryConditionsAllPML();
     pml_width_ = 1;
     pml_computational_ratio_ = 1.0;
@@ -933,8 +924,7 @@ namespace onza {
     MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
     if (process_rank == kOutput)
       printf("Preset TMz2Dspeedup\n");
-    if (grid_input_config_.set_total_grid_length(length_x, length_y, length_z)
-        != kDone) return kErrorSettingWrongGridSize;
+    grid_input_config_.set_total_grid_length(length_x, length_y, length_z);
     SetBoundaryConditionsAllPML();
     pml_width_ = 1;
     pml_computational_ratio_ = 1.0;
@@ -964,8 +954,7 @@ namespace onza {
     MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
     if (process_rank == kOutput)
       printf("Preset 3Dsimple\n");
-    if (grid_input_config_.set_total_grid_length(length_x, length_y, length_z)
-        != kDone) return kErrorSettingWrongGridSize;
+    grid_input_config_.set_total_grid_length(length_x, length_y, length_z);
     SetBoundaryConditionsAllPML();
     pml_width_ = 1;
     pml_computational_ratio_ = 1.0;
@@ -1008,59 +997,47 @@ namespace onza {
   /// 630 x 630 x 630 vertices x 8 components = 16 Gb on deb00
   int SimulationInputConfig::ReadConfig() {
     // Read config from file to private member.
-    int done_status = SetConfigFileMap();
-    if (done_status != kDone) return done_status;
+    SetConfigFileMap();    
     int64_t length_x = 1, length_y = 1, length_z = 1;
     int64_t total_time_steps = 1;
     if (config_file_map_.count("length_x"))
-      if (!convert_to_positive(config_file_map_["length_x"], length_x)) {
-        printf("Error! Non positive or non decimal input '%s'!\n",
-               config_file_map_["length_x"].c_str());
-        return kErrorConfgiFileWrongDecimalInput;
-      };
+      if (!convert_to_positive(config_file_map_["length_x"], length_x))
+	throw std::invalid_argument
+	  (std::string("Error! Non positive or non decimal input ") +
+	   +"length_x = " + config_file_map_["length_x"] + "!\n" );
     if (config_file_map_.count("length_y"))
-      if (!convert_to_positive(config_file_map_["length_y"], length_y)) {
-        printf("Error! Non positive or non decimal input '%s'!\n",
-               config_file_map_["length_y"].c_str());
-        return kErrorConfgiFileWrongDecimalInput;
-      };
+      if (!convert_to_positive(config_file_map_["length_y"], length_y))
+    	throw std::invalid_argument
+    	  (std::string("Error! Non positive or non decimal input ") +
+    	   +"length_y = " + config_file_map_["length_y"] + "!\n" );
     if (config_file_map_.count("length_z"))
-      if (!convert_to_positive(config_file_map_["length_z"], length_z)) {
-        printf("Error! Non positive or non decimal input '%s'!\n",
-               config_file_map_["length_z"].c_str());
-        return kErrorConfgiFileWrongDecimalInput;
-      };
+      if (!convert_to_positive(config_file_map_["length_z"], length_z))
+	throw std::invalid_argument
+	  (std::string("Error! Non positive or non decimal input ") +
+	   +"length_z = " + config_file_map_["length_z"] + "!\n" );
     if (config_file_map_.count("total_time_steps"))
       if (!convert_to_positive(config_file_map_["total_time_steps"],
-                               total_time_steps)) {
-        printf("Error! Non positive or non decimal input '%s'!\n",
-               config_file_map_["total_time_steps"].c_str());
-        return kErrorConfgiFileWrongDecimalInput;
-      };
+                               total_time_steps))
+	throw std::invalid_argument
+	  (std::string("Error! Non positive or non decimal input ")
+	   + "total_time_steps" + config_file_map_["total_time_steps"] + "!\n");
     // convert_to_positive(config_file_map_["total_time_steps"]);
     // Select from some of hard coded tests.
     if (config_file_map_.count("test_case")) {
       if (config_file_map_["test_case"] == "X1Dzero") {
-        done_status = PresetX1Dzero(total_time_steps,
-                                   length_x, length_y, length_z);
-        if (done_status != kDone) return done_status;
+        PresetX1Dzero(total_time_steps, length_x, length_y, length_z);
       } else if (config_file_map_["test_case"] == "TMz2Dspeedup") {
-        done_status = PresetTMz2Dspeedup(total_time_steps,
-                                   length_x, length_y, length_z);
-        if (done_status != kDone) return done_status;
+	PresetTMz2Dspeedup(total_time_steps, length_x, length_y, length_z);
       } else if (config_file_map_["test_case"] == "3Dsimple") {
-        done_status = Preset3Dsimple(total_time_steps,
-                                   length_x, length_y, length_z);
-        if (done_status != kDone) return done_status;
+        Preset3Dsimple(total_time_steps, length_x, length_y, length_z);
       }
     } else {  // end of if simulating test case
-      done_status = SetConfigFromFileMap();
-      if (done_status != kDone) return done_status;
+      SetConfigFromFileMap();
     }  // end of else using castom settings.
     /// @todo1 For CPML implementation see Taflove 3d ed. p.307 section 7.9.2
     // Config auto check.
     AutoSetReducedBoundaryConditions();
-    if (CheckTotalPMLWidth() != kDone) return kErrorTooWidePml;
+    CheckTotalPMLWidth();
     status_ = kInputConfigAllDone;
     return kDone;
   };  // end of SimulationInputConfig::ReadConfig
@@ -1078,8 +1055,7 @@ namespace onza {
     if (process_rank == kOutput)
       printf("Using custom config\n");
     int64_t length_x = 200, length_y = 1, length_z = 1;
-    if (grid_input_config_.set_total_grid_length(length_x, length_y, length_z)
-        != kDone) return kErrorSettingWrongGridSize;
+    grid_input_config_.set_total_grid_length(length_x, length_y, length_z);
     // Setting boundary_condition_
     //            kBoundaryConditionPML or kBoundaryConditionPeriodical.
     SetBoundaryConditionsAllPML();

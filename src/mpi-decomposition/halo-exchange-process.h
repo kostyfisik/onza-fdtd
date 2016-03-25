@@ -87,7 +87,7 @@ namespace onza {
     /// @brief Status of waiting for isend/irecv.
     ///
     /// May be not used (using MPI_STATUS_IGNORE insted).
-    MPI_Status status_;
+    // MPI_Status status_;
     /// @brief Fast access (without MPI call) to process rank of
     /// containing object. Should be set in init()
     int process_rank_;
@@ -124,6 +124,8 @@ namespace onza {
     /// @brief Fast access (without MPI call) to process rank of
     /// containing object. Should be set in init()
     int process_rank_;
+    /// @brief Process rank formated for error output.
+    std::string process_name_;
     /// @brief Fast access (without MPI call) to total number of
     /// processes executing simulation. Should be set in init().
     int processes_total_number_;
