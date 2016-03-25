@@ -4,7 +4,7 @@ multiprocessor systems, clusters and supercomputers.
 
 It only solves some predefined cases of Maxwell equation (usually anisotropic case) for 1,2,3D case an scales on HPC cluster.
 
-![Scale plot](https://github.com/kostyfisik/onza-fdtd/blob/master/doc/onza-speedup.svg "Scale plot")
+![Scale plot](https://github.com/kostyfisik/onza-fdtd/blob/master/doc/onza-speedup.png "Scale plot")
 
 
 Onza FDTD needs MPI installed to compile and run. 
